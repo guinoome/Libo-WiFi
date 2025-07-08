@@ -17,6 +17,8 @@
     margin-top: 5px;
   }
 
+</style>
+
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     loadVoucherStoreContent();
@@ -76,8 +78,12 @@
                     </li>
 
                     <li class="nav-item">
-                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">Cashless Voucher</a>
+                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">Voucher Store</a>
                     </li>
+
+                    <li class="nav-item">
+                    <a class="nav-link" id="transactions-tab" data-toggle="pill" href="#transactions" role="tab" aria-controls="transactions" aria-selected="false">Transaction Logs</a>
+                    </li>      
                 </ul>
           </div>
 
@@ -85,7 +91,7 @@
 
             <div class="tab-content" id="klcis-tabContent">
 
-                <div class="tab-panel fade" id="login" role="tabpanel" aria-labelledby="login-tab">
+                <div class="tab-pane fade" id="login" role="tabpanel" aria-labelledby="login-tab">
 
                 <p class="text-center text-gray h6">Enter the voucher code and tap Login to begin.</p>
                 <div class="oper-section-outer">
@@ -97,11 +103,27 @@
                       <form id="login-form">
                           <div id="input-voucher">
                               <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
-			</div>
+                          </div>
+                          <div id="input-user">
+                              <input id="username" class="oper-section-item input" name="username" type="text" placeholder="Username"/>
+                          </div>
+                          <div id="input-password" class="user-input">
+                              <input id="password" class="oper-section-item input" name="password" type="password"  placeholder="Password"/>
+                          </div>
+                          <div id="input-simple">
+                              <input id="simplePassword" class="password oper-section-item" name="simplePassword" type="password" placeholder="Password"/>
+                          </div>
+                          <div id="input-phone-num">
+                              <span class="add">+</span><input id="country-code" class="input"><input id="phone-number" class="input" name="phone-number" type="text" placeholder="Phone Number"/>
+                          </div>
+                          <div id="input-verify-code">
+                              <input id="verify-code" class="input" name="verify-code" type="text" placeholder="Verification Code"/><button id="get-code" class="button">Get Code</button>
+                          </div>
                           <input name="clientMac" id="cMac" style="display:none"/>
                           <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
                       </form>
                       <div id="button-area">
+                          <button id="button-facebook" class="btn btn-block btn-success btn-shadow">Facebook</button>
                           <button id="button-login" class="btn btn-block btn-warning btn-lg text-white">LOGIN</button>
                       </div>
                   </div>
@@ -110,7 +132,7 @@
             </div>
 
               <div class="tab-pane fade" id="voucher" role="tabpanel" aria-labelledby="voucher-tab">
-                <!-- <div class="text-center text-gray h4">LIBO Cashless WiFi</div> -->
+                <!-- <div class="text-center text-gray h4">KLCiS Voucher Store</div> -->
 
                 <form id="paymentForm" action="https://s2.klinternetservices.com/xendit/ewallet" method="GET">
                   
@@ -128,6 +150,7 @@
                             <option value="160">₱160.00 - 15 Days UNLI WiFi</option>
                             <option value="300">₱300.00 - 1 Month UNLI WiFi</option>
                             </select>
+              
               
                          <!--PAKI-PALITAN ANG value="PUT_YOUR_KLCIS_API_KEY_HERE" ng iyong KLCiS API KEY-->
                         <input type="hidden" class="form-control" id="tokenInput" name="token" value="7z62ZWE2ORTHHJ6N1PZIZ5hfb">
@@ -195,7 +218,10 @@
       
               <div class="text-center text-xs text-muted" id="result"></div>
               </div>
-              <hr> 
+              <hr>
+              <p class="text-muted text-sm mb-0 mt-0 text-center">No KLCiS client account? <br>
+                <a class="text-muted text-sm" href="https://s2.klinternetservices.com/client"><strong>CLICK HERE TO SIGN-UP!</strong></a>
+              </p>            
           </div>
         </div>      
       </div>
