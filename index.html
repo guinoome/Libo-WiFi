@@ -78,7 +78,7 @@
                     </li>
 
                     <li class="nav-item">
-                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">Cashless Voucher</a>
+                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">E- Voucher</a>
                     </li>
 
                     </li>      
@@ -101,28 +101,63 @@
                       <form id="login-form">
                           <div id="input-voucher">
                               <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
-                          </div>
-                          <div id="input-user">
-                              <input id="username" class="oper-section-item input" name="username" type="text" placeholder="Username"/>
-                          </div>
-                          <div id="input-password" class="user-input">
-                              <input id="password" class="oper-section-item input" name="password" type="password"  placeholder="Password"/>
-                          </div>
-                          <div id="input-simple">
-                              <input id="simplePassword" class="password oper-section-item" name="simplePassword" type="password" placeholder="Password"/>
-                          </div>
-                          <div id="input-phone-num">
-                              <span class="add">+</span><input id="country-code" class="input"><input id="phone-number" class="input" name="phone-number" type="text" placeholder="Phone Number"/>
-                          </div>
-                          <div id="input-verify-code">
-                              <input id="verify-code" class="input" name="verify-code" type="text" placeholder="Verification Code"/><button id="get-code" class="button">Get Code</button>
-                          </div>
+                                             </div>
                           <input name="clientMac" id="cMac" style="display:none"/>
                           <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
                       </form>
                       <div id="button-area">
-                          <button id="button-facebook" class="btn btn-block btn-success btn-shadow">Facebook</button>
+                          
                           <button id="button-login" class="btn btn-block btn-warning btn-lg text-white">LOGIN</button>
+<div class="text-center mt-3">
+<button id="evoucherRedirect" class="btn btn-lg rounded-pill text-white" style="background-color: #0070BA;">
+  💳 E-Voucher Available
+</button>
+<button type="submit" class="btn btn-md btn-block rounded-pill" id="gcash">
+  <img src="resources/gcash_logo.png" style="height: 28px; width: 120px;">
+</button>
+<button type="submit" class="btn btn-md btn-block rounded-pill" id="maya">
+  <img src="resources/maya_logo.png" style="height: 25px; width: 80px;">
+</button>
+<button type="submit" class="btn btn-md btn-block rounded-pill" id="spay">
+  <img src="resources/spay_logo.png" style="height: 28px; width: 75px;">
+</button>
+
+</div>
+
+<script>
+  document.getElementById("evoucherRedirect").addEventListener("click", function () {
+    const voucherTab = document.querySelector('a#voucher-tab');
+    if (voucherTab) voucherTab.click();
+    setTimeout(() => {
+      const voucherSection = document.getElementById("voucher");
+      if (voucherSection) {
+        window.scrollTo({ top: voucherSection.offsetTop, behavior: 'smooth' });
+      }
+    }, 300);
+  });
+</script>
+
+<!-- ADD THIS RIGHT BELOW VOUCHER LOGIN FORM -->
+<div class="text-center mt-3" id="movieLinks" style="display: none;">
+  <button class="btn btn-danger btn-lg rounded-pill mb-2" onclick="window.location.href='https://stream.klcis.cc'">🎬 Free Movies</button>
+  <button class="btn btn-primary btn-lg rounded-pill mb-2" onclick="window.location.href='https://ph.klcis.cc'">📺 PH Movies</button>
+  <button class="btn btn-success btn-lg rounded-pill" onclick="window.location.href='https://int.klcis.cc'">🌐 International</button>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const loginButton = document.getElementById("button-login");
+    const movieLinks = document.getElementById("movieLinks");
+
+    loginButton.addEventListener("click", function () {
+      setTimeout(() => {
+        movieLinks.style.display = "block";
+        movieLinks.scrollIntoView({ behavior: "smooth" });
+      }, 1500);
+    });
+  });
+</script>
+
                       </div>
                   </div>
               </div>
@@ -140,11 +175,10 @@
                             <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
               
                             <!--PAKI-EDIT NG VALUE SAKA DESCRIPTION BASE SA VOUCHER AMOUNT NA NAKA-UPLOAD SA IYONG KLCIS ACCOUNT -->
-                            <option value="6">₱6.00 - 3 Hours UNLI WiFi</option>
                             <option value="12">₱12.00 - 7 Hours UNLI WiFi</option>
-			    <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
-                            <option value="60">₱60.00 - 3 Days UNLI WiFi</option>
-                            <option value="95">₱95.00 - 7 Days UNLI WiFi</option>
+    			    <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
+                            <option value="50">₱50.00 - 3 Days UNLI WiFi</option>
+                            <option value="85">₱85.00 - 7 Days UNLI WiFi</option>
                             <option value="160">₱160.00 - 15 Days UNLI WiFi</option>
                             <option value="300">₱300.00 - 1 Month UNLI WiFi</option>
                             </select>
