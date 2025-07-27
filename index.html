@@ -49,19 +49,53 @@
                   </form>
                   <div class="text-center mt-3">
                   <button id="evoucherRedirect" class="btn btn-lg rounded-pill text-white" style="background-color: #0070BA;">
-💳 E-Voucher Available Here
+  💳 E-Voucher Available Here
 </button>
+<style>
+  /* Bounce effect */
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+
+  /* Glow effect */
+  .glow-highlight {
+    animation: glow 2s ease-in-out infinite alternate;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #0070BA;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px #0070BA;
+    }
+    to {
+      box-shadow: 0 0 20px #0070BA;
+    }
+  }
+</style>
 <script>
   document.getElementById("evoucherRedirect").addEventListener("click", function () {
-    // Switch to the E-Voucher tab
     const voucherTab = document.querySelector('a#voucher-tab');
     if (voucherTab) voucherTab.click();
 
-    // Optional: Scroll to the E-Voucher tab content
     setTimeout(() => {
-      const voucherSection = document.getElementById("voucher");
-      if (voucherSection) {
-        window.scrollTo({ top: voucherSection.offsetTop, behavior: 'smooth' });
+      const promoDropdown = document.getElementById("amountDropdown");
+      if (promoDropdown) {
+        promoDropdown.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Add rainbow glow for 15 seconds
+        promoDropdown.classList.add("rainbow-highlight");
+        setTimeout(() => {
+          promoDropdown.classList.remove("rainbow-highlight");
+        }, 15000);
       }
     }, 300);
   });
@@ -102,6 +136,22 @@
                 <div class="form-group mt-3">
                   <label class="text-muted text-sm" for="amountDropdown">Select promo:</label>
                   <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
+<style>
+  @keyframes rainbowGlow {
+    0%   { box-shadow: 0 0 10px red; }
+    20%  { box-shadow: 0 0 10px orange; }
+    40%  { box-shadow: 0 0 10px yellow; }
+    60%  { box-shadow: 0 0 10px green; }
+    80%  { box-shadow: 0 0 10px blue; }
+    100% { box-shadow: 0 0 10px violet; }
+  }
+
+  .rainbow-highlight {
+    animation: rainbowGlow 2s infinite;
+    border-radius: 8px;
+  }
+</style>
+
                     <option value="12">₱12.00 - 7 Hours UNLI WiFi</option>
                     <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
                     <option value="50">₱50.00 - 3 Days UNLI WiFi</option>
