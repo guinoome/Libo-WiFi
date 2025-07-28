@@ -1,189 +1,53 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <title>Libo WiFi Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Libo Bay + Movies</title>
-  <link rel="stylesheet" href="resources/index.css" type="text/css" />
-  <link rel="stylesheet" href="resources/adminlte.min.css" type="text/css" />
-  <script src="resources/forced_browser.js"></script>
   <style>
-    .custom-swal-width { width: 380px; }
-    label { display: block; margin-bottom: 5px; margin-top: 5px; }
-    .horizontal-logo-buttons img {
-      width: 80px;
-      margin: 5px;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+      background-color: #f5f5f5;
+    }
+    #fallback {
+      display: none;
+      margin-top: 2rem;
+    }
+    .btn {
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0070BA;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
-<body class="portal">
-  <div><div class="wave"></div><div class="wave"></div></div>
-  <img class="mx-auto d-block img-fluid mt-2" src="resources/logo.png" style="width: 120px; height: auto; margin-bottom: 10px; border-radius: 5px;">
-  <div class="container">
-    <div class="row justify-content-center p-3">
-      <div class="card card-outline card-tabs" style="width: 480px; border-radius: 15px;">
-        <div class="card-header p-0 pt-1 border-bottom-0 ml-2">
-          <ul class="nav nav-tabs" id="klcis-tab" role="tablist">
-            <li class="nav-item">
-              <a class="nav-link active" id="login-tab" data-toggle="pill" href="#login" role="tab" aria-controls="login" aria-selected="true">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">E-Voucher</a>
-            </li>
-          </ul>
-        </div>
-        <div class="card-body">
-          <div class="tab-content" id="klcis-tabContent">
-            <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-              <p class="text-center text-gray h6">Enter the voucher code to access FREE Movies.</p>
-              <div class="oper-section-outer">
-                <div class="oper-section-inner">
-                  <span id="oper-hint" style="color: red; display: none;"></span>
-                  <form id="login-form" method="POST" action="http://1.1.1.1/login">
-                    <div id="input-voucher">
-                      <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
-                    </div>
-                    <input name="clientMac" id="cMac" style="display:none"/>
-                    <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
-                    <button id="button-login" class="btn btn-block btn-warning btn-lg text-white" type="submit">LOGIN</button>
-                  </form>
-                  <div class="text-center mt-3">
-                  <button id="evoucherRedirect" class="btn btn-lg rounded-pill text-white" style="background-color: #0070BA;">
-  💳 E-Voucher Available Here
-</button>
-<style>
-  /* Bounce effect */
-  @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-      transform: translateY(0);
-    }
-    40% {
-      transform: translateY(-10px);
-    }
-    60% {
-      transform: translateY(-5px);
-    }
-  }
+<body>
+  <h1>Welcome to Libo WiFi</h1>
+  <p id="status-text">Checking your voucher access...</p>
 
-  /* Glow effect */
-  .glow-highlight {
-    animation: glow 2s ease-in-out infinite alternate;
-    border-radius: 10px;
-    box-shadow: 0 0 10px #0070BA;
-  }
-
-  @keyframes glow {
-    from {
-      box-shadow: 0 0 5px #0070BA;
-    }
-    to {
-      box-shadow: 0 0 20px #0070BA;
-    }
-  }
-</style>
-<script>
-  document.getElementById("evoucherRedirect").addEventListener("click", function () {
-    const voucherTab = document.querySelector('a#voucher-tab');
-    if (voucherTab) voucherTab.click();
-
-    setTimeout(() => {
-      const promoDropdown = document.getElementById("amountDropdown");
-      if (promoDropdown) {
-        promoDropdown.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Add rainbow glow for 15 seconds
-        promoDropdown.classList.add("rainbow-highlight");
-        setTimeout(() => {
-          promoDropdown.classList.remove("rainbow-highlight");
-        }, 15000);
-      }
-    }, 300);
-  });
-</script>
-
-                    <div class="horizontal-logo-buttons d-flex justify-content-center flex-wrap mt-2">
-                      <img src="resources/gcash_logo.png" alt="GCash">
-                      <img src="resources/maya_logo.png" alt="Maya">
-                      <img src="resources/spay_logo.png" alt="SPay">
-                    </div>
-                  </div>
-                 <script>
-  document.getElementById("login-form").addEventListener("submit", function (e) {
-    const code = document.getElementById("voucherCode").value.trim();
-    e.preventDefault();
-
-    if (code === "") {
-      alert("Please enter a voucher code.");
-    } else {
-      // Sample valid voucher codes (replace with your real validation/API later)
-      const validCodes = ["abc123", "demo456"];
-
-      if (validCodes.includes(code)) {
-        window.location.href = "https://stream.klcis.cc";
-      } else {
-        alert("Invalid voucher code. Please try again.");
-      }
-    }
-  });
-</script>
-
-                </div>
-              </div>
-            </div>
-            <div class="tab-pane fade" id="voucher" role="tabpanel" aria-labelledby="voucher-tab">
-              <form id="paymentForm" action="https://s2.klinternetservices.com/xendit/ewallet" method="GET">
-                <input type="hidden" name="method" value="">
-                <div class="form-group mt-3">
-                  <label class="text-muted text-sm" for="amountDropdown">Select promo:</label>
-                  <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
-<style>
-  @keyframes rainbowGlow {
-    0%   { box-shadow: 0 0 10px red; }
-    20%  { box-shadow: 0 0 10px orange; }
-    40%  { box-shadow: 0 0 10px yellow; }
-    60%  { box-shadow: 0 0 10px green; }
-    80%  { box-shadow: 0 0 10px blue; }
-    100% { box-shadow: 0 0 10px violet; }
-  }
-
-  .rainbow-highlight {
-    animation: rainbowGlow 2s infinite;
-    border-radius: 8px;
-  }
-</style>
-
-                    <option value="12">₱12.00 - 7 Hours UNLI WiFi</option>
-                    <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
-                    <option value="50">₱50.00 - 3 Days UNLI WiFi</option>
-                    <option value="85">₱85.00 - 7 Days UNLI WiFi</option>
-                    <option value="160">₱160.00 - 15 Days UNLI WiFi</option>
-                    <option value="300">₱300.00 - 1 Month UNLI WiFi</option>
-                  </select>
-                  <input type="hidden" name="token" value="7z62ZWE2ORTHHJ6N1PZIZ5hfb">
-                  <label class="text-muted text-sm mt-1" for="numberInput">Mobile number for SMS notification:</label>
-                  <input type="tel" id="numberInput" class="form-control text-center text-lg" placeholder="e.g. 09912346789" name="number" pattern="[0]{1}[9]{1}[0-9]{9}" required>
-                </div>
-                <button type="submit" class="btn btn-md btn-primary btn-block rounded-pill"><img src="resources/gcash_logo.png" style="height: 28px; width: 120px;"></button>
-                <button type="submit" class="btn btn-md btn-success btn-block rounded-pill"><img src="resources/maya_logo.png" style="height: 25px; width: 80px;"></button>
-                <button type="submit" class="btn btn-md btn-warning btn-block rounded-pill"><img src="resources/spay_logo.png" style="height: 28px; width: 75px;"></button>
-              </form>
-              <div class="text-center">
-                <button class="btn btn-md btn-primary rounded-pill mt-2" id="generate_qr"><i class="fas fa-qrcode"></i> Generate QR</button>
-              </div>
-              <div id="qrcode" style="display: none;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div id="fallback">
+    <p><strong>You are not logged in with a voucher.</strong></p>
+    <button class="btn" onclick="window.location.href='https://stream.klcis.cc'">🎬 Access Free Movies (Test Mode)</button>
   </div>
 
-<script src="resources/index.js"></script>
-<script src="resources/qr.js"></script>
-<script src="resources/jquery.min.js"></script>
-<script src="resources/klcis.js"></script>
-<script src="resources/alert.js"></script>
-<script src="resources/bootstrap.bundle.min.js"></script>
-<script src="resources/adminlte.min.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const auth = urlParams.get("auth");
+
+    if (auth === "1") {
+      document.getElementById("status-text").innerText = "Voucher valid. Redirecting to Free Movies...";
+      setTimeout(() => {
+        window.location.href = "https://stream.klcis.cc";
+      }, 1500);
+    } else {
+      document.getElementById("status-text").innerText = "No voucher detected.";
+      document.getElementById("fallback").style.display = "block";
+    }
+  </script>
 </body>
 </html>
