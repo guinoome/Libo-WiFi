@@ -18,6 +18,53 @@
   }
 
 </style>
+<style>
+  .custom-swal-width {
+      width: 380px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 5px;
+    margin-top: 5px;
+  }
+
+  /* CTA bounce + glow */
+  .cta-glow-bounce {
+    background-color: #0070BA;
+    animation: bounce 1s infinite alternate, ctaGlow 1.5s infinite alternate;
+    border-radius: 50px;
+    box-shadow: 0 0 10px #0070BA;
+    font-weight: bold;
+    padding: 10px 30px;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  @keyframes bounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-8px); }
+  }
+
+  @keyframes ctaGlow {
+    0% { box-shadow: 0 0 5px #0070BA; }
+    100% { box-shadow: 0 0 20px #0070BA; }
+  }
+
+  /* Rainbow glowing promo dropdown */
+  @keyframes rainbowGlow {
+    0% { box-shadow: 0 0 10px red; }
+    20% { box-shadow: 0 0 10px orange; }
+    40% { box-shadow: 0 0 10px yellow; }
+    60% { box-shadow: 0 0 10px green; }
+    80% { box-shadow: 0 0 10px blue; }
+    100% { box-shadow: 0 0 10px violet; }
+  }
+
+  .glow-rainbow {
+    animation: rainbowGlow 1s infinite alternate;
+    border-radius: 8px;
+  }
+</style>
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
@@ -65,6 +112,7 @@
   
   <img class="mx-auto d-block img-fluid mt-2" src="resources/logo.png" style="width: 120px; height: auto; margin-bottom: 10px; border-radius: 5px;">
 
+
     
 
     <div class="container">
@@ -78,7 +126,7 @@
                     </li>
 
                     <li class="nav-item">
-                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">Cashless Voucher</a>
+                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">E-Voucher</a>
                     </li>
 
                     </li>      
@@ -91,7 +139,7 @@
 
                 <div class="tab-pane fade" id="login" role="tabpanel" aria-labelledby="login-tab">
 
-                <p class="text-center text-gray h6">Enter the voucher code and tap Login to begin.</p>
+                <p class="text-center text-gray h6">Enter the voucher code and enjoy FREE Movies.</p>
                 <div class="oper-section-outer">
                   <div class="oper-section-inner">
                       <span id="oper-hint" style="color: red; display: none;"></span>
@@ -100,34 +148,36 @@
                       </div>
                       <form id="login-form">
                           <div id="input-voucher">
-                              <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
-                          </div>
-                          <div id="input-user">
-                              <input id="username" class="oper-section-item input" name="username" type="text" placeholder="Username"/>
-                          </div>
-                          <div id="input-password" class="user-input">
-                              <input id="password" class="oper-section-item input" name="password" type="password"  placeholder="Password"/>
-                          </div>
-                          <div id="input-simple">
-                              <input id="simplePassword" class="password oper-section-item" name="simplePassword" type="password" placeholder="Password"/>
-                          </div>
-                          <div id="input-phone-num">
-                              <span class="add">+</span><input id="country-code" class="input"><input id="phone-number" class="input" name="phone-number" type="text" placeholder="Phone Number"/>
-                          </div>
-                          <div id="input-verify-code">
-                              <input id="verify-code" class="input" name="verify-code" type="text" placeholder="Verification Code"/><button id="get-code" class="button">Get Code</button>
-                          </div>
-                          <input name="clientMac" id="cMac" style="display:none"/>
+                              <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />                          <input name="clientMac" id="cMac" style="display:none"/>
                           <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
                       </form>
                       <div id="button-area">
-                          <button id="button-facebook" class="btn btn-block btn-success btn-shadow">Facebook</button>
+                          
                           <button id="button-login" class="btn btn-block btn-warning btn-lg text-white">LOGIN</button>
-                      </div>
+                      
+
+		      </div>
                   </div>
               </div>
 
             </div>
+		      <div class="text-center my-3">
+  <button id="scrollToVoucher" class="btn btn-lg text-white cta-glow-bounce">
+    💳 E-Voucher Available Here
+  </button>
+</div>
+			 <!-- GCash / Maya / SpayLater logos -->
+		       <div class="d-flex justify-content-between gap-2 my-3">
+			<div class="flex-fill text-center mx-1">
+    			 <img src="resources/gcash_logo.png" alt="GCash" style="height: 32px; width: auto;">
+                        </div>
+                        <div class="flex-fill text-center mx-1">
+                           <img src="resources/maya_logo.png" alt="Maya" style="height: 30px; width: auto;">
+                        </div>
+                        <div class="flex-fill text-center mx-1">
+                           <img src="resources/spay_logo.png" alt="SpayLater" style="height: 32px; width: auto;">
+                        </div>
+                       </div>
 
               <div class="tab-pane fade" id="voucher" role="tabpanel" aria-labelledby="voucher-tab">
                 <!-- <div class="text-center text-gray h4">KLCiS Voucher Store</div> -->
@@ -140,9 +190,11 @@
                             <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
               
                             <!--PAKI-EDIT NG VALUE SAKA DESCRIPTION BASE SA VOUCHER AMOUNT NA NAKA-UPLOAD SA IYONG KLCIS ACCOUNT -->
-                            <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
+                            <option value="6">₱6.00 - 3 Hours UNLI WiFi</option>
+			    <option value="12">₱12.00 - 7 Hours UNLI WiFi</option>
+			    <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
                             <option value="60">₱60.00 - 3 Days UNLI WiFi</option>
-                            <option value="95">₱95.00 - 7 Days UNLI WiFi</option>
+                            <option value="85">₱85.00 - 7 Days UNLI WiFi</option>
                             <option value="160">₱160.00 - 15 Days UNLI WiFi</option>
                             <option value="300">₱300.00 - 1 Month UNLI WiFi</option>
                             </select>
@@ -154,11 +206,17 @@
 						
                         <label class="text-muted text-sm mt-1" for="numberInput">Mobile number for SMS notification:</label>
                         <input type="tel" id="numberInput" class="form-control text-center text-lg" style="width:100%; letter-spacing: 3px;" placeholder="e.g. 09912346789" name="number" pattern="[0]{1}[9]{1}[0-9]{9}" autocomplete="tel" required>
-                      </div>
-      
-                      <button type="submit" class="btn btn-md btn-primary btn-block rounded-pill" id="gcash"><img src="resources/gcash_logo.png" style="height: 28px; width: 120px;"></button>
-                      <button type="submit" class="btn btn-md btn-success btn-block rounded-pill" id="maya"><img src="resources/maya_logo.png" style="height: 25px; width: 80px;"></button>
-                      <button type="submit" class="btn btn-md btn-warning btn-block rounded-pill" id="spay"><img src="resources/spay_logo.png" style="height: 28px; width: 75px;"></button>
+                    <div class="d-flex justify-content-between gap-2 mt-3 mb-2">
+  <button type="submit" class="btn btn-md btn-primary flex-fill mx-1 rounded-pill" id="gcash">
+    <img src="resources/gcash_logo.png" style="height: 28px; width: 120px;">
+  </button>
+  <button type="submit" class="btn btn-md btn-success flex-fill mx-1 rounded-pill" id="maya">
+    <img src="resources/maya_logo.png" style="height: 25px; width: 80px;">
+  </button>
+  <button type="submit" class="btn btn-md btn-warning flex-fill mx-1 rounded-pill" id="spay">
+    <img src="resources/spay_logo.png" style="height: 28px; width: 75px;">
+  </button>
+</div>
 
                 </form>
                 <div class="text-center">                  
@@ -222,6 +280,40 @@
     </div>
   </div>   
     
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const ctaButton = document.getElementById("scrollToVoucher");
+  const voucherTab = document.getElementById("voucher-tab");
+  const voucherPane = document.getElementById("voucher");
+  const amountDropdown = document.getElementById("amountDropdown");
+
+  ctaButton.addEventListener("click", function () {
+    // Activate the voucher tab
+    voucherTab.click();
+
+    // Wait for tab to show then scroll
+    setTimeout(() => {
+      voucherPane.scrollIntoView({ behavior: "smooth" });
+
+      // Glow transfer effect
+      amountDropdown.classList.add("glow-rainbow");
+
+      // Stop glow after 25s
+      setTimeout(() => {
+        amountDropdown.classList.remove("glow-rainbow");
+      }, 25000);
+    }, 500);
+  });
+
+  // Re-trigger glow if user clicks the dropdown
+  amountDropdown.addEventListener("click", function () {
+    amountDropdown.classList.add("glow-rainbow");
+    setTimeout(() => {
+      amountDropdown.classList.remove("glow-rainbow");
+    }, 25000);
+  });
+});
+</script>
 
 <!-- END OF KLCIS VOUCHER SYSTEM CODE -->
 
