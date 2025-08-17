@@ -4,235 +4,129 @@
 <link rel="stylesheet" href="resources/index.css" type="text/css" />
 <link rel="stylesheet" href="resources/adminlte.min.css" type="text/css" />
 
-<!-- This is the script that forces client to open regular browser -->
 <script src="resources/forced_browser.js"></script>
 
 <style>
-  .custom-swal-width {
-      width: 380px;
-  }
-  label{
-    display: block;
-    margin-bottom: 5px;
-    margin-top: 5px;
-  }
-
+  .custom-swal-width {
+      width: 380px;
+  }
+  label{
+    display: block;
+    margin-bottom: 5px;
+    margin-top: 5px;
+  }
 </style>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    loadVoucherStoreContent();
-  });
-
-  function loadVoucherStoreContent() {
-    document.getElementById("login").classList.add("show");
-    document.getElementById("login").classList.add("active");
-  }
+  document.addEventListener("DOMContentLoaded", function() {
+    // This script now directly shows the unified content instead of tabs
+  });
 </script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const operHint = document.getElementById("oper-hint");
-  
-      const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-              if (mutation.type === "childList" && operHint.innerText) {
-                  Swal.fire({
-                      title: "Notice",
-                      text: operHint.innerText, 
-                      icon: "warning",          
-                      confirmButtonText: "OK",
-                  }).then(() => {
-                      setTimeout(() => {
-                      }, 3000);
-                  });
-              }
-          });
-      });
-  
-      observer.observe(operHint, { childList: true });
-  });
+  document.addEventListener("DOMContentLoaded", function () {
+      const operHint = document.getElementById("oper-hint");
+  
+      const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+              if (mutation.type === "childList" && operHint.innerText) {
+                  Swal.fire({
+                      title: "Notice",
+                      text: operHint.innerText, 
+                      icon: "warning",          
+                      confirmButtonText: "OK",
+                  }).then(() => {
+                      setTimeout(() => {
+                      }, 3000);
+                  });
+              }
+          });
+      });
+  
+      observer.observe(operHint, { childList: true });
+  });
 </script>
-  
-  
-
+  
 <body class="portal">
 
-  <div>
-    <div class="wave"></div>
-    <div class="wave"></div>
-  </div>
-  
-  <img class="mx-auto d-block img-fluid mt-2" src="resources/logo.png" style="width: 120px; height: auto; margin-bottom: 10px; border-radius: 5px;">
+  <div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+  </div>
+  
+  <img class="mx-auto d-block img-fluid mt-2" src="resources/logo.png" style="width: 120px; height: auto; margin-bottom: 10px; border-radius: 5px;">
 
-    
+    <div class="container">
+      <div class="row justify-content-center p-3">
+        <div class="card card-outline card-tabs" style="width: 480px; border-radius: 15px;">
+          <div class="card-body">
 
-    <div class="container">
-      <div class="row justify-content-center p-3">
-        <div class="card card-outline card-tabs" style="width: 480px; border-radius: 15px;">
-            <div class="card-header p-0 pt-1 border-bottom-0 ml-2">
-                <ul class="nav nav-tabs" id="klcis-tab" role="tablist">
+            <div id="login-section">
+              <p class="text-center text-gray h6">Enter the voucher code and Enjoy FREE Movies</p>
+              <div class="oper-section-outer">
+                <div class="oper-section-inner">
+                  <span id="oper-hint" style="color: red; display: none;"></span>
+                  <div id="hotspot-section">
+                    <select id="hotspot-selector" class="oper-section-item" style="display:none;"></select>
+                  </div>
+                  <form id="login-form">
+                    <div id="input-voucher">
+                      <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
+                    </div>
+                    
+                    <input name="clientMac" id="cMac" style="display:none"/>
+                    <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
+                  </form>
+                  <div id="button-area">
+                    <button id="button-login" class="btn btn-block btn-warning btn-lg text-white">LOGIN</button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                   <li class="nav-item">
-                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">Cashless Voucher</a>
-                    </li>
-					
-					<li class="nav-item">
-                    <a class="nav-link active" id="login-tab" data-toggle="pill" href="#login" role="tab" aria-controls="login" aria-selected="true">Login</a>
-                    </li>
+            <hr>
+              
+            <p class="text-center text-gray h6">E-Voucher also available here.</p>
 
-                   
+            <div id="voucher-section">
+              <form id="paymentForm" action="https://s2.klinternetservices.com/xendit/ewallet" method="GET">
+                
+                <input type="hidden" class="form-control" id="method" name="method" value=""></input> 
+                <div class="form-group mt-3">
+                  <label class="text-muted text-sm" for="amountDropdown">Select promo:</label>
+                  <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
+                    <option value="12">₱12.00 - 1 Day UNLI WiFi</option>
+                    <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
+                    <option value="60">₱60.00 - 3 Days UNLI WiFi</option>
+                    <option value="95">₱95.00 - 7 Days UNLI WiFi</option>
+                  </select>
+                
+                  <input type="hidden" class="form-control" id="tokenInput" name="token" value="7z62ZWE2ORTHHJ6N1PZIZ5hfb">
+                  
+                  <label class="text-muted text-sm mt-1" for="numberInput">Mobile number for SMS notification:</label>
+                  <input type="tel" id="numberInput" class="form-control text-center text-lg" style="width:100%; letter-spacing: 3px;" placeholder="e.g. 09912346789" name="number" pattern="[0]{1}[9]{1}[0-9]{9}" autocomplete="tel" required>
+                </div>
+    
+                <button type="submit" class="btn btn-md btn-primary btn-block rounded-pill" id="gcash"><img src="resources/gcash_logo.png" style="height: 28px; width: 120px;"></button>
+                <button type="submit" class="btn btn-md btn-success btn-block rounded-pill" id="maya"><img src="resources/maya_logo.png" style="height: 25px; width: 80px;"></button>
+                <button type="submit" class="btn btn-md btn-warning btn-block rounded-pill" id="spay"><img src="resources/spay_logo.png" style="height: 28px; width: 75px;"></button>
+              </form>
+              <div class="text-center">                  
+                <button class="btn btn-md btn-primary rounded-pill mt-2" id="generate_qr"><i class="fas fa-qrcode"></i> Generate QR</button>                
+              </div>
+              <div id="qrcode" style="display: none;"></div>               
+            </div>
 
-                    </li>      
-                </ul>
-          </div>
-
-          <div class="card-body">
-
-            <div class="tab-content" id="klcis-tabContent">
-
-                <div class="tab-pane fade" id="login" role="tabpanel" aria-labelledby="login-tab">
-
-                <p class="text-center text-gray h6">Enter the voucher code and tap Login to begin.</p>
-                <div class="oper-section-outer">
-                  <div class="oper-section-inner">
-                      <span id="oper-hint" style="color: red; display: none;"></span>
-                      <div id="hotspot-section">
-                          <select id="hotspot-selector" class="oper-section-item" style="display:none;"></select>
-                      </div>
-                      <form id="login-form">
-                          <div id="input-voucher">
-                              <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
-                          </div>
-                          <div id="input-user">
-                              <input id="username" class="oper-section-item input" name="username" type="text" placeholder="Username"/>
-                          </div>
-                          <div id="input-password" class="user-input">
-                              <input id="password" class="oper-section-item input" name="password" type="password"  placeholder="Password"/>
-                          </div>
-                          <div id="input-simple">
-                              <input id="simplePassword" class="password oper-section-item" name="simplePassword" type="password" placeholder="Password"/>
-                          </div>
-                          <div id="input-phone-num">
-                              <span class="add">+</span><input id="country-code" class="input"><input id="phone-number" class="input" name="phone-number" type="text" placeholder="Phone Number"/>
-                          </div>
-                          <div id="input-verify-code">
-                              <input id="verify-code" class="input" name="verify-code" type="text" placeholder="Verification Code"/><button id="get-code" class="button">Get Code</button>
-                          </div>
-                          <input name="clientMac" id="cMac" style="display:none"/>
-                          <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
-                      </form>
-                      <div id="button-area">
-                          <button id="button-facebook" class="btn btn-block btn-success btn-shadow">Facebook</button>
-                          <button id="button-login" class="btn btn-block btn-warning btn-lg text-white">LOGIN</button>
-                      </div>
-                  </div>
-              </div>
-
-            </div>
-
-              <div class="tab-pane fade" id="voucher" role="tabpanel" aria-labelledby="voucher-tab">
-                <!-- <div class="text-center text-gray h4">KLCiS Voucher Store</div> -->
-
-                <form id="paymentForm" action="https://s2.klinternetservices.com/xendit/ewallet" method="GET">
-                  
-                    <input type="hidden" class="form-control" id="method" name="method" value=""></input> 
-                    <div class="form-group mt-3">
-                            <label class="text-muted text-sm" for="amountDropdown">Select promo:</label>
-                            <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
-              
-                            <!--PAKI-EDIT NG VALUE SAKA DESCRIPTION BASE SA VOUCHER AMOUNT NA NAKA-UPLOAD SA IYONG KLCIS ACCOUNT -->
-                            <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
-                            <option value="60">₱60.00 - 3 Days UNLI WiFi</option>
-                            <option value="95">₱95.00 - 7 Days UNLI WiFi</option>
-                   
-                            </select>
-              
-              
-                         <!--PAKI-PALITAN ANG value="PUT_YOUR_KLCIS_API_KEY_HERE" ng iyong KLCiS API KEY-->
-                        <input type="hidden" class="form-control" id="tokenInput" name="token" value="7z62ZWE2ORTHHJ6N1PZIZ5hfb">
-						
-						
-                        <label class="text-muted text-sm mt-1" for="numberInput">Mobile number for SMS notification:</label>
-                        <input type="tel" id="numberInput" class="form-control text-center text-lg" style="width:100%; letter-spacing: 3px;" placeholder="e.g. 09912346789" name="number" pattern="[0]{1}[9]{1}[0-9]{9}" autocomplete="tel" required>
-                      </div>
-      
-                      <button type="submit" class="btn btn-md btn-primary btn-block rounded-pill" id="gcash"><img src="resources/gcash_logo.png" style="height: 28px; width: 120px;"></button>
-                      <button type="submit" class="btn btn-md btn-success btn-block rounded-pill" id="maya"><img src="resources/maya_logo.png" style="height: 25px; width: 80px;"></button>
-                      <button type="submit" class="btn btn-md btn-warning btn-block rounded-pill" id="spay"><img src="resources/spay_logo.png" style="height: 28px; width: 75px;"></button>
-
-                </form>
-                <div class="text-center">                  
-                  <button class="btn btn-md btn-primary rounded-pill mt-2" id="generate_qr"><i class="fas fa-qrcode"></i> Generate QR</button>                
-                </div>
-                <div id="qrcode" style="display: none;"></div>               
-              </div>
-
-              <div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
-                <form id="checkNumberForm">
-                  <div class="form-group">
-                    <input type="text" name="getVouchers" id="getVouchers" value="vouchers" hidden></input>
-                    <input type="text" name="getTransactions" id="getTransactions" value="transactions" hidden></input>
-      
-                    <label class="text-muted text-sm" for="numberSearch">Mobile number:</label>
-                    <input type="tel" name="numberSearch" id="numberSearch" class="form-control text-center text-lg" style="width:100%; letter-spacing: 3px;" placeholder="e.g. 09912346789" pattern="[0]{1}[9]{1}[0-9]{9}" autocomplete="tel" required>            
-                    <label class="text-muted text-sm mt-1" for="key">KLCiS Client API Secret:</label>
-                    <input type="password" name="key" id="key" class="form-control text-center text-lg" placeholder="KLCIS Client API Secret" required>
-                  </div>
-                      <button type="submit" id="checkVouchers" class="btn btn-md btn-success btn-block rounded-pill mb-2">Check Vouchers</button>
-                      <button type="submit" id="checkTransactions" class="btn btn-md btn-primary btn-block rounded-pill mb-2">Check Transactions</button>
-                  </form>
-      
-                  <div id="vouchersTable" style="display: none;">
-                    <table class="table table-sm table-bordered table-fluid table-hover">
-                        <thead>
-                            <tr>
-                                <th class="text-sm text-muted">Date</th>
-                                <th class="text-sm text-center text-muted">Voucher</th>
-                                <th class="text-sm text-center text-muted">Amount</th>
-                                <th class="text-sm text-muted">Transaction Code</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vouchersTableBody">
-                        </tbody>
-                    </table>
-                </div>
-      
-                <div id="transactionTable" style="display: none;">
-                  <table class="table table-sm table-bordered table-hover">
-                      <thead>
-                          <tr>
-                              <th class="text-sm text-muted">Date</th>
-                              <th class="text-sm text-center text-muted">Status</th>
-                              <th class="text-sm text-center text-muted">Amount</th>
-                              <th class="text-sm text-center text-muted">Check Status</th>
-                          </tr>
-                      </thead>
-                      <tbody id="transactionTableBody">
-                      </tbody>
-                  </table>
-              </div>
-      
-              <div class="text-center text-xs text-muted" id="result"></div>
-              </div>
-              <hr>
-             </p>            
-          </div>
-        </div>      
-      </div>
-    </div>
-  </div>   
-    
-
-<!-- END OF KLCIS VOUCHER SYSTEM CODE -->
-
-<!-- KLCiS Necessary scripts! DO NOT REMOVE! -->
+          </div>
+        </div>      
+      </div>
+    </div>
+  </div>   
+    
 <script src="resources/index.js"></script>
 <script src="resources/qr.js"></script>
 <script src="resources/jquery.min.js"></script>
 <script src="resources/klcis.js"></script>
-
-<!-- Assets -->
 <script src="resources/alert.js"></script>
 <script src="resources/bootstrap.bundle.min.js"></script>
 <script src="resources/adminlte.min.js"></script>
