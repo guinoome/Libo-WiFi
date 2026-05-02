@@ -1,241 +1,2749 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="resources/index.css" type="text/css" />
-<link rel="stylesheet" href="resources/adminlte.min.css" type="text/css" />
-
-<!-- This is the script that forces client to open regular browser -->
-<script src="resources/forced_browser.js"></script>
-
+<title>FDG Solar Visayas EPC | Pro Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  .custom-swal-width {
-      width: 380px;
+:root {
+  --bg: #080D1A;
+  --bg2: #0C1222;
+  --sidebar: #060A14;
+  --card: #0F1829;
+  --card2: #131D30;
+  --border: #1A2540;
+  --border2: #243254;
+  --accent: #F59E0B;
+  --accent2: #FBBF24;
+  --accent-dim: rgba(245,158,11,0.12);
+  --accent-glow: rgba(245,158,11,0.25);
+  --blue: #3B82F6;
+  --blue-dim: rgba(59,130,246,0.12);
+  --green: #10B981;
+  --green-dim: rgba(16,185,129,0.12);
+  --red: #EF4444;
+  --red-dim: rgba(239,68,68,0.12);
+  --orange: #F97316;
+  --orange-dim: rgba(249,115,22,0.12);
+  --text: #E2E8F0;
+  --text2: #94A3B8;
+  --text3: #475569;
+  --mono: 'JetBrains Mono', monospace;
+  --body: 'DM Sans', sans-serif;
+  --display: 'Syne', sans-serif;
+  --radius: 10px;
+  --radius2: 6px;
+  --transition: all 0.2s ease;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+/* ── LAYOUT ── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  height: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 1px; height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  opacity: 0.3;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-sun {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.logo-name {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.logo-sub {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 3px;
+}
+
+.nav { padding: 12px 0; flex: 1; overflow-y: auto; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: var(--transition);
+  color: var(--text2);
+  font-weight: 500;
+  font-size: 13px;
+  position: relative;
+}
+
+.nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-left-color: var(--accent);
+}
+
+.sidebar-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.sidebar-footer strong { color: var(--text2); display: block; margin-bottom: 2px; }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 60% 40% at 70% 0%, rgba(245,158,11,0.04) 0%, transparent 60%),
+    linear-gradient(to bottom, rgba(245,158,11,0.02) 0%, transparent 300px);
+}
+
+.view-section { display: none; padding: 30px 32px; animation: fadeUp 0.3s ease; }
+.view-section.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header { margin-bottom: 28px; }
+.page-title {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.page-title span { color: var(--accent); }
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 5px; font-style: italic; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+}
+
+.card:hover { border-color: var(--border2); }
+
+.card-accent { border-color: rgba(245,158,11,0.3); background: linear-gradient(135deg, var(--card) 0%, rgba(245,158,11,0.03) 100%); }
+.card-blue { border-color: rgba(59,130,246,0.25); }
+.card-green { border-color: rgba(16,185,129,0.2); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.icon-amber { background: var(--accent-dim); }
+.icon-blue { background: var(--blue-dim); }
+.icon-green { background: var(--green-dim); }
+.icon-orange { background: var(--orange-dim); }
+
+.card-title {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ── GRIDS ── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media(max-width:900px) { .g2,.g3,.g4 { grid-template-columns: 1fr; } }
+
+/* ── FORMS ── */
+.fg { margin-bottom: 14px; }
+.fg:last-child { margin-bottom: 0; }
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius2);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13px;
+  transition: var(--transition);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+input[readonly] {
+  color: var(--text2);
+  cursor: default;
+  border-color: var(--border);
+  background: var(--card2);
+}
+
+input[readonly]:focus { box-shadow: none; border-color: var(--border); }
+
+.input-accent {
+  background: rgba(245,158,11,0.05) !important;
+  border-color: rgba(245,158,11,0.3) !important;
+  color: var(--accent) !important;
+  font-family: var(--mono) !important;
+  font-weight: 600 !important;
+}
+
+.input-grand {
+  background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.08)) !important;
+  border-color: rgba(16,185,129,0.4) !important;
+  color: #34D399 !important;
+  font-family: var(--mono) !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  text-align: right;
+}
+
+select option { background: #1a2540; color: var(--text); }
+textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+.num-val {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: var(--radius2);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-amber {
+  background: linear-gradient(135deg, var(--accent), var(--orange));
+  color: #000;
+  box-shadow: 0 4px 15px rgba(245,158,11,0.25);
+}
+.btn-amber:hover { box-shadow: 0 6px 20px rgba(245,158,11,0.4); }
+
+.btn-green {
+  background: linear-gradient(135deg, var(--green), #059669);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(16,185,129,0.2);
+}
+.btn-green:hover { box-shadow: 0 6px 20px rgba(16,185,129,0.35); }
+
+.btn-slate {
+  background: var(--card2);
+  color: var(--text);
+  border: 1px solid var(--border2);
+}
+.btn-slate:hover { background: var(--border2); }
+
+.btn-red {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.btn-red:hover { background: rgba(239,68,68,0.2); }
+
+.btn-sm { padding: 7px 12px; font-size: 11px; width: auto; }
+
+.btn-group { display: flex; gap: 12px; margin-top: 16px; }
+
+/* ── RESULT BOX ── */
+.res {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius2);
+  font-size: 13px;
+  line-height: 1.6;
+  display: none;
+}
+.res.visible { display: block; animation: fadeUp 0.2s ease; }
+.res-green { background: var(--green-dim); border-left: 3px solid var(--green); color: #6EE7B7; }
+.res-amber { background: var(--accent-dim); border-left: 3px solid var(--accent); color: #FCD34D; }
+.res-blue { background: var(--blue-dim); border-left: 3px solid var(--blue); color: #93C5FD; }
+.res-orange { background: var(--orange-dim); border-left: 3px solid var(--orange); color: #FDBA74; }
+
+/* ── SECTION CARD (auto-sizer sub) ── */
+.sub-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 16px;
+}
+
+/* ── BOM TABLE ── */
+.bom-wrap { overflow-x: auto; }
+
+.bom-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.bom-table th {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.bom-table td {
+  padding: 6px 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.bom-table tr:last-child td { border-bottom: none; }
+.bom-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.bom-table td input,
+.bom-table td select {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.bom-row-mount td { background: rgba(249,115,22,0.03); }
+.bom-row-elec td { background: rgba(59,130,246,0.03); }
+.bom-row-labor td { background: rgba(16,185,129,0.03); }
+
+.bom-line-total {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.bom-cat-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+/* ── DATA TABLE ── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  background: var(--card2);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ── VISUALIZER BARS ── */
+.chart-block { margin-bottom: 22px; }
+.chart-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.chart-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+.chart-val { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); }
+.bar-track {
+  width: 100%; height: 18px;
+  background: var(--bg2);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid var(--border);
+}
+.bar-fill { height: 100%; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); border-radius: 20px; }
+.bar-solar { background: linear-gradient(90deg, var(--green), #059669); }
+.bar-load { background: var(--text3); }
+.bar-surge { background: linear-gradient(90deg, var(--accent), var(--orange)); }
+.legend { display: flex; gap: 14px; margin-top: 7px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── RADIO GROUP ── */
+.radio-group {
+  display: flex; gap: 12px;
+  background: var(--bg2);
+  padding: 10px 12px;
+  border-radius: var(--radius2);
+  border: 1px solid var(--border2);
+}
+.radio-label {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.radio-label input[type=radio] { width: auto; accent-color: var(--accent); }
+
+/* ── QUOTE REF ── */
+.quote-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* ── STATS ROW ── */
+.stats-row { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-chip {
+  flex: 1;
+  min-width: 120px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 12px 16px;
+}
+.stat-chip-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); font-weight: 600; }
+.stat-chip-val { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); margin-top: 4px; }
+.stat-chip-val.amber { color: var(--accent); }
+.stat-chip-val.green { color: var(--green); }
+
+/* ── TOAST ── */
+.toast-container {
+  position: fixed;
+  top: 20px; right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  pointer-events: auto;
+  animation: slideIn 0.3s ease;
+  display: flex; align-items: center; gap: 10px;
+  max-width: 320px;
+  min-width: 220px;
+}
+.toast.toast-success { border-left: 3px solid var(--green); }
+.toast.toast-error { border-left: 3px solid var(--red); }
+.toast.toast-info { border-left: 3px solid var(--blue); }
+.toast.toast-warn { border-left: 3px solid var(--accent); }
+.toast-exit { animation: slideOut 0.3s ease forwards; }
+@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { to { transform: translateX(20px); opacity: 0; } }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 400px;
+  width: 90%;
+  animation: fadeUp 0.2s ease;
+}
+.modal h3 { font-family: var(--display); font-size: 16px; margin-bottom: 10px; }
+.modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+.modal-btns { display: flex; gap: 10px; }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ── PRINT CSS ── */
+.print-only { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 9mm 11mm; }
+
+  html { height: auto !important; overflow: visible !important; }
+  body {
+    height: auto !important; overflow: visible !important; display: block !important;
+    background: white !important; color: #1a1a2e !important;
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif !important;
+    font-size: 9.5pt !important; line-height: 1.45 !important;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
   }
-  label{
-    display: block;
-    margin-bottom: 5px;
-    margin-top: 5px;
+  .app, .toast-container, .modal-overlay { display: none !important; }
+  .print-only {
+    display: block !important; width: 100%;
+    box-sizing: border-box; page-break-after: avoid;
   }
 
+  /* ═══════════════════════════════════════
+     LETTERHEAD HEADER
+  ═══════════════════════════════════════ */
+  .p-letterhead {
+    display: flex; align-items: stretch;
+    margin-bottom: 9pt; border-radius: 4pt; overflow: hidden;
+    box-shadow: 0 1pt 5pt rgba(0,0,0,0.15);
+  }
+  .p-lh-accent {
+    width: 8pt; min-width: 8pt;
+    background: linear-gradient(to bottom, #b45309, #d97706, #f59e0b) !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-lh-body {
+    flex: 1; padding: 8pt 11pt;
+    background: #fafafa !important;
+    border: 0.5pt solid #e5e7eb; border-left: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .p-company-name {
+    font-size: 17pt; font-weight: 900; color: #d97706 !important;
+    letter-spacing: -0.5pt; margin: 0 0 1pt;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-company-sub { font-size: 8pt; color: #6b7280 !important; margin: 0; letter-spacing: 0.3pt; }
+  .p-contact-block { text-align: right; font-size: 8.5pt; color: #374151 !important; line-height: 1.6; }
+  .p-doc-badge {
+    display: inline-block;
+    background: #1e2d4a !important; color: white !important;
+    font-size: 8pt; font-weight: 800; letter-spacing: 2pt;
+    text-transform: uppercase; padding: 2.5pt 7pt; border-radius: 2pt;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-ref-line { font-size: 7.5pt; color: #9ca3af !important; margin-top: 2pt; font-family: monospace; }
+
+  /* ═══════════════════════════════════════
+     CLIENT INFO BAR
+  ═══════════════════════════════════════ */
+  .p-info-bar {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0; margin-bottom: 8pt;
+    border: 0.5pt solid #d1d5db; border-radius: 3pt; overflow: hidden;
+  }
+  .p-info-cell {
+    padding: 4.5pt 9pt; border-right: 0.5pt solid #d1d5db;
+    border-bottom: 0.5pt solid #d1d5db;
+  }
+  .p-info-cell:nth-child(2n) { border-right: none; }
+  .p-info-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .p-info-label { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6pt; color: #9ca3af !important; display: block; margin-bottom: 1pt; }
+  .p-info-value { font-size: 9.5pt; font-weight: 600; color: #1a1a2e !important; }
+
+  /* ═══════════════════════════════════════
+     SECTION TITLE
+  ═══════════════════════════════════════ */
+  .p-section-title {
+    font-size: 7.5pt; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1pt; color: #6b7280 !important;
+    display: flex; align-items: center; gap: 5pt;
+    margin: 8pt 0 4pt; padding-bottom: 2pt;
+    border-bottom: 0.5pt solid #e5e7eb;
+  }
+  .p-section-title::before {
+    content: ''; display: inline-block;
+    width: 3pt; height: 10pt; border-radius: 1pt;
+    background: #d97706 !important; -webkit-print-color-adjust: exact !important;
+  }
+
+  /* ═══════════════════════════════════════
+     TABLES
+  ═══════════════════════════════════════ */
+  .p-table { width: 100%; border-collapse: collapse; margin-bottom: 6pt; page-break-inside: avoid; }
+  .p-table th {
+    background: #1e2d4a !important; color: white !important;
+    font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5pt;
+    padding: 3.5pt 7pt; text-align: left;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-table td { padding: 3.5pt 7pt; font-size: 9pt; color: #1a1a2e !important; border-bottom: 0.5pt solid #e5e7eb; vertical-align: top; word-wrap: break-word; }
+  .p-table tr:last-child td { border-bottom: none; }
+  .p-table tr:nth-child(even) td { background: #f9fafb !important; -webkit-print-color-adjust: exact !important; }
+  .p-table-outline { border: 0.5pt solid #d1d5db; border-radius: 3pt; overflow: hidden; }
+  .p-total-row td {
+    background: #1e2d4a !important; color: white !important;
+    font-weight: 800; font-size: 11pt; border-bottom: none !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-subtotal-row td { background: #f3f4f6 !important; font-weight: 600; font-size: 9pt; -webkit-print-color-adjust: exact !important; }
+
+  /* ═══════════════════════════════════════
+     PITCH STRIP
+  ═══════════════════════════════════════ */
+  .p-pitch {
+    border-left: 4pt solid #d97706 !important;
+    background: linear-gradient(135deg, #fffbeb, #fef9ee) !important;
+    padding: 6pt 10pt; margin-bottom: 7pt; border-radius: 0 3pt 3pt 0;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-pitch h4 { color: #b45309 !important; margin: 0 0 2pt; font-size: 9pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5pt; }
+  .p-pitch p  { margin: 0; font-size: 8.5pt; color: #44403c !important; line-height: 1.5; }
+
+  /* ═══════════════════════════════════════
+     ROI SUMMARY
+  ═══════════════════════════════════════ */
+  .p-roi-box {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+    border: 1pt solid #86efac !important; border-radius: 3pt;
+    padding: 7pt 10pt; margin: 6pt 0;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-roi-title {
+    font-size: 9pt; font-weight: 800; color: #15803d !important;
+    text-align: center; text-transform: uppercase; letter-spacing: 0.8pt;
+    margin: 0 0 5pt; padding-bottom: 3pt; border-bottom: 0.5pt solid #86efac;
+  }
+  .p-roi-table { width: 100%; border-collapse: collapse; }
+  .p-roi-table td {
+    width: 25%; text-align: center; padding: 4pt 5pt;
+    border-right: 0.5pt solid #86efac; font-size: 8pt; color: #166534 !important;
+    background: transparent !important;
+  }
+  .p-roi-table td:last-child { border-right: none; }
+  .p-roi-table td strong { display: block; font-size: 11pt; font-weight: 900; color: #15803d !important; margin-top: 2pt; }
+  .p-roi-note { font-size: 7pt; color: #6b7280 !important; text-align: center; margin: 3pt 0 0; font-style: italic; }
+
+  /* ═══════════════════════════════════════
+     INTERNAL NOTES
+  ═══════════════════════════════════════ */
+  .p-internal-notes {
+    border: 1pt dashed #f87171 !important; background: #fff5f5 !important;
+    padding: 6pt 10pt; margin: 6pt 0; border-radius: 3pt;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-internal-notes h4 { color: #dc2626 !important; margin: 0 0 3pt; font-size: 9pt; font-weight: 800; }
+  .p-internal-notes p  { margin: 1pt 0; font-size: 8.5pt; }
+
+  /* ═══════════════════════════════════════
+     TERMS STRIP
+  ═══════════════════════════════════════ */
+  .p-terms {
+    background: #f8fafc !important; border: 0.5pt solid #e2e8f0;
+    border-radius: 3pt; padding: 5pt 9pt; margin: 6pt 0;
+    font-size: 7.5pt; color: #64748b !important; line-height: 1.55;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .p-terms strong { color: #1e2d4a !important; }
+
+  /* ═══════════════════════════════════════
+     SIGNATURE ROW
+  ═══════════════════════════════════════ */
+  .p-sig-row { display: flex; justify-content: space-between; margin-top: 10pt; gap: 24pt; }
+  .p-sig { flex: 1; text-align: center; }
+  .p-sig-line { border-bottom: 0.8pt solid #374151; height: 24pt; margin-bottom: 2pt; display: flex; align-items: flex-end; justify-content: center; }
+  .p-sig-name { font-weight: 800; font-size: 9pt; color: #1a1a2e !important; }
+  .p-sig-role { font-size: 7.5pt; color: #6b7280 !important; }
+
+  /* Internal BOM */
+  #p-bom-table th { font-size: 8pt !important; padding: 3pt 5pt !important; }
+  #p-bom-table td { font-size: 8.5pt !important; padding: 3pt 5pt !important; }
+
+  body.print-client   .p-internal { display: none !important; }
+  body.print-internal .p-client   { display: none !important; }
+}
+
+        /* ── CALC VIEW STEP COMPONENTS ── */
+        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+        .step-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+        @media(max-width:860px){.step-wrap{grid-template-columns:1fr;}}
+        .step-block{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+        .step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;flex-shrink:0;}
+        .step-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:11px;}
+        .seg-row{display:flex;width:100%;}
+        .seg-btn{flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:var(--body);border-radius:0;line-height:1.4;text-align:center;}
+        .seg-btn:first-child{border-radius:5px 0 0 5px;}
+        .seg-btn:last-child{border-radius:0 5px 5px 0;}
+        .seg-btn.sel{background:var(--accent-dim);color:var(--accent);border-color:rgba(245,158,11,0.45);}
+        .math-pill{background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);}
+        .math-pill span{color:var(--accent);font-weight:700;}
+        .out-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+        .out-box{background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;}
+        .out-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;}
+        .out-val{font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);}
+        .out-sub{font-size:10px;color:var(--text2);margin-top:1px;}
+        .out-box.hi{border-color:rgba(245,158,11,0.4);background:var(--accent-dim);}
+        .out-box.hi .out-val{color:var(--accent);}
+        .out-box.gn{border-color:rgba(16,185,129,0.3);background:var(--green-dim);}
+        .out-box.gn .out-val{color:var(--green);}
+        .warn-strip{background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 5px 5px 0;padding:8px 12px;font-size:11px;color:var(--accent);line-height:1.6;margin-top:8px;}
+        .bar-row{margin-bottom:12px;}
+        .bar-meta{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;}
+        .bar-name{font-size:11px;font-weight:600;color:var(--text2);line-height:1.3;}
+        .bar-name small{display:block;font-size:9px;color:var(--text3);font-weight:400;}
+        .bar-val-sm{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);}
+        .sync-strip{display:flex;align-items:flex-start;gap:10px;padding:9px 13px;background:linear-gradient(90deg,rgba(16,185,129,0.06),rgba(245,158,11,0.06));border:1px solid rgba(16,185,129,0.2);border-radius:6px;font-size:11px;color:var(--text2);margin-top:10px;}
 </style>
+</head>
+<body>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    loadVoucherStoreContent();
-  });
+<div class="toast-container" id="toastContainer"></div>
 
-  function loadVoucherStoreContent() {
-    document.getElementById("login").classList.add("show");
-    document.getElementById("login").classList.add("active");
-  }
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const operHint = document.getElementById("oper-hint");
-  
-      const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-              if (mutation.type === "childList" && operHint.innerText) {
-                  Swal.fire({
-                      title: "Notice",
-                      text: operHint.innerText, 
-                      icon: "warning",          
-                      confirmButtonText: "OK",
-                  }).then(() => {
-                      setTimeout(() => {
-                      }, 3000);
-                  });
-              }
-          });
-      });
-  
-      observer.observe(operHint, { childList: true });
-  });
-</script>
-  
-  
-
-<body class="portal">
-
-  <div>
-    <div class="wave"></div>
-    <div class="wave"></div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg">This action cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="btn btn-red btn-sm" id="confirmOk" style="width:auto;">Confirm</button>
+      <button class="btn btn-slate btn-sm" onclick="closeModal()" style="width:auto;">Cancel</button>
+    </div>
   </div>
-  
-  <img class="mx-auto d-block img-fluid mt-2" src="resources/logo.png" style="width: 120px; height: auto; margin-bottom: 10px; border-radius: 5px;">
+</div>
 
-    
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-sun">☀️</div>
+      <div class="logo-name">FDG Solar Visayas</div>
+      <div class="logo-sub">EPC Pro Dashboard</div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active" onclick="switchView('view-calc', this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
+      <div class="nav-item" onclick="switchView('view-quote', this)"><span class="nav-icon">📄</span>Quotation Generator</div>
+      <div class="nav-item" onclick="switchView('view-battery', this)"><span class="nav-icon">🗄️</span>Hardware Database</div>
+      <div class="nav-item" onclick="switchView('view-history', this)"><span class="nav-icon">📋</span>Quote History</div>
+      <div class="nav-item" onclick="switchView('view-learn', this)"><span class="nav-icon">📖</span>Costing & Economics</div>
+    </div>
+    <div class="sidebar-footer">
+      <strong>FDG Solar Visayas</strong>
+      0915 1983 899 · fmguinoo@gmail.com
+    </div>
+  </div>
 
-    <div class="container">
-      <div class="row justify-content-center p-3">
-        <div class="card card-outline card-tabs" style="width: 480px; border-radius: 15px;">
-            <div class="card-header p-0 pt-1 border-bottom-0 ml-2">
-                <ul class="nav nav-tabs" id="klcis-tab" role="tablist">
+  <div class="main">
 
-                  <li class="nav-item">
-                    <a class="nav-link active" id="login-tab" data-toggle="pill" href="#login" role="tab" aria-controls="login" aria-selected="true">Login</a>
-                    </li>
+    <div id="view-quote" class="view-section">
+      <div class="page-header">
+        <div class="quote-ref" id="quoteRefBadge">REF: FDGS-000000</div>
+        <div class="page-title">Project <span>Quotation</span></div>
+        <div class="page-sub">"Calculated Precision. Engineered Freedom."</div>
+      </div>
 
-                    <li class="nav-item">
-                    <a class="nav-link" id="voucher-tab" data-toggle="pill" href="#voucher" role="tab" aria-controls="voucher" aria-selected="false">E-Voucher also available here</a>
-                    </li>
-
-                    </li>      
-                </ul>
+      <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(245,158,11,0.04));border-color:rgba(16,185,129,0.25);padding:16px 22px;">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="font-size:22px;">🔄</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--display);font-size:13px;font-weight:700;color:var(--green);margin-bottom:3px;">Live Sync Active — Eng. Calculators → Quotation</div>
+            <div id="quoteSyncStatus" style="font-size:12px;color:var(--text2);">Open <strong>Eng. Calculators</strong> and adjust the Energy Flow Visualizer to auto-populate this quotation.</div>
           </div>
+          <button class="btn btn-slate" style="width:auto;padding:9px 16px;font-size:11px;" onclick="switchView('view-calc', document.querySelector('.nav-item'))">
+            ← Go to Calculators
+          </button>
+        </div>
+      </div>
 
-          <div class="card-body">
-
-            <div class="tab-content" id="klcis-tabContent">
-
-                <div class="tab-pane fade" id="login" role="tabpanel" aria-labelledby="login-tab">
-
-                <p class="text-center text-gray h6">Enter the voucher code and tap Login to begin.</p>
-                <div class="oper-section-outer">
-                  <div class="oper-section-inner">
-                      <span id="oper-hint" style="color: red; display: none;"></span>
-                      <div id="hotspot-section">
-                          <select id="hotspot-selector" class="oper-section-item" style="display:none;"></select>
-                      </div>
-                      <form id="login-form">
-                          <div id="input-voucher">
-                              <input id="voucherCode" class="oper-section-item input" name="voucherCode" type="text" placeholder="Voucher Code" />
-                          </div>
-                          <div id="input-user">
-                              <input id="username" class="oper-section-item input" name="username" type="text" placeholder="Username"/>
-                          </div>
-                          <div id="input-password" class="user-input">
-                              <input id="password" class="oper-section-item input" name="password" type="password"  placeholder="Password"/>
-                          </div>
-                          <div id="input-simple">
-                              <input id="simplePassword" class="password oper-section-item" name="simplePassword" type="password" placeholder="Password"/>
-                          </div>
-                          <div id="input-phone-num">
-                              <span class="add">+</span><input id="country-code" class="input"><input id="phone-number" class="input" name="phone-number" type="text" placeholder="Phone Number"/>
-                          </div>
-                          <div id="input-verify-code">
-                              <input id="verify-code" class="input" name="verify-code" type="text" placeholder="Verification Code"/><button id="get-code" class="button">Get Code</button>
-                          </div>
-                          <input name="clientMac" id="cMac" style="display:none"/>
-                          <input name="radiusSvrIp" id="radiusServerIp" style="display:none"/>
-                      </form>
-                      <div id="button-area">
-                          <button id="button-facebook" class="btn btn-block btn-success btn-shadow">Facebook</button>
-                          <button id="button-login" class="btn btn-block btn-warning btn-lg text-white">LOGIN</button>
-                      </div>
-                  </div>
-              </div>
-
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-blue">👤</div>
+          <div><div class="card-title">Company & Client Details</div></div>
+        </div>
+        <div class="g2">
+          <div class="sub-card">
+            <div style="font-family:var(--display);font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;">FDG Solar Visayas</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:14px;">Renewable Design and Build<br>0915 1983 899 · fmguinoo@gmail.com</div>
+            <div class="fg" style="margin-bottom:0;"><label>Assigned Lead Installer</label>
+              <input type="text" id="installer-name" placeholder="E.g., Team Alpha / Foreman Name">
             </div>
-
-              <div class="tab-pane fade" id="voucher" role="tabpanel" aria-labelledby="voucher-tab">
-                <!-- <div class="text-center text-gray h4">KLCiS Voucher Store</div> -->
-
-                <form id="paymentForm" action="https://s2.klinternetservices.com/xendit/ewallet" method="GET">
-                  
-                    <input type="hidden" class="form-control" id="method" name="method" value=""></input> 
-                    <div class="form-group mt-3">
-                            <label class="text-muted text-sm" for="amountDropdown">Select promo:</label>
-                            <select id="amountDropdown" name="amount" class="form-control text-lg btn-block">
-              
-                            <!--PAKI-EDIT NG VALUE SAKA DESCRIPTION BASE SA VOUCHER AMOUNT NA NAKA-UPLOAD SA IYONG KLCIS ACCOUNT -->
-                            <option value="12">₱12.00 - 7 Hours UNLI WiFi</option>
-			   			    <option value="25">₱25.00 - 1 Day UNLI WiFi</option>
-                            <option value="60">₱60.00 - 3 Days UNLI WiFi</option>
-                            <option value="95">₱95.00 - 7 Days UNLI WiFi</option>
-                            <option value="160">₱160.00 - 15 Days UNLI WiFi</option>
-                            <option value="300">₱300.00 - 1 Month UNLI WiFi</option>
-                            </select>
-              
-              
-                         <!--PAKI-PALITAN ANG value="PUT_YOUR_KLCIS_API_KEY_HERE" ng iyong KLCiS API KEY-->
-                        <input type="hidden" class="form-control" id="tokenInput" name="token" value="7z62ZWE2ORTHHJ6N1PZIZ5hfb">
-						
-						
-                        <label class="text-muted text-sm mt-1" for="numberInput">Mobile number for SMS notification:</label>
-                        <input type="tel" id="numberInput" class="form-control text-center text-lg" style="width:100%; letter-spacing: 3px;" placeholder="e.g. 09912346789" name="number" pattern="[0]{1}[9]{1}[0-9]{9}" autocomplete="tel" required>
-                      </div>
-      
-                      <button type="submit" class="btn btn-md btn-primary btn-block rounded-pill" id="gcash"><img src="resources/gcash_logo.png" style="height: 28px; width: 120px;"></button>
-                      <button type="submit" class="btn btn-md btn-success btn-block rounded-pill" id="maya"><img src="resources/maya_logo.png" style="height: 25px; width: 80px;"></button>
-                      <button type="submit" class="btn btn-md btn-warning btn-block rounded-pill" id="spay"><img src="resources/spay_logo.png" style="height: 28px; width: 75px;"></button>
-
-                </form>
-                <div class="text-center">                  
-                  <button class="btn btn-md btn-primary rounded-pill mt-2" id="generate_qr"><i class="fas fa-qrcode"></i> Generate QR</button>                
-                </div>
-                <div id="qrcode" style="display: none;"></div>               
-              </div>
-
-              <div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
-                <form id="checkNumberForm">
-                  <div class="form-group">
-                    <input type="text" name="getVouchers" id="getVouchers" value="vouchers" hidden></input>
-                    <input type="text" name="getTransactions" id="getTransactions" value="transactions" hidden></input>
-      
-                    <label class="text-muted text-sm" for="numberSearch">Mobile number:</label>
-                    <input type="tel" name="numberSearch" id="numberSearch" class="form-control text-center text-lg" style="width:100%; letter-spacing: 3px;" placeholder="e.g. 09912346789" pattern="[0]{1}[9]{1}[0-9]{9}" autocomplete="tel" required>            
-                    <label class="text-muted text-sm mt-1" for="key">KLCiS Client API Secret:</label>
-                    <input type="password" name="key" id="key" class="form-control text-center text-lg" placeholder="KLCIS Client API Secret" required>
-                  </div>
-                      <button type="submit" id="checkVouchers" class="btn btn-md btn-success btn-block rounded-pill mb-2">Check Vouchers</button>
-                      <button type="submit" id="checkTransactions" class="btn btn-md btn-primary btn-block rounded-pill mb-2">Check Transactions</button>
-                  </form>
-      
-                  <div id="vouchersTable" style="display: none;">
-                    <table class="table table-sm table-bordered table-fluid table-hover">
-                        <thead>
-                            <tr>
-                                <th class="text-sm text-muted">Date</th>
-                                <th class="text-sm text-center text-muted">Voucher</th>
-                                <th class="text-sm text-center text-muted">Amount</th>
-                                <th class="text-sm text-muted">Transaction Code</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vouchersTableBody">
-                        </tbody>
-                    </table>
-                </div>
-      
-                <div id="transactionTable" style="display: none;">
-                  <table class="table table-sm table-bordered table-hover">
-                      <thead>
-                          <tr>
-                              <th class="text-sm text-muted">Date</th>
-                              <th class="text-sm text-center text-muted">Status</th>
-                              <th class="text-sm text-center text-muted">Amount</th>
-                              <th class="text-sm text-center text-muted">Check Status</th>
-                          </tr>
-                      </thead>
-                      <tbody id="transactionTableBody">
-                      </tbody>
-                  </table>
-              </div>
-      
-              <div class="text-center text-xs text-muted" id="result"></div>
-              </div>
-              <hr>
-             </p>            
           </div>
-        </div>      
+          <div>
+            <div class="fg"><label>Client Name</label><input type="text" id="cli-name" placeholder="E.g., Juan Dela Cruz"></div>
+            <div class="fg"><label>Project Address</label><input type="text" id="cli-address" placeholder="Complete Site Address"></div>
+            <div class="fg" style="margin-bottom:0;"><label>Quote Date</label><input type="date" id="cli-date"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-green">
+        <div class="card-header">
+          <div class="card-icon icon-green">⚙️</div>
+          <div><div class="card-title">System Configuration & Financial Summary</div></div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="fg"><label>Electrical Phase</label>
+              <select id="sys-phase" onchange="calcBOM()">
+                <option value="1">1-Phase (220V L-N / 230V)</option>
+                <option value="3">3-Phase (220V L-L or 380V)</option>
+              </select>
+            </div>
+            <div class="fg"><label>System Type</label>
+              <select id="sys-type">
+                <option>⚡ Hybrid (On/Off-Grid + Battery)</option>
+                <option>🔌 Grid-Tied (On-Grid Only)</option>
+                <option>🔋 Off-Grid (Stand Alone)</option>
+              </select>
+            </div>
+            <div class="fg"><label>System Capacity (kW)</label>
+              <input type="number" id="sys-size" placeholder="E.g., 5" value="5" oninput="calcBOM()">
+            </div>
+            <div class="fg" style="margin-bottom:0;"><label>Internal Notes (Hidden from Client)</label>
+              <textarea id="sys-notes" placeholder="Roof angle notes, wire run length, etc."></textarea>
+            </div>
+          </div>
+          <div>
+            <div class="fg"><label>Raw BOM Subtotal</label>
+              <input type="text" id="sys-subtotal" class="input-accent" readonly>
+            </div>
+            <div class="g2">
+              <div class="fg"><label>Mobilization (₱)</label><input type="number" id="sys-mob" value="0" oninput="calcGrandTotal()"></div>
+              <div class="fg"><label>Logistics (₱)</label><input type="number" id="sys-delivery" value="0" oninput="calcGrandTotal()"></div>
+            </div>
+            <div class="fg"><label style="color:var(--accent);">Turnkey Anchor Price (Rounded ↑ to nearest 1,000)</label>
+              <input type="text" id="sys-anchor" class="input-accent" readonly>
+            </div>
+            <div class="fg"><label style="color:var(--text2);">Marketing Discount Label</label>
+              <input type="text" id="sys-discount-label" value="Engineering System Design">
+            </div>
+            <div class="fg"><label>Discount (Waived)</label>
+              <input type="text" id="sys-discount-val" readonly style="color:var(--red);">
+            </div>
+            <div class="fg" style="margin-bottom:0;"><label style="color:var(--green);">⭐ Final Investment (₱)</label>
+              <input type="text" id="sys-grandtotal" class="input-grand" readonly>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-amber">📦</div>
+          <div><div class="card-title">Interactive Bill of Materials</div></div>
+        </div>
+        <div class="bom-wrap">
+          <table class="bom-table">
+            <thead>
+              <tr>
+                <th style="width:20%;">Component</th>
+                <th style="width:30%;">Specification / Notes</th>
+                <th style="width:8%;">Qty</th>
+                <th style="width:14%;">Unit Price (₱)</th>
+                <th style="width:13%;text-align:right;padding-right:12px;">Line Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><select id="sel-panels" onchange="updateItem('panels')" style="min-width:160px;"></select></td>
+                <td><input type="text" id="desc-panels" data-client="" placeholder="Internal notes"></td>
+                <td><input type="number" id="qty-panels" value="10" min="1" oninput="calcBOM()"></td>
+                <td><input type="number" id="price-panels" value="0" oninput="calcBOM()"></td>
+                <td class="bom-line-total" id="total-panels">₱0</td>
+              </tr>
+              <tr>
+                <td><select id="sel-inverter" onchange="updateItem('inverter')" style="min-width:160px;"></select></td>
+                <td><input type="text" id="desc-inverter" data-client="" placeholder="Internal notes"></td>
+                <td><input type="number" id="qty-inverter" value="1" min="1" oninput="calcBOM()"></td>
+                <td><input type="number" id="price-inverter" value="0" oninput="calcBOM()"></td>
+                <td class="bom-line-total" id="total-inverter">₱0</td>
+              </tr>
+              <tr>
+                <td><select id="sel-battery" onchange="updateItem('battery')" style="min-width:160px;"></select></td>
+                <td><input type="text" id="desc-battery" data-client="" placeholder="Internal notes"></td>
+                <td><input type="number" id="qty-battery" value="1" min="0" oninput="calcBOM()"></td>
+                <td><input type="number" id="price-battery" value="0" oninput="calcBOM()"></td>
+                <td class="bom-line-total" id="total-battery">₱0</td>
+              </tr>
+              <tr style="background:rgba(59,130,246,0.03);">
+                <td><select id="sel-acc" onchange="updateItem('acc')" style="min-width:160px;"></select></td>
+                <td><input type="text" id="desc-acc" data-client="" placeholder="Internal notes"></td>
+                <td><input type="number" id="qty-acc" value="0" min="0" oninput="calcBOM()"></td>
+                <td><input type="number" id="price-acc" value="0" oninput="calcBOM()"></td>
+                <td class="bom-line-total" id="total-acc">₱0</td>
+              </tr>
+              <tr class="bom-row-mount">
+                <td><span class="bom-cat-label">🔩 Mounting System</span></td>
+                <td><input type="text" id="desc-mount" data-client="Engineered Aluminum Structural Roof Mounting" value="Auto-calculated ceiling (Nearest 1k + 500)" readonly style="font-size:11px;color:var(--text3);"></td>
+                <td><input type="number" id="qty-mount" value="1" min="1" readonly style="background:var(--card2);color:var(--text3);"></td>
+                <td><input type="number" id="price-mount" value="0" readonly style="background:var(--card2);color:var(--text3);font-family:var(--mono);"></td>
+                <td class="bom-line-total" id="total-mount">₱0</td>
+              </tr>
+              <tr class="bom-row-elec">
+                <td><span class="bom-cat-label">🔌 Electrical & BOS</span></td>
+                <td><input type="text" id="desc-electrical" data-client="Code-Compliant BOS & Industrial Protection Devices" value="Auto-calculated ceiling (Nearest 1k + 500)" readonly style="font-size:11px;color:var(--text3);"></td>
+                <td><input type="number" id="qty-electrical" value="1" min="1" readonly style="background:var(--card2);color:var(--text3);"></td>
+                <td><input type="number" id="price-electrical" value="0" readonly style="background:var(--card2);color:var(--text3);font-family:var(--mono);"></td>
+                <td class="bom-line-total" id="total-electrical">₱0</td>
+              </tr>
+              <tr class="bom-row-labor">
+                <td><span class="bom-cat-label">👷 Professional Labor</span></td>
+                <td><input type="text" id="desc-labor" data-client="FDG Solar Visayas Engineering, Execution & Testing" value="Labor dynamically bound to highest kW"></td>
+                <td><input type="number" id="qty-labor" value="1" min="1" readonly style="background:var(--card2);color:var(--text3);"></td>
+                <td><input type="number" id="price-labor" value="0" readonly style="background:var(--card2);color:var(--text3);font-family:var(--mono);"></td>
+                <td class="bom-line-total" id="total-labor">₱0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-green" onclick="generateDoc('client')">📄 Print Client Proposal</button>
+        <button class="btn btn-slate" onclick="generateDoc('internal')">🔒 Print Internal Job Order</button>
+        <button class="btn btn-amber" style="width:auto;padding:10px 18px;" onclick="saveQuote()">💾 Save to History</button>
       </div>
     </div>
-  </div>   
-    
 
-<!-- END OF KLCIS VOUCHER SYSTEM CODE -->
+    <div id="view-calc" class="view-section active">
+      <div class="page-header">
+        <div class="page-title">Engineering <span>Calculators</span></div>
+      </div>
 
-<!-- KLCiS Necessary scripts! DO NOT REMOVE! -->
-<script src="resources/index.js"></script>
-<script src="resources/qr.js"></script>
-<script src="resources/jquery.min.js"></script>
-<script src="resources/klcis.js"></script>
+      <div class="card" style="border-color:rgba(245,158,11,0.4);">
+        <div class="card-header">
+          <div class="card-icon icon-amber">&#9889;</div>
+          <div>
+            <div class="card-title">System Sizer &amp; Energy Flow Engine</div>
+            <div class="card-desc">Complete Steps 1&#x2013;5 below &#x2014; Step 6 auto-calculates and live-syncs to Quotation Generator</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--green-dim);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--green);white-space:nowrap;flex-shrink:0;">
+            <span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;"></span>
+            LIVE SYNC
+          </div>
+        </div>
 
-<!-- Assets -->
-<script src="resources/alert.js"></script>
-<script src="resources/bootstrap.bundle.min.js"></script>
-<script src="resources/adminlte.min.js"></script>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
+          <div style="display:flex;flex-direction:column;gap:10px;">
+
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:11px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;">1</span>
+                Electrical Phase &amp; Voltage
+              </div>
+              <div style="display:flex;width:100%;">
+                <button id="s1-1ph" type="button" style="flex:1;padding:8px 4px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.45);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px 0 0 5px;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase('1|230','s1-1ph')">1-Phase<br><span style="font-size:10px;font-weight:400;">220/230V</span></button>
+                <button id="s1-3ph220" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase('3|220','s1-3ph220')">3-Phase<br><span style="font-size:10px;font-weight:400;">220V L-L</span></button>
+                <button id="s1-3ph380" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0 5px 5px 0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase('3|380','s1-3ph380')">3-Phase<br><span style="font-size:10px;font-weight:400;">380V L-L</span></button>
+              </div>
+            </div>
+
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:11px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;">2</span>
+                System Architecture
+              </div>
+              <div style="display:flex;width:100%;">
+                <button id="s2-hybrid" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px 0 0 5px;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setArch('hybrid','s2-hybrid')">&#9889; Hybrid<br><span style="font-size:10px;font-weight:400;">On/Off-Grid</span></button>
+                <button id="s2-offgrid" type="button" style="flex:1;padding:8px 4px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.45);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;border-radius:0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setArch('offgrid','s2-offgrid')">&#128267; Off-Grid<br><span style="font-size:10px;font-weight:400;">Stand Alone</span></button>
+                <button id="s2-gti" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0 5px 5px 0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setArch('gridtie','s2-gti')">&#128268; Grid-Tied<br><span style="font-size:10px;font-weight:400;">GTI Only</span></button>
+              </div>
+              <div id="archOverrideNote" style="display:none;background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 5px 5px 0;padding:8px 12px;font-size:11px;color:var(--accent);line-height:1.6;margin-top:8px;"></div>
+            </div>
+
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:11px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;">3</span>
+                Consumption Input Basis
+              </div>
+              <div style="display:flex;width:100%;">
+                <button id="s3-kwh" type="button" style="flex:1;padding:9px 8px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.45);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px 0 0 5px;font-family:var(--body);" onclick="setBasis('kwh','s3-kwh')">&#128202; Monthly kWh</button>
+                <button id="s3-bill" type="button" style="flex:1;padding:9px 8px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0;border-left:none;font-family:var(--body);" onclick="setBasis('bill','s3-bill')">&#128179; Monthly Bill (&#8369;)</button>
+                <button id="s3-amps" type="button" style="flex:1;padding:9px 8px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0 5px 5px 0;border-left:none;font-family:var(--body);" onclick="setBasis('amps','s3-amps')">&#9889; Amperage</button>
+              </div>
+            </div>
+
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:11px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;">4</span>
+                Energy Value Input
+              </div>
+              <div id="s4-kwh-wrap">
+                <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Monthly Consumption (kWh)</label>
+                <input type="number" id="flowConsumption" value="1000" min="0" oninput="calculateFlow()">
+              </div>
+              <div id="s4-bill-wrap" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;">
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Monthly Bill (&#8369;)</label>
+                    <input type="number" id="flowBill" value="8000" min="0" oninput="calculateFlow()">
+                  </div>
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Rate (&#8369;/kWh)</label>
+                    <input type="number" id="flowRate" value="12.56" step="0.1" oninput="calculateFlow()">
+                  </div>
+                </div>
+                <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);">
+                  Derived: <span id="flowBillDerived" style="color:var(--accent);font-weight:700;">&#8212;</span> kWh / month
+                </div>
+              </div>
+              <div id="s4-amps-wrap" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;">
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Target Amperage (A)</label>
+                    <input type="number" id="flowAmps" value="60" min="0" oninput="calculateFlow()">
+                  </div>
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Hours / Day</label>
+                    <input type="number" id="flowAmpsHours" value="4" min="0" oninput="calculateFlow()">
+                  </div>
+                </div>
+                <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);">
+                  Derived: <span id="flowAmpsDerived" style="color:var(--accent);font-weight:700;">&#8212;</span> kWh / month
+                </div>
+              </div>
+              <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);">
+                Daily Equivalent = <span id="mathDailyKwh" style="color:var(--accent);font-weight:700;">&#8212;</span>
+              </div>
+            </div>
+
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:11px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;">5</span>
+                Load Profile &#8212; Day / Night Split
+              </div>
+              <select id="flowProfile" onchange="calculateFlow()" style="margin-bottom:10px;">
+                <option value="0.05,0.95">Mostly Nighttime (5% Day / 95% Night)</option>
+                <option value="0.25,0.75">Nighttime Heavy (25% Day / 75% Night)</option>
+                <option value="0.50,0.50">24/7 Balanced (50% Day / 50% Night)</option>
+                <option value="0.75,0.25">Daytime Heavy (75% Day / 25% Night)</option>
+                <option value="0.95,0.05" selected>Mostly Daytime (95% Day / 5% Night)</option>
+              </select>
+              <div id="flowSurgeGroup">
+                <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:4px;">
+                  Surge Reserve (kWh) &#8212; <span style="color:var(--accent);text-transform:none;font-weight:400;">Auto 20% of daily, editable</span>
+                </label>
+                <input type="number" id="flowSurge" value="" min="0" step="0.1"
+                  oninput="this.dataset.auto='false';calculateFlow()"
+                  placeholder="Auto: 20% of daily kWh">
+              </div>
+            </div>
+
+          </div><div style="display:flex;flex-direction:column;gap:10px;">
+
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);display:flex;align-items:center;margin-bottom:14px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:800;margin-right:7px;">6</span>
+                Energy Flow Visualization
+              </div>
+
+              <div style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;">
+                  <div>
+                    <div style="font-size:11px;font-weight:600;color:var(--text2);">Daytime Load vs Solar</div>
+                    <div style="font-size:9px;color:var(--text3);">Solar covers day usage</div>
+                  </div>
+                  <div id="flowValDay" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);">&#8212;</div>
+                </div>
+                <div style="width:100%;height:16px;background:var(--bg);border-radius:20px;overflow:hidden;display:flex;border:1px solid var(--border);">
+                  <div id="flowBarDaySolar" style="height:100%;transition:width 0.7s;background:linear-gradient(90deg,var(--green),#059669);width:0%;"></div>
+                  <div id="flowBarDayUnmet" style="height:100%;transition:width 0.7s;background:var(--text3);width:0%;"></div>
+                </div>
+                <div style="display:flex;gap:14px;margin-top:5px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>Solar Offset</div>
+                  <div id="flowLegGrid" style="display:none;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:var(--text3);"></div>Grid Dependency</div>
+                </div>
+              </div>
+
+              <div id="flowNightChartGroup" style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;">
+                  <div>
+                    <div style="font-size:11px;font-weight:600;color:var(--text2);">Required Battery Storage</div>
+                    <div style="font-size:9px;color:var(--text3);">Daily &#8212; usable (night+surge) &middot; gross = usable &divide; DOD &rarr; bank sizing</div>
+                  </div>
+                  <div id="flowValBattery" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);">&#8212;</div>
+                </div>
+                <div style="width:100%;height:16px;background:var(--bg);border-radius:20px;overflow:hidden;display:flex;border:1px solid var(--border);">
+                  <div id="flowBarNightLoad" style="height:100%;transition:width 0.7s;background:var(--text3);width:0%;"></div>
+                  <div id="flowBarSurge" style="height:100%;transition:width 0.7s;background:linear-gradient(90deg,var(--accent),var(--orange));width:0%;"></div>
+                </div>
+                <div style="display:flex;gap:14px;margin-top:5px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:var(--text3);"></div>Night Load</div>
+                  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></div>Surge Reserve</div>
+                </div>
+              </div>
+
+              <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;font-size:11px;color:var(--text2);font-family:var(--mono);">
+                Monthly Savings: <span id="flowValSavings" style="color:var(--accent);font-weight:700;">&#8212;</span>
+                &nbsp;&middot;&nbsp; <span id="flowSummaryText" style="color:var(--text3);font-size:10px;font-family:var(--body);"></span>
+              </div>
+            </div>
+
+            <div style="background:var(--bg2);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green);display:flex;align-items:center;margin-bottom:11px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.15);color:var(--green);font-size:10px;font-weight:800;margin-right:7px;">&#10003;</span>
+                Recommended Configuration
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div id="out-inv-box" style="grid-column:1/-1;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:9px 12px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;">&#9889; Inverter</div>
+                  <div id="out-inverter" style="font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);">&#8212;</div>
+                  <div id="out-arch" style="font-size:10px;color:var(--text2);margin-top:2px;">&#8212;</div>
+                </div>
+                <div style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;">&#9728; PV Array</div>
+                  <div id="out-panels" style="font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);">&#8212;</div>
+                  <div id="out-pkwp" style="font-size:10px;color:var(--text2);margin-top:1px;">&#8212;</div>
+                </div>
+                <div id="out-bat-box" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;">&#128267; Battery Bank</div>
+                  <div id="out-battery" style="font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);">&#8212;</div>
+                  <div id="out-batah" style="font-size:10px;color:var(--text2);margin-top:1px;">&#8212;</div>
+                </div>
+                <div style="grid-column:1/-1;background:var(--green-dim);border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:9px 12px;">
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;">&#128176; Estimated Investment</div>
+                  <div id="out-investment" style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono);">&#8212;</div>
+                </div>
+              </div>
+
+              <div id="engineWarningBox" style="display:none;background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 5px 5px 0;padding:8px 12px;font-size:11px;color:var(--accent);line-height:1.6;margin-top:8px;"></div>
+
+              <div id="syncStatusBar" style="display:flex;align-items:flex-start;gap:10px;padding:9px 13px;background:linear-gradient(90deg,rgba(16,185,129,0.06),rgba(245,158,11,0.06));border:1px solid rgba(16,185,129,0.2);border-radius:6px;font-size:11px;color:var(--text2);margin-top:10px;">
+                <span style="font-size:14px;flex-shrink:0;">&#128260;</span>
+                <span id="syncStatusText">Complete Steps 1&#x2013;5 above to auto-size and sync to Quotation Generator.</span>
+              </div>
+            </div>
+
+          </div></div><div style="display:none;">
+          <input type="hidden" id="auto-phase" value="1|230">
+          <input type="hidden" id="auto-basis" value="kwh">
+          <input type="hidden" id="auto-sys-type" value="offgrid">
+        </div>
+      </div><div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-amber">&#128267;</div>
+          <div><div class="card-title">Battery Chemistry &amp; DOD</div><div class="card-desc">Applied to all battery calculators below</div></div>
+        </div>
+        <div class="fg" style="margin-bottom:0;">
+          <select id="global-dod">
+            <option value="0.8">LiFePO4 (Lithium Iron Phosphate) &#8212; 80% DOD Recommended</option>
+            <option value="0.9">Lithium-Ion (NMC) &#8212; 90% DOD Recommended</option>
+            <option value="0.5">Lead-Acid / Gel / AGM &#8212; 50% DOD Recommended</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="card-header"><div class="card-icon icon-amber">&#9201;</div><div><div class="card-title">Battery Runtime</div></div></div>
+          <div class="fg"><label>Voltage (V)</label><select id="c1-v"><option>12</option><option>24</option><option selected>48</option></select></div>
+          <div class="fg"><label>Capacity (Ah)</label><input type="number" id="c1-ah" placeholder="100"></div>
+          <div class="fg"><label>Constant Load (Watts)</label><input type="number" id="c1-w" placeholder="500"></div>
+          <button class="btn btn-amber" onclick="calcRuntime()">Calculate</button>
+          <div id="res-runtime" class="res res-amber"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-icon icon-blue">&#128267;</div><div><div class="card-title">Required Battery Sizing</div></div></div>
+          <div class="fg"><label>Voltage (V)</label><select id="c2-v"><option>12</option><option>24</option><option selected>48</option></select></div>
+          <div class="fg"><label>Total Load (Watts)</label><input type="number" id="c2-w" placeholder="1000"></div>
+          <div class="fg"><label>Backup Hours Needed</label><input type="number" id="c2-h" placeholder="4"></div>
+          <button class="btn btn-amber" onclick="calcBatReq()">Calculate</button>
+          <div id="res-batreq" class="res res-amber"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-icon icon-green">&#9728;</div><div><div class="card-title">PV Array Sizer</div></div></div>
+          <div class="fg"><label>Voltage (V)</label><select id="c3-v"><option>12</option><option>24</option><option selected>48</option></select></div>
+          <div class="fg"><label>Battery to Charge (Ah)</label><input type="number" id="c3-ah" placeholder="200"></div>
+          <div class="fg"><label>Effective Sun Hours (Derated)</label><input type="number" id="c3-sun" value="4.5"></div>
+          <button class="btn btn-amber" onclick="calcPanels()">Calculate</button>
+          <div id="res-panels" class="res res-green"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-icon icon-orange">&#128268;</div><div><div class="card-title">Breaker Sizer</div></div></div>
+          <div class="fg"><label>Voltage (V)</label><select id="c4-v"><option>12</option><option>24</option><option>48</option><option selected>220</option></select></div>
+          <div class="fg"><label>Max Load (Watts)</label><input type="number" id="c4-w" placeholder="3000"></div>
+          <button class="btn btn-amber" onclick="calcBreaker()">Calculate</button>
+          <div id="res-breaker" class="res res-blue"></div>
+        </div>
+      </div>
+    </div><div id="view-battery" class="view-section">
+      <div class="page-header">
+        <div class="page-title">Hardware <span>Database</span></div>
+        <div class="page-sub">Manage BOM dropdowns, pricing, and client-facing descriptions. Saved to browser automatically.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-green">➕</div>
+          <div><div class="card-title">Add New Hardware Item</div></div>
+        </div>
+        <div class="g4">
+          <div class="fg"><label>Category</label>
+            <select id="db-category">
+              <option value="panels">PV Panels</option>
+              <option value="inverters">Inverters</option>
+              <option value="batteries">Batteries</option>
+              <option value="accessories">Accessories / Extras</option>
+              <option value="bos">Base Materials & BOS</option>
+            </select>
+          </div>
+          <div class="fg"><label>Internal Name</label>
+            <input type="text" id="db-name" placeholder="E.g., Deye 12kW 3-Phase">
+          </div>
+          <div class="fg"><label>Client Name (Hidden Tier)</label>
+            <input type="text" id="db-client" placeholder="E.g., Advanced Series 12kW">
+          </div>
+          <div class="fg"><label>Price (₱)</label>
+            <input type="number" id="db-price" placeholder="144000">
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-slate" style="width:auto;" onclick="addDBItem()">Save New Item</button>
+          <button class="btn btn-red" style="width:auto;" onclick="resetDBConfirm()">↺ Reset to Defaults</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-blue">📋</div>
+          <div><div class="card-title">Current Inventory</div></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          <button class="btn btn-sm btn-amber" onclick="renderDBTable('panels')">Panels</button>
+          <button class="btn btn-sm btn-slate" onclick="renderDBTable('inverters')">Inverters</button>
+          <button class="btn btn-sm btn-slate" onclick="renderDBTable('batteries')">Batteries</button>
+          <button class="btn btn-sm btn-slate" onclick="renderDBTable('accessories')">Accessories</button>
+          <button class="btn btn-sm btn-blue" onclick="renderDBTable('bos')">BOS & Materials</button>
+        </div>
+        <table class="data-table" id="db-table"></table>
+      </div>
+    </div>
+
+    <div id="view-history" class="view-section">
+      <div class="page-header">
+        <div class="page-title">Quote <span>History</span></div>
+        <div class="page-sub">Track all saved quotations — mark successful clients and delete trials.</div>
+      </div>
+
+      <div class="stats-row" id="historyStats">
+        <div class="stat-chip"><div class="stat-chip-label">Total Quotes</div><div class="stat-chip-val amber" id="hstat-total">0</div></div>
+        <div class="stat-chip"><div class="stat-chip-label">✅ Successful</div><div class="stat-chip-val green" id="hstat-success">0</div></div>
+        <div class="stat-chip"><div class="stat-chip-label">⏳ Pending</div><div class="stat-chip-val" id="hstat-pending">0</div></div>
+        <div class="stat-chip"><div class="stat-chip-label">💰 Total Revenue (Successful)</div><div class="stat-chip-val green" id="hstat-revenue">₱0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-green">📋</div>
+          <div><div class="card-title">Saved Quotations</div><div class="card-desc">Click a row to load it back. Use status to track conversion.</div></div>
+          <button class="btn btn-red btn-sm" style="margin-left:auto;" onclick="clearAllTrials()">🗑 Clear All Trials</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="history-table" style="min-width:700px;">
+            <thead><tr>
+              <th>Ref #</th><th>Client</th><th>Date</th><th>System</th><th>Amount</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-learn" class="view-section">
+      <div class="page-header">
+        <div class="page-title">Solar Academy <span>&</span> Economics</div>
+      </div>
+      <div class="card card-blue">
+        <div class="card-header">
+          <div class="card-icon icon-blue">🏗️</div>
+          <div><div class="card-title">Transparent EPC Pricing Logic</div>
+          <div class="card-desc">How we calculate industry-standard mounting and labor costs for a typical 5kW system</div></div>
+        </div>
+        <div class="g2">
+          <div>
+            <div style="font-family:var(--display);font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Mounting Hardware (₱1,500 / Panel)</div>
+            <table class="data-table" style="font-size:12px;">
+              <tr><th>Component</th><th style="text-align:right">Est. Cost</th></tr>
+              <tr><td>Aluminum Rails (Anodized)</td><td style="text-align:right;font-family:var(--mono);">₱600</td></tr>
+              <tr><td>Roof Attachments (L-Feet/Hooks w/ EPDM)</td><td style="text-align:right;font-family:var(--mono);">₱400</td></tr>
+              <tr><td>Fasteners & Sealants (Sikaflex, Tekscrews)</td><td style="text-align:right;font-family:var(--mono);">₱200</td></tr>
+              <tr><td>Clamps & Grounding</td><td style="text-align:right;font-family:var(--mono);">₱300</td></tr>
+              <tr><td><strong>Total per Panel</strong></td><td style="text-align:right;font-family:var(--mono);color:var(--accent);font-weight:700;">₱1,500</td></tr>
+            </table>
+          </div>
+          <div>
+            <div style="font-family:var(--display);font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Professional Labor (₱7,000 / kW)</div>
+            <table class="data-table" style="font-size:12px;">
+              <tr><th>Allocation (Based on 5kW / 3 Days)</th><th style="text-align:right">Est. Cost</th></tr>
+              <tr><td>Lead Engineer / Electrician</td><td style="text-align:right;font-family:var(--mono);">₱9,000</td></tr>
+              <tr><td>Skilled Roofers & Helpers</td><td style="text-align:right;font-family:var(--mono);">₱14,000</td></tr>
+              <tr><td>Sign-offs & Testing</td><td style="text-align:right;font-family:var(--mono);">₱5,000</td></tr>
+              <tr><td>Logistics, Meals & Consumables</td><td style="text-align:right;font-family:var(--mono);">₱7,000</td></tr>
+              <tr><td><strong>Total for 5kW System</strong></td><td style="text-align:right;font-family:var(--mono);color:var(--accent);font-weight:700;">₱35,000</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-green">📊</div>
+          <div><div class="card-title">ROI & Savings Calculator</div></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>System Size (kW)</label><input type="number" id="roi-size" value="5"></div>
+          <div class="fg"><label>Effective Sun Hours</label><input type="number" id="roi-sun" value="4.5"></div>
+          <div class="fg"><label>Electricity Rate (₱/kWh)</label><input type="number" id="roi-rate" value="12.56" step="0.1"></div>
+          <div class="fg"><label>Total Investment (₱)</label><input type="number" id="roi-cost" value="184900"></div>
+        </div>
+        <button class="btn btn-green" onclick="calcROI()">Calculate ROI</button>
+        <div id="res-roi" class="res res-green"></div>
+      </div>
+    </div>
+
+  </div></div><div id="print-doc" class="print-only">
+
+  <div class="p-letterhead">
+    <div class="p-lh-accent"></div>
+    <div class="p-lh-body">
+      <div>
+        <div class="p-company-name">FDG Solar Visayas</div>
+        <div class="p-company-sub">Renewable Design and Build — Engineering, Procurement & Construction</div>
+      </div>
+      <div class="p-contact-block">
+        📞 0915 1983 899 &nbsp;|&nbsp; ✉ fmguinoo@gmail.com<br>
+        <span class="p-doc-badge" id="p-doc-title">PROJECT PROPOSAL</span><br>
+        <span class="p-ref-line" id="p-quote-ref"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-info-bar">
+    <div class="p-info-cell">
+      <span class="p-info-label">Client Name</span>
+      <span class="p-info-value" id="p-cli-name">—</span>
+    </div>
+    <div class="p-info-cell">
+      <span class="p-info-label">Quote Date</span>
+      <span class="p-info-value" id="p-cli-date">—</span>
+    </div>
+    <div class="p-info-cell">
+      <span class="p-info-label">Project Address</span>
+      <span class="p-info-value" id="p-cli-address">—</span>
+    </div>
+    <div class="p-info-cell">
+      <span class="p-info-label">System</span>
+      <span class="p-info-value">
+        <span id="p-system-size">—</span> &nbsp;·&nbsp; <span id="p-sys-type">—</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="p-pitch p-client" id="p-client-pitch"></div>
+
+  <div class="p-section-title p-client">Scope of Work &amp; Engineered Hardware</div>
+  <div class="p-table-outline p-client">
+    <table class="p-table" style="margin-bottom:0;">
+      <thead><tr><th style="width:22%;">Component</th><th>EPC Grade Hardware Included</th></tr></thead>
+      <tbody>
+        <tr><td><strong>PV Solar Array</strong></td><td id="c-desc-panels"></td></tr>
+        <tr><td><strong>Power Inverter</strong></td><td id="c-desc-inverter"></td></tr>
+        <tr id="c-row-battery"><td><strong>Energy Storage</strong></td><td id="c-desc-battery"></td></tr>
+        <tr id="c-row-acc" style="display:none;"><td><strong>Accessories</strong></td><td id="c-desc-acc"></td></tr>
+        <tr><td><strong>Mounting System</strong></td><td id="c-desc-mount"></td></tr>
+        <tr><td><strong>BOS &amp; Electrical</strong></td><td id="c-desc-electrical"></td></tr>
+        <tr><td><strong>Labor &amp; Services</strong></td><td id="c-desc-labor"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="p-section-title p-internal">Itemized Bill of Materials</div>
+  <div class="p-table-outline p-internal">
+    <table class="p-table" id="p-bom-table" style="margin-bottom:0;"></table>
+  </div>
+
+  <div class="p-section-title p-client">Investment Summary</div>
+  <div class="p-table-outline p-client">
+    <table class="p-table" style="margin-bottom:0;">
+      <tbody>
+        <tr class="p-subtotal-row">
+          <td style="width:70%;">Calculated Turnkey Investment</td>
+          <td style="text-align:right;font-family:monospace;" id="p-sys-anchor"></td>
+        </tr>
+        <tr>
+          <td style="color:#15803d;"><strong id="p-sys-discount-label"></strong> — Included &amp; Waived</td>
+          <td style="text-align:right;color:#dc2626;font-family:monospace;" id="p-sys-discount-val-print"></td>
+        </tr>
+        <tr class="p-total-row">
+          <td><strong>⭐ FINAL INVESTMENT (VAT Exclusive — Acknowledge Receipt Only)</strong></td>
+          <td style="text-align:right;font-family:monospace;" id="p-sys-grandtotal"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="p-roi-box p-client">
+    <div class="p-roi-title">📈 Your Financial Freedom Summary</div>
+    <table class="p-roi-table">
+      <tr>
+        <td>Est. Monthly Savings<strong id="p-roi-monthly">₱0</strong></td>
+        <td>Est. Yearly Savings<strong id="p-roi-yearly">₱0</strong></td>
+        <td>Investment Payback<strong id="p-roi-payback">0 Yrs</strong></td>
+        <td>10-Year Net Savings<strong id="p-roi-10yr">₱0</strong></td>
+      </tr>
+    </table>
+    <p class="p-roi-note">*Based on provided electricity rate and conservative 4.5 peak sun hours/day. Actual savings may vary.</p>
+  </div>
+
+  <div class="p-terms p-client">
+    <strong>Terms & Validity:</strong> This quotation is valid for <strong>30 days</strong> from the date issued.
+    Prices are subject to change upon material price fluctuations. An <strong>80% down payment</strong> is required upon confirmation.
+    Balance due after system commissioning. All installations carry a <strong>1-year workmanship warranty</strong>.
+    Equipment warranty follows manufacturer terms.
+  </div>
+
+  <div class="p-internal-notes p-internal">
+    <h4>🔒 INTERNAL — INSTALLER &amp; SITE NOTES</h4>
+    <p><strong>Lead Installer / Foreman:</strong> <span id="p-installer-name">—</span></p>
+    <p id="p-sys-notes" style="white-space:pre-wrap;font-family:monospace;margin-top:3pt;"></p>
+  </div>
+
+  <div class="p-sig-row p-internal">
+    <div class="p-sig">
+      <div class="p-sig-line"><span class="p-sig-name">Engr. Francis Dale C. Guinoo</span></div>
+      <div class="p-sig-role">Prepared by — FDG Solar Visayas Engineering Representative</div>
+    </div>
+    <div class="p-sig">
+      <div class="p-sig-line"></div>
+      <div class="p-sig-role">Foreman / Job Order Received by</div>
+    </div>
+  </div>
+
+  <div class="p-sig-row p-client">
+    <div class="p-sig">
+      <div class="p-sig-line"><span class="p-sig-name">Engr. Francis Dale C. Guinoo</span></div>
+      <div class="p-sig-role">Prepared by — FDG Solar Visayas Engineering Representative</div>
+    </div>
+    <div class="p-sig">
+      <div class="p-sig-line"></div>
+      <div class="p-sig-role">Conforme: Client Printed Name, Signature &amp; Date</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ================================================================
+// 🛎️ TOAST & MODAL SYSTEM (replaces all alert/confirm)
+// ================================================================
+function toast(msg, type = 'info', duration = 3000) {
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warn:'⚠️' };
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => {
+    t.classList.add('toast-exit');
+    setTimeout(() => t.remove(), 300);
+  }, duration);
+}
+
+let modalResolve = null;
+function showConfirm(title, msg) {
+  return new Promise(resolve => {
+    modalResolve = resolve;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmModal').classList.add('visible');
+    document.getElementById('confirmOk').onclick = () => { closeModal(); resolve(true); };
+  });
+}
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('visible');
+}
+
+// ================================================================
+// 🗄️ HARDWARE DATABASE (localStorage)
+// ================================================================
+const defaultDB = {
+  panels:[
+    {price:4800,name:"500W Solar Panel",client:"Advanced Series 500W PV Module"},
+    {price:5300,name:"550W Solar Panel",client:"Elite Series 550W PV Module"},
+    {price:5800,name:"580W Solar Panel",client:"Elite Series 580W PV Module"},
+    {price:6300,name:"600W Solar Panel",client:"Elite Series 600W PV Module"}
+  ],
+  inverters:[
+    // Sorted by kW ASC, then tier (Essential → Advanced → Elite) within same kW
+    {price:18000,name:"1kW 12V MPPT Hybrid Inverter",client:"Essential Series 1kW 12V Hybrid Inverter"},
+    {price:28000,name:"2kW 12V MPPT Hybrid Inverter",client:"Essential Series 2kW 12V Hybrid Inverter"},
+    {price:32000,name:"3kW 24V MPPT Hybrid Inverter",client:"Essential Series 3kW 24V Hybrid Inverter"},
+    {price:42000,name:"Deye/Solis 3kW Grid-Tie",client:"Advanced Series 3kW Grid-Tie Inverter"},
+    {price:40000,name:"5kW 24V MPPT Hybrid Inverter",client:"Advanced Series 5kW 24V Hybrid Inverter"},
+    {price:64000,name:"Deye/Solis 6kW Hybrid",client:"Advanced Series 6kW Hybrid Inverter"},
+    {price:55000,name:"SUNGROW 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center"},
+    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center"},
+    {price:92000,name:"Deye/Solis 8kW Hybrid",client:"Advanced Series 8kW Hybrid Inverter"},
+    {price:73000,name:"SUNGROW 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center"},
+    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center"},
+    {price:89000,name:"SUNGROW 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center"},
+    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center"},
+    {price:144000,name:"Deye 12kW 3-Phase Hybrid",client:"Advanced Series 12kW 3-Phase Power Center"},
+    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center"},
+    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center"},
+    {price:180000,name:"Elite 16kW Hybrid",client:"Elite Series 16kW Hybrid Power Center"},
+    {price:210000,name:"Deye 20kW 3-Phase Hybrid",client:"Advanced Series 20kW 3-Phase Power Center"},
+    {price:175200,name:"LuxPower 20kW 1-Phase",client:"Elite Series 20kW 1-Phase Power Center"},
+    {price:167900,name:"LuxPower 20kW 3-Phase (Trip20kw)",client:"Elite Series 20kW 3-Phase Power Center"}
+  ],
+  batteries:[
+    // Sorted by V ASC, Ah ASC, then tier (Essential → Advanced → Elite) within
+    {price:14400,name:"Basic 12V 100Ah",client:"Essential Series 12V 100Ah Storage"},
+    {price:28800,name:"Basic 12V 200Ah",client:"Essential Series 12V 200Ah Storage"},
+    {price:28800,name:"Basic 24V 100Ah",client:"Essential Series 24V 100Ah Storage"},
+    {price:57600,name:"Basic 24V 200Ah",client:"Essential Series 24V 200Ah Storage"},
+    {price:50400,name:"Basic 48V 100Ah",client:"Essential Series 48V 100Ah Storage"},
+    {price:57600,name:"Standard 48V 100Ah",client:"Advanced Series 48V 100Ah Storage"},
+    {price:54000,name:"Elite 48V 100Ah",client:"Elite Series 48V 100Ah Storage System"},
+    {price:114000,name:"Standard 48V 200Ah",client:"Advanced Series 48V 200Ah Storage"},
+    {price:62400,name:"Elite 48V 200Ah",client:"Elite Series 48V 200Ah Storage System"},
+    {price:170400,name:"Standard 48V 300Ah",client:"Advanced Series 48V 300Ah Storage"},
+    {price:138000,name:"Elite 48V 300Ah",client:"Elite Series 48V 300Ah Storage System"}
+  ],
+  accessories:[
+    {price:0,name:"No Accessories",client:"N/A"},
+    {price:6500,name:"3-Phase Smart Meter (Export Control)",client:"Advanced 3-Phase Load Profiling Meter"},
+    {price:2500,name:"1-Phase Smart Meter (Export Control)",client:"Advanced 1-Phase Load Profiling Meter"},
+    {price:1500,name:"WiFi Monitoring Dongle",client:"24/7 Mobile Monitoring Module"}
+  ],
+  bos:[
+    {price:65,name:"PV Wire 6mm² (m)",client:"System Base Pricing"},
+    {price:480,name:"Aluminum Rail (pc)",client:"System Base Pricing"},
+    {price:65,name:"L-Foot / Roof Hook",client:"System Base Pricing"},
+    {price:45,name:"Mid Clamp",client:"System Base Pricing"},
+    {price:45,name:"End Clamp",client:"System Base Pricing"},
+    {price:65,name:"Splice Kit",client:"System Base Pricing"},
+    {price:75,name:"Grounding Lug",client:"System Base Pricing"},
+    {price:1500,name:"Panel Box (Small)",client:"System Base Pricing"},
+    {price:2500,name:"Panel Box (Large)",client:"System Base Pricing"},
+    {price:450,name:"AC Breaker (1P/2P)",client:"System Base Pricing"},
+    {price:1200,name:"AC Breaker (3P/4P)",client:"System Base Pricing"},
+    {price:750,name:"DC Breaker",client:"System Base Pricing"},
+    {price:650,name:"DC SPD",client:"System Base Pricing"},
+    {price:650,name:"AC SPD",client:"System Base Pricing"},
+    {price:1800,name:"ATS System",client:"System Base Pricing"},
+    {price:1200,name:"Battery Cable Set",client:"System Base Pricing"}
+  ]
+};
+
+let hwDB = (() => {
+  try { return JSON.parse(localStorage.getItem('fdgSolarDB_v4')) || defaultDB; }
+  catch(e) { return defaultDB; }
+})();
+if(!hwDB.bos) { hwDB.bos = defaultDB.bos; saveDB(); }
+
+function saveDB() {
+  try { localStorage.setItem('fdgSolarDB_v4', JSON.stringify(hwDB)); }
+  catch(e) {}
+  populateBOMDropdowns();
+  calcBOM();
+}
+
+async function resetDBConfirm() {
+  const ok = await showConfirm('Reset Hardware Database', 'This will erase all custom hardware and restore factory defaults. This cannot be undone.');
+  if(ok) {
+    localStorage.removeItem('fdgSolarDB_v4');
+    hwDB = JSON.parse(JSON.stringify(defaultDB));
+    saveDB();
+    renderDBTable('panels');
+    toast('Database reset to defaults', 'success');
+  }
+}
+
+// Quote Reference
+function generateQuoteRef() {
+  const d = new Date();
+  const n = String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const r = Math.floor(Math.random()*900)+100;
+  return `FDGS-${n}-${r}`;
+}
+
+let currentQuoteRef = generateQuoteRef();
+
+// ================================================================
+// INIT
+// ================================================================
+document.getElementById('cli-date').valueAsDate = new Date();
+document.getElementById('quoteRefBadge').textContent = 'REF: ' + currentQuoteRef;
+
+window.onload = function() {
+  populateBOMDropdowns();
+  renderDBTable('panels');
+  calcBOM();
+  calculateFlow();
+  renderHistoryTable();
+};
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function switchView(viewId, el) {
+  document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  el.classList.add('active');
+}
+
+// ================================================================
+// BOM DROPDOWNS
+// ================================================================
+function populateBOMDropdowns() {
+  const catMap = {panels:'panels', inverters:'inverter', batteries:'battery', accessories:'acc'};
+  Object.entries(catMap).forEach(([cat, selId]) => {
+    const sel = document.getElementById('sel-'+selId);
+    if(!sel) return;
+    const curr = sel.value;
+    let html = `<option value="0|Custom ${selId}" data-client="Custom Option">Custom Option</option>`;
+    hwDB[cat].forEach((item, idx) => {
+      html += `<option value="${item.price}|${item.name}" data-client="${item.client}" data-index="${idx}">${item.name} (₱${item.price.toLocaleString()})</option>`;
+    });
+    sel.innerHTML = html;
+    let match = Array.from(sel.options).find(o => o.value === curr);
+    if(match) sel.value = curr;
+  });
+  ['panels','inverter','battery','acc'].forEach(t => updateItem(t));
+}
+
+function updateItem(type) {
+  const sel = document.getElementById('sel-'+type);
+  if(!sel) return;
+  if(sel.value.startsWith("0|") && sel.value !== "0|No Battery (Grid-Tied)") return;
+  const opt = sel.options[sel.selectedIndex];
+  const parts = sel.value.split('|');
+  document.getElementById('price-'+type).value = parseFloat(parts[0]);
+  document.getElementById('desc-'+type).value = parts[1];
+  if(opt.dataset.client) document.getElementById('desc-'+type).dataset.client = opt.dataset.client;
+  if(type === 'inverter') {
+    document.getElementById('sys-phase').value = opt.text.includes('3-Phase') ? '3' : '1';
+  }
+  // === Manual override: recompute qty against stored requirement ===
+  if(type === 'battery') {
+    const name = parts[1] || '';
+    const m = name.match(/(\d+)Ah/);
+    if (m && batNeedAh > 0) {
+      const packAh = parseInt(m[1]);
+      let q;
+      if (packAh === 100) {
+        // 100Ah is SINGLE-only — never parallel
+        q = 1;
+        if (batNeedAh > 100) {
+          toast(`⚠️ 100Ah is single-only (no parallel). Need ${batNeedAh.toFixed(0)}Ah — pick 200Ah or 300Ah.`, 'error');
+        }
+      } else {
+        q = Math.ceil(batNeedAh / packAh);
+        if (q < 1) q = 1;
+        if (q > BMS_MAX_PARALLEL) {
+          toast(`⚠️ ${q}× ${packAh}Ah exceeds BMS ${BMS_MAX_PARALLEL}-string limit. Pick higher cap.`, 'error');
+        }
+      }
+      document.getElementById('qty-battery').value = q;
+      batQty = q;
+      batSizeAh = packAh;
+      const v = invVolts || 48;
+      document.getElementById('desc-battery').value = `Manual ${v}V ${packAh}Ah Battery${q>1?' (×'+q+' parallel)':''}`;
+    } else if (m && batNeedAh === 0) {
+      batSizeAh = parseInt(m[1]);
+    }
+  }
+  if(type === 'inverter') {
+    const name = parts[1] || '';
+    const m = name.match(/(\d+)kW/);
+    if (m && recSysKw > 0) {
+      const kw = parseInt(m[1]);
+      const q = Math.max(1, Math.ceil(recSysKw / kw));
+      document.getElementById('qty-inverter').value = q;
+      invQty = q; invSize = kw;
+    }
+  }
+  calcBOM();
+}
+
+// ================================================================
+// DB MANAGER
+// ================================================================
+function addDBItem() {
+  const cat = document.getElementById('db-category').value;
+  const name = document.getElementById('db-name').value.trim();
+  const client = document.getElementById('db-client').value.trim();
+  const price = parseFloat(document.getElementById('db-price').value);
+  if(!name || !client || isNaN(price)) return toast('Fill all fields to add hardware', 'error');
+  hwDB[cat].push({name, client, price});
+  saveDB();
+  document.getElementById('db-name').value='';
+  document.getElementById('db-client').value='';
+  document.getElementById('db-price').value='';
+  renderDBTable(cat);
+  toast(`"${name}" added to database`, 'success');
+}
+
+function renderDBTable(cat) {
+  let html = `<tr><th>Internal Name</th><th>Client Spec</th><th>Price</th><th>Actions</th></tr>`;
+  hwDB[cat].forEach((item, idx) => {
+    html += `<tr>
+      <td>${item.name}</td>
+      <td style="color:var(--text2);">${item.client}</td>
+      <td style="font-family:var(--mono);color:var(--accent);font-weight:700;">₱${item.price.toLocaleString()}</td>
+      <td><button class="btn btn-sm btn-slate" onclick="editDBItem('${cat}',${idx})">Edit</button>
+          <button class="btn btn-sm btn-red" style="margin-left:6px;" onclick="deleteDBItem('${cat}',${idx})">Del</button></td>
+    </tr>`;
+  });
+  document.getElementById('db-table').innerHTML = html;
+}
+
+function editDBItem(cat, idx) {
+  let item = hwDB[cat][idx];
+  let newP = prompt(`Update price for: ${item.name}\nCurrent: ₱${item.price}`, item.price);
+  if(newP !== null && !isNaN(newP) && newP !== '') {
+    item.price = parseFloat(newP);
+    saveDB();
+    renderDBTable(cat);
+    toast(`Price updated to ₱${parseFloat(newP).toLocaleString()}`, 'info');
+  }
+}
+
+async function deleteDBItem(cat, idx) {
+  const ok = await showConfirm('Delete Hardware', `Permanently delete "${hwDB[cat][idx].name}"?`);
+  if(ok) {
+    const name = hwDB[cat][idx].name;
+    hwDB[cat].splice(idx, 1);
+    saveDB();
+    renderDBTable(cat);
+    toast(`"${name}" deleted`, 'warn');
+  }
+}
+
+// ================================================================
+// PRICING HELPERS
+// ================================================================
+function applyCeiling(raw) {
+  if(raw === 0) return 0;
+  let upper = (raw % 1000 === 0) ? raw + 1000 : Math.ceil(raw / 1000) * 1000;
+  return upper + 500;
+}
+
+function getLivePrice(itemName) {
+  let item = hwDB.bos.find(b => b.name === itemName);
+  return item ? item.price : 0;
+}
+
+// ================================================================
+// STEP BUTTON HANDLERS
+// ================================================================
+function selBtn(activeId) {
+  var groups = {
+    's1-1ph':    ['s1-1ph','s1-3ph220','s1-3ph380'],
+    's1-3ph220': ['s1-1ph','s1-3ph220','s1-3ph380'],
+    's1-3ph380': ['s1-1ph','s1-3ph220','s1-3ph380'],
+    's2-hybrid': ['s2-hybrid','s2-offgrid','s2-gti'],
+    's2-offgrid':['s2-hybrid','s2-offgrid','s2-gti'],
+    's2-gti':    ['s2-hybrid','s2-offgrid','s2-gti'],
+    's3-kwh':    ['s3-kwh','s3-bill','s3-amps'],
+    's3-bill':   ['s3-kwh','s3-bill','s3-amps'],
+    's3-amps':   ['s3-kwh','s3-bill','s3-amps'],
+  };
+  var grp = groups[activeId] || [];
+  grp.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (id === activeId) {
+      el.style.background = 'rgba(245,158,11,0.15)';
+      el.style.borderColor = 'rgba(245,158,11,0.45)';
+      el.style.color = '#F59E0B';
+    } else {
+      el.style.background = '#131D30';
+      el.style.borderColor = '#243254';
+      el.style.color = '#94A3B8';
+    }
+  });
+}
+
+function setPhase(val, activeId) {
+  selBtn(activeId);
+  document.getElementById('auto-phase').value = val;
+  document.getElementById('sys-phase').value = val.split('|')[0];
+  calculateFlow();
+}
+
+function setArch(val, activeId) {
+  selBtn(activeId);
+  document.getElementById('auto-sys-type').value = val;
+  calculateFlow();
+}
+
+function setBasis(val, activeId) {
+  selBtn(activeId);
+  document.getElementById('s4-kwh-wrap').style.display  = (val==='kwh')  ? 'block' : 'none';
+  document.getElementById('s4-bill-wrap').style.display = (val==='bill') ? 'block' : 'none';
+  document.getElementById('s4-amps-wrap').style.display = (val==='amps') ? 'block' : 'none';
+  // Keep hidden input in sync so engine reads correct basis
+  document.getElementById('auto-basis').value = val;
+  calculateFlow();
+}
+
+// Helper: Converts current inputs to Monthly kWh uniformly
+function getFlowConsumption(){
+  const basis = document.getElementById('auto-basis').value;
+  if(basis === 'bill'){
+    const bill = parseFloat(document.getElementById('flowBill').value) || 0;
+    const rate = parseFloat(document.getElementById('flowRate').value) || 12.56;
+    const derived = rate > 0 ? bill / rate : 0;
+    document.getElementById('flowBillDerived').textContent = derived.toFixed(1);
+    return derived;
+  } else if (basis === 'amps') {
+    const amps = parseFloat(document.getElementById('flowAmps').value) || 0;
+    const hours = parseFloat(document.getElementById('flowAmpsHours').value) || 4;
+    const phaseVal = document.getElementById('auto-phase').value.split('|');
+    const sysPhase = parseInt(phaseVal[0]);
+    const sysVolts = parseFloat(phaseVal[1]);
+    const rawKw = (sysPhase === 3 ? 1.732 : 1) * sysVolts * amps * 0.8 / 1000;
+    const derived = rawKw * hours * 30; // monthly
+    document.getElementById('flowAmpsDerived').textContent = derived.toFixed(1);
+    return derived;
+  }
+  return parseFloat(document.getElementById('flowConsumption').value) || 0;
+}
+
+// ================================================================
+// FLOW VISUALIZER & CORE SYNC
+// ================================================================
+function calculateFlow(){
+  const cons = getFlowConsumption();
+  const daily = cons / 30;
+  const dkEl = document.getElementById('mathDailyKwh');
+  if(dkEl) dkEl.textContent = daily.toFixed(2) + ' kWh';
+
+  const archVal = document.getElementById('auto-sys-type').value || 'offgrid';
+  const isGTI = archVal === 'gridtie';
+
+  const profile   = document.getElementById('flowProfile').value.split(',');
+  const dayPct    = parseFloat(profile[0]), nightPct = parseFloat(profile[1]);
+  const dayLoad   = daily * dayPct;
+  const nightLoad = daily * nightPct;
+
+  const surgeField = document.getElementById('flowSurge');
+  // Surge rule:
+  //   - Blank/empty field → use 20% default (auto-fill)
+  //   - Any number entered (0, 0.5, 5, etc) → use exactly that, recompute live
+  // User typing 0 = explicit no-surge → respect it.
+  // User clearing field = revert to auto-default.
+  const surgeRaw = surgeField.value.trim();
+  if (surgeRaw === '') {
+    surgeField.value = parseFloat((daily * 0.20).toFixed(2));
+    surgeField.dataset.auto = 'true';
+  } else {
+    surgeField.dataset.auto = 'false';
+  }
+  const surge = parseFloat(surgeField.value);
+  const surgeUsed = (isNaN(surge) || surge < 0) ? 0 : surge;
+
+  const sg = document.getElementById('flowSurgeGroup');
+  if(sg) sg.style.display = isGTI ? 'none' : 'block';
+  const nc = document.getElementById('flowNightChartGroup');
+  if(nc) nc.style.display = isGTI ? 'none' : 'block';
+  const lg = document.getElementById('flowLegGrid');
+  if(lg) lg.style.display = isGTI ? 'flex' : 'none';
+
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  const sw  = (id, w) => { const el=document.getElementById(id); if(el) el.style.width=w; };
+
+  if(isGTI){
+    set('flowValDay', dayLoad.toFixed(2)+' kWh/day');
+    set('flowValSavings', (cons*dayPct).toFixed(1)+' kWh/mo');
+    set('flowSummaryText', `GTI offsets ${dayPct*100}% daytime. Grid covers night.`);
+    sw('flowBarDaySolar', (dayPct*100)+'%');
+    sw('flowBarDayUnmet', (nightPct*100)+'%');
+  } else {
+    const totBat = nightLoad + surgeUsed;
+    const grossBat = totBat / 0.80; // DOD = 0.80, gross bank kWh required for autosizer
+    set('flowValDay',     dayLoad.toFixed(2)+' kWh/day');
+    set('flowValBattery', totBat.toFixed(2)+' kWh usable · '+grossBat.toFixed(2)+' kWh gross');
+    set('flowValSavings', cons.toFixed(1)+' kWh/mo');
+    set('flowSummaryText', `Day: ${dayLoad.toFixed(2)}kWh · Night+Surge: ${totBat.toFixed(2)}kWh usable (${grossBat.toFixed(2)}kWh gross @ 80% DOD)`);
+    sw('flowBarDaySolar', '100%'); sw('flowBarDayUnmet', '0%');
+    if(totBat>0){
+      sw('flowBarNightLoad', ((nightLoad/totBat)*100)+'%');
+      sw('flowBarSurge',     ((surgeUsed/totBat)*100)+'%');
+    } else {
+      sw('flowBarNightLoad', '0%'); sw('flowBarSurge', '0%');
+    }
+  }
+  clearTimeout(window._syncTimer);
+  window._syncTimer = setTimeout(() => syncToQuotation(true), 100);
+}
+
+function syncToQuotation(silent) {
+  const result = runAutoSizerSilent();
+  if(!result) return;
+  applyAutoSizerSilent();
+
+  const archVal = document.getElementById('auto-sys-type').value;
+  const isGTI = archVal === 'gridtie';
+  const archLabel = isGTI ? 'Grid-Tied (GTI)'
+    : invVolts === 48 ? '48V Hybrid On/Off-Grid'
+    : invVolts === 24 ? '24V Pure Off-Grid'
+    : '12V Pure Off-Grid';
+
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('out-inverter', `${invQty > 1 ? invQty+'× ' : ''}${invSize}kW @ ${invVolts}V`);
+  set('out-arch',     archLabel);
+  set('out-panels',   `${recPanels} × 550W panels`);
+  set('out-pkwp',     `${(recPanels*550/1000).toFixed(2)} kWp total`);
+
+  const batBox = document.getElementById('out-bat-box');
+  if(isGTI){
+    set('out-battery', 'None');
+    set('out-batah', 'Grid-Tied — no storage required');
+    if(batBox) batBox.style.opacity = '0.4';
+  } else {
+    const bankKwh = (batQty * batSizeAh * invVolts) / 1000;
+    const dodPct  = (batEffDod * 100).toFixed(1);
+    const band    = batEffDod <= 0.80 ? 'IDEAL' : (batEffDod <= 0.90 ? 'TOLERABLE' : 'OVER');
+    set('out-battery', `${batQty}× ${invVolts}V ${batSizeAh}Ah`);
+    set('out-batah',   `${batQty * batSizeAh}Ah @ ${invVolts}V — ${bankKwh.toFixed(2)} kWh gross — delivers ${usableKwhNeed.toFixed(2)} kWh @ ${dodPct}% DOD (${band})`);
+    if(batBox) batBox.style.opacity = '1';
+  }
+
+  const warnBox = document.getElementById('engineWarningBox');
+  if(warnBox){
+    if(engineWarnings.length){
+      warnBox.style.display = 'block';
+      warnBox.innerHTML = engineWarnings.join('<br>');
+    } else {
+      warnBox.style.display = 'none';
+    }
+  }
+
+  const archNote = document.getElementById('archOverrideNote');
+  const archOverride = engineWarnings.find(w => w.includes('Architecture'));
+  if(archNote){
+    if(archOverride){ archNote.style.display='block'; archNote.textContent=archOverride; }
+    else { archNote.style.display='none'; }
+  }
+
+  setTimeout(() => {
+    const gt = document.getElementById('sys-grandtotal');
+    const el = document.getElementById('out-investment');
+    if(gt && el) el.textContent = gt.value || '—';
+  }, 60);
+
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  document.getElementById('syncStatusText').innerHTML =
+    `✅ Quotation synced — <strong>${recSysKw}kW ${isGTI ? 'Grid-Tied' : 'Hybrid/Off-Grid'}</strong> system, ${recPanels} panels, ${isGTI ? 'no battery' : batQty + ' batteries'} · Last synced: ${time}`;
+
+  const qs = document.getElementById('quoteSyncStatus');
+  if(qs) qs.innerHTML = `✅ <strong>${recSysKw}kW ${isGTI?'Grid-Tied':'Hybrid'}</strong> — ${recPanels} panels · ${isGTI?'No battery':batQty+' batteries'} · Synced at ${time}`;
+
+  if(!silent) toast('Quotation Generator updated ✓', 'success');
+}
+
+
+// ================================================================
+// HARDWARE ENGINE — STRICT SEQUENTIAL RULES
+// ================================================================
+let recPanels=0, recSysKw=0, autoRate=12.56, invQty=1, invSize=5, invVolts=48;
+let batQty=1, batSizeAh=100, batNeedAh=0, autoInvTier="", autoBatTier="";
+let clientMonthlyKwh=0; // captured from autosizer; caps bill-based savings
+let usableKwhNeed=0;    // raw usable battery delivery need (night+surge, no DOD)
+let batEffDod=0;        // effective DOD on chosen bank (0..1)
+const BMS_MAX_PARALLEL = 16;
+const DOD_IDEAL = 0.80;   // ideal DOD ceiling — cycle-life sweet spot
+const DOD_MAX   = 0.90;   // hard tolerance — anything deeper rejected
+// Standard PH breaker sizes (A) for nextBreaker rounding
+const STD_BREAKERS = [10, 15, 20, 30, 40, 50, 60, 75, 100, 125, 150, 200, 225, 250, 300, 400, 500, 630, 800, 1000];
+function nextBreaker(a) { for (const b of STD_BREAKERS) if (b >= a) return b; return STD_BREAKERS[STD_BREAKERS.length-1]; }
+let autoInvPrice=0, autoBatPrice=0, autoPanelPrice=5300, autoPanelTier="Elite Series 550W PV Module";
+let autoInvVal="0|Custom Inverter", autoBatVal="0|Custom Battery";
+let engineWarnings = [];
+
+function runAutoSizerSilent() {
+  engineWarnings = [];
+
+  const basis    = document.getElementById('auto-basis').value;
+  const phaseVal = document.getElementById('auto-phase').value.split('|');
+  const sysPhase = parseInt(phaseVal[0]);
+  const sysVolts = parseFloat(phaseVal[1]);
+  let userArch   = document.getElementById('auto-sys-type').value; 
+  let isGridTieSelection = (userArch === 'gridtie');
+  
+  const profile  = document.getElementById('flowProfile').value.split(',');
+  const dayRatio = parseFloat(profile[0]);
+  const nightRatio = parseFloat(profile[1]);
+
+  let dailyKwh = 0;
+  if(basis === 'bill') {
+    const bill = parseFloat(document.getElementById('flowBill').value);
+    autoRate   = parseFloat(document.getElementById('flowRate').value) || 12.56;
+    if(!bill || !autoRate) return false;
+    dailyKwh = (bill / autoRate) / 30;
+  } else if (basis === 'kwh') {
+    const monthly = parseFloat(document.getElementById('flowConsumption').value);
+    if(!monthly) return false;
+    dailyKwh = monthly / 30;
+  } else {
+    const amps = parseFloat(document.getElementById('flowAmps').value);
+    const hours = parseFloat(document.getElementById('flowAmpsHours').value) || 4;
+    if(!amps) return false;
+    let peakKw = (sysPhase === 3 ? 1.732 : 1) * sysVolts * amps * 0.8 / 1000;
+    dailyKwh = peakKw * hours; 
+  }
+
+  const SUN_HOURS = 4.5;
+  const DOD       = 0.80;
+  clientMonthlyKwh = dailyKwh * 30; // for savings cap on print
+
+  const dayLoadKwh = dailyKwh * dayRatio;
+  const nightKwh   = dailyKwh * nightRatio;
+  const surgeField = document.getElementById('flowSurge');
+  // Surge rule (matches calculateFlow):
+  //   blank → 20% of daily; any number ≥0 (including 0) → use exactly that
+  const surgeRawAS = surgeField.value.trim();
+  let surgeKwh;
+  if (surgeRawAS === '') {
+    surgeKwh = dailyKwh * 0.20;
+  } else {
+    const parsed = parseFloat(surgeRawAS);
+    surgeKwh = (isNaN(parsed) || parsed < 0) ? 0 : parsed;
+  }
+  const usableKwh    = nightKwh + surgeKwh;          // RAW battery delivery need (no DOD)
+  usableKwhNeed = usableKwh;
+  const batKwhNeeded = usableKwh / DOD;              // gross at ideal 80% DOD (used for inverter sizing)
+
+  let targetKw = 0;
+  if(isGridTieSelection) {
+    targetKw = (dayLoadKwh / SUN_HOURS) * 1.20;
+  } else {
+    targetKw = ((dayLoadKwh + batKwhNeeded) / SUN_HOURS) * 1.20;
+  }
+  targetKw = Math.max(0.5, targetKw);
+
+  let V = 48;
+  
+  if (isGridTieSelection) {
+    targetKw = Math.max(6, targetKw);
+    V = 48;
+  } else if (sysPhase === 3) {
+    targetKw = Math.max(6, targetKw);
+    V = 48;
+  } else {
+    if (targetKw <= 1) V = 12;
+    else if (targetKw <= 3) V = 24;
+    else V = 48;
+
+    let needAh = (batKwhNeeded * 1000) / V;
+    if (V === 12 && needAh > 200) {
+        V = 24;
+        needAh = (batKwhNeeded * 1000) / V;
+        engineWarnings.push("⚠️ Rule 1→2: 12V storage exceeded 200Ah limit. Auto-upgraded to 24V system.");
+    }
+    if (V === 24 && needAh > 200) {
+        V = 48;
+        engineWarnings.push("⚠️ Rule 2→3: 24V storage exceeded 200Ah limit. Auto-upgraded to 48V system.");
+    }
+
+    if (V === 48 && targetKw < 6) {
+        targetKw = 6;
+    }
+  }
+
+  invVolts = V;
+  
+  if ((V === 12 || V === 24) && userArch !== 'offgrid') {
+      userArch = 'offgrid';
+      isGridTieSelection = false;
+      document.getElementById('auto-sys-type').value = 'offgrid';
+      engineWarnings.push(`⚠️ Rule 1/2A: ${V}V systems are strictly Off-Grid. Architecture overridden.`);
+  }
+
+  let liveInvs = hwDB.inverters;
+  let opts = [];
+
+  if (isGridTieSelection) {
+      opts = liveInvs.filter(i => sysPhase === 3 ? i.name.includes('3-Phase') : (i.name.includes('Grid-Tie') && !i.name.includes('3-Phase')));
+  } else if (sysPhase === 3) {
+      opts = liveInvs.filter(i => i.name.includes('3-Phase'));
+  } else {
+      opts = liveInvs.filter(i => i.name.includes(V + 'V') || (V===48 && !i.name.includes('12V') && !i.name.includes('24V') && !i.name.includes('3-Phase') && !i.name.includes('Grid-Tie')));
+  }
+  if(!opts.length) opts = liveInvs;
+
+  let selInv;
+  if (V === 48) {
+      const STRICT = [6, 8, 10, 12, 14, 16, 20]; // Added 10 & 20 to allowable rigid matches
+      let avail = STRICT.filter(sz => opts.some(o => o.name.match(new RegExp(sz+'kW'))));
+      if (!avail.length) avail = STRICT; 
+
+      const largest = Math.max(...avail);
+      if (targetKw <= largest) {
+          let bestSz = avail.find(s => s >= targetKw) || largest;
+          selInv = opts.find(o => o.name.match(new RegExp(bestSz+'kW'))) || opts[opts.length-1];
+          invQty = 1;
+          invSize = bestSz;
+      } else {
+          invQty = Math.ceil(targetKw / largest);
+          invSize = largest;
+          selInv = opts.find(o => o.name.match(new RegExp(largest+'kW'))) || opts[opts.length-1];
+          engineWarnings.push(`ℹ️ Rule 3B: Target ${targetKw.toFixed(1)}kW > ${largest}kW single limit. Paralleling ${invQty}× ${largest}kW identical units.`);
+      }
+  } else {
+      let bestDiff = Infinity;
+      selInv = opts[opts.length-1];
+      invQty = 1;
+      opts.forEach(opt => {
+          const m = opt.name.match(/(\d+)kW/);
+          const s = m ? parseInt(m[1]) : 5;
+          const q = Math.ceil(targetKw / s);
+          const diff = (q * s) - targetKw;
+          if (diff >= 0 && (diff < bestDiff || (diff === bestDiff && q < invQty))) {
+              bestDiff = diff; invQty = q; invSize = s; selInv = opt;
+          }
+      });
+  }
+
+  autoInvPrice = selInv.price; autoInvTier = selInv.client; autoInvVal = selInv.price+'|'+selInv.name;
+  recSysKw = invQty * invSize;
+  recPanels = Math.ceil((recSysKw * 1000) / 550);
+
+  if (isGridTieSelection) {
+      batQty = 0; batSizeAh = 0; batNeedAh = 0; batEffDod = 0; autoBatPrice = 0; autoBatTier = 'No Storage System'; autoBatVal = '0|No Battery (Grid-Tied)';
+  } else {
+      const usableAh   = (usableKwh * 1000) / V;          // RAW Ah delivery need
+      const needAhFinal = (batKwhNeeded * 1000) / V;       // gross Ah at ideal 80% DOD (legacy)
+      const needAhMin   = usableAh / DOD_MAX;              // min gross at 90% DOD ceiling
+      batNeedAh = needAhFinal;                              // keep ideal-DOD Ah for manual override
+      let batOpts = hwDB.batteries.filter(b => b.name.includes(V+'V'));
+      if(!batOpts.length) batOpts = hwDB.batteries;
+
+      let selBat = batOpts[batOpts.length-1];
+      if (V === 48) {
+          // === 48V Battery Bank Sizing — DOD-Tolerant Cost-First ===
+          // 100Ah single-only (no parallel). 200/300Ah parallel up to BMS limit (16).
+          // Filter: bank gross must satisfy effective DOD ≤ 90% (hard tolerance).
+          // Sort priority: cost ASC → strings ASC → DOD closer to 80% (ideal) → cap DESC.
+          // This intentionally accepts up to 90% DOD when it materially saves cost,
+          // since 80–90% DOD on LiFePO4 is operationally acceptable for residential cycling.
+
+          const ahMap = {};
+          batOpts.forEach(b => {
+              const m = b.name.match(/(\d+)Ah/);
+              if (m) {
+                  const ah = parseInt(m[1]);
+                  if (!ahMap[ah]) ahMap[ah] = [];
+                  ahMap[ah].push(b);
+              }
+          });
+          const has  = (cap) => !!ahMap[cap];
+          const pick = (cap) => ahMap[cap][ahMap[cap].length-1]; // highest tier of that cap
+
+          // Build candidate combos
+          const combos = [];
+          // 100Ah → single only
+          if (has(100)) {
+              const opt = pick(100);
+              if (100 >= needAhMin) {
+                  combos.push({ cap:100, qty:1, grossAh:100, eff: usableAh/100, cost: opt.price, opt });
+              }
+          }
+          // 200Ah & 300Ah → 1..16 strings
+          [200, 300].forEach(cap => {
+              if (!has(cap)) return;
+              const opt = pick(cap);
+              for (let q = 1; q <= BMS_MAX_PARALLEL; q++) {
+                  const grossAh = cap * q;
+                  if (grossAh >= needAhMin) {
+                      combos.push({ cap, qty:q, grossAh, eff: usableAh/grossAh, cost: opt.price * q, opt });
+                  }
+              }
+          });
+
+          if (combos.length) {
+              // Sort priority (reflects real installation economics):
+              //   1. FEWER strings — saves labor hrs, cables, lugs, breakers, BMS ports;
+              //      each parallel string adds a failure point + cell-imbalance risk.
+              //   2. LOWER cost — break ties between equal string counts.
+              //   3. DOD closer to 80% (ideal cycle-life sweet spot).
+              //   4. LARGER cap — simpler busbar/cable runs on tie.
+              combos.sort((a,b) =>
+                  a.qty - b.qty ||
+                  a.cost - b.cost ||
+                  Math.abs(a.eff - DOD_IDEAL) - Math.abs(b.eff - DOD_IDEAL) ||
+                  b.cap - a.cap
+              );
+              const win = combos[0];
+              selBat = win.opt; batSizeAh = win.cap; batQty = win.qty;
+              batEffDod = win.eff;
+              const dodPct = (win.eff * 100).toFixed(1);
+              const band   = win.eff <= DOD_IDEAL ? 'IDEAL' : 'TOLERABLE';
+              engineWarnings.push(`ℹ️ Battery: ${usableKwh.toFixed(2)}kWh usable need → ${batQty}× 48V ${batSizeAh}Ah = ${win.grossAh}Ah / ${(win.grossAh*V/1000).toFixed(2)}kWh gross @ ${dodPct}% DOD (${band}). Bank cost ₱${win.cost.toLocaleString()}.`);
+          } else {
+              // Even 16×300Ah at 90% DOD insufficient — split-bank required
+              selBat = pick(300) || pick(200) || batOpts[batOpts.length-1];
+              const fbAh = selBat.name.match(/(\d+)Ah/);
+              batSizeAh = fbAh ? parseInt(fbAh[1]) : 300;
+              batQty = Math.ceil(needAhMin / batSizeAh);
+              engineWarnings.push(`⚠️ Battery: ${usableKwh.toFixed(2)}kWh need exceeds BMS ${BMS_MAX_PARALLEL}-string capability at 90% DOD. Recommend split into multiple banks with separate BMS.`);
+          }
+      } else {
+          let validOpts = batOpts.filter(b => { const m = b.name.match(/(\d+)Ah/); return m && parseInt(m[1]) <= 200; });
+          if(!validOpts.length) validOpts = batOpts;
+          
+          let bestD = Infinity;
+          batQty = Infinity;
+          validOpts.forEach(b => {
+              const m = b.name.match(/(\d+)Ah/);
+              const s = m ? parseInt(m[1]) : 100;
+              const q = Math.ceil(needAhFinal / s);
+              const d = (q * s) - needAhFinal;
+              if (d >= 0 && (q < batQty || (q === batQty && d < bestD))) {
+                  batQty = q; batSizeAh = s; bestD = d; selBat = b;
+              }
+          });
+      }
+      autoBatPrice = selBat.price; autoBatTier = selBat.client; autoBatVal = selBat.price+'|'+selBat.name;
+  }
+
+  return true;
+}
+
+function applyAutoSizerSilent() {
+  const isGTI = document.getElementById('auto-sys-type').value === 'gridtie';
+  const sysTypeVal = isGTI && invVolts === 48
+    ? '🔌 Grid-Tied (On-Grid Only)'
+    : invVolts === 48
+      ? '⚡ Hybrid (On/Off-Grid + Battery)'
+      : '🔋 Off-Grid (Stand Alone)';
+  
+  document.getElementById('sys-type').value = sysTypeVal;
+  document.getElementById('sys-size').value = recSysKw;
+  
+  document.getElementById('qty-panels').value = recPanels;
+  document.getElementById('price-panels').value = autoPanelPrice;
+  document.getElementById('desc-panels').value = 'Auto-Sized 550W Panels';
+  document.getElementById('desc-panels').dataset.client = autoPanelTier;
+  
+  document.getElementById('qty-inverter').value = invQty;
+  document.getElementById('price-inverter').value = autoInvPrice;
+  document.getElementById('desc-inverter').value = invQty>1 ? `Auto-Sized ${invQty}x ${invSize}kW Inverter` : `Auto-Sized ${invSize}kW Inverter`;
+  document.getElementById('desc-inverter').dataset.client = invQty>1 ? `${invQty}x ${autoInvTier}` : autoInvTier;
+  
+  document.getElementById('qty-battery').value = batQty;
+  document.getElementById('price-battery').value = autoBatPrice;
+  document.getElementById('desc-battery').value = isGTI ? 'No Battery (Grid-Tied)' : `Auto-Sized ${invVolts}V ${batSizeAh}Ah Battery`;
+  document.getElementById('desc-battery').dataset.client = isGTI ? 'No Storage System' : autoBatTier;
+  
+  calcBOM();
+}
+
+function runAutoSizer() {
+  syncToQuotation(false);
+}
+
+// ================================================================
+// BOM CALCULATOR
+// ================================================================
+let bomTotal=0, rawGrandTotal=0;
+
+function calcBOM() {
+  const p=parseInt(document.getElementById('qty-panels').value)||0;
+  const kw=parseFloat(document.getElementById('sys-size').value)||0;
+  const iQty=parseInt(document.getElementById('qty-inverter').value)||1;
+  const b=parseInt(document.getElementById('qty-battery').value)||0;
+  const phase=parseInt(document.getElementById('sys-phase').value)||1;
+
+  if(p>0){
+    const rails=Math.ceil(p/2)*2;
+    const rawMount=(rails*getLivePrice("Aluminum Rail (pc)"))+(rails*3*getLivePrice("L-Foot / Roof Hook"))+
+      ((p>1?(p-1):0)*2*getLivePrice("Mid Clamp"))+(4*getLivePrice("End Clamp"))+
+      (Math.max(0,rails-2)*getLivePrice("Splice Kit"))+(2*getLivePrice("Grounding Lug"));
+    document.getElementById('price-mount').value=applyCeiling(rawMount);
+  }
+
+  if(kw>0){
+    const sInvKw=kw/iQty;
+    const pbox=sInvKw<=8?getLivePrice("Panel Box (Small)"):getLivePrice("Panel Box (Large)");
+    const dcBase=sInvKw>=20?8:sInvKw>=14?6:sInvKw>=10?4:sInvKw>=8?3:2;
+    const dcProt=dcBase*iQty;
+    const batCables=b===0?0:b>1?b+2:2;
+    const batBreakers=b===0?0:b>1?b+1:1;
+    const acBrk=phase===3?getLivePrice("AC Breaker (3P/4P)"):getLivePrice("AC Breaker (1P/2P)");
+    const rawBOS=(40*getLivePrice("PV Wire 6mm² (m)"))+(pbox*iQty)+(4*iQty*acBrk)+(dcProt*getLivePrice("DC Breaker"))+
+      (dcProt*getLivePrice("DC SPD"))+(iQty*getLivePrice("AC SPD"))+getLivePrice("ATS System")+
+      (batBreakers*getLivePrice("DC Breaker"))+(batCables*getLivePrice("Battery Cable Set"));
+    document.getElementById('price-electrical').value=applyCeiling(rawBOS);
+  }
+
+  if(kw>0){
+    const panelKw=(p*550)/1000;
+    document.getElementById('price-labor').value=Math.max(kw,panelKw)*7000;
+  }
+
+  bomTotal=0;
+  ['panels','inverter','battery','acc','mount','electrical','labor'].forEach(t=>{
+    const elQ=document.getElementById('qty-'+t);
+    const elP=document.getElementById('price-'+t);
+    if(elQ && elP) {
+        const q=parseFloat(elQ.value)||0;
+        const pr=parseFloat(elP.value)||0;
+        const ln=q*pr;
+        document.getElementById('total-'+t).textContent='₱'+ln.toLocaleString(undefined,{minimumFractionDigits:2});
+        bomTotal+=ln;
+    }
+  });
+
+  document.getElementById('sys-subtotal').value='₱'+bomTotal.toLocaleString(undefined,{minimumFractionDigits:2});
+  calcGrandTotal();
+}
+
+function calcGrandTotal() {
+  rawGrandTotal=bomTotal+(parseFloat(document.getElementById('sys-mob').value)||0)+(parseFloat(document.getElementById('sys-delivery').value)||0);
+  const anchor=rawGrandTotal===0?0:Math.ceil(rawGrandTotal/1000)*1000;
+  const disc=5000;
+  const final=anchor===0?0:anchor-disc;
+  document.getElementById('sys-anchor').value='₱'+anchor.toLocaleString(undefined,{minimumFractionDigits:2});
+  document.getElementById('sys-discount-val').value=`-₱${disc.toLocaleString()} (Waived)`;
+  document.getElementById('sys-grandtotal').value='₱'+final.toLocaleString(undefined,{minimumFractionDigits:2});
+}
+
+// ================================================================
+// ENGINEERING CALCULATORS
+// ================================================================
+function showRes(id,html){
+  const el=document.getElementById(id);
+  el.innerHTML=html;
+  el.classList.add('visible');
+}
+function getDOD(){ return parseFloat(document.getElementById('global-dod').value); }
+
+function calcRuntime(){
+  const v=parseFloat(document.getElementById('c1-v').value),ah=parseFloat(document.getElementById('c1-ah').value),w=parseFloat(document.getElementById('c1-w').value);
+  if(ah&&w){
+    const h=(ah*v*getDOD())/w;
+    showRes('res-runtime',`Runtime: <strong>${h.toFixed(1)} hours</strong><br><small style="opacity:0.7">${getDOD()*100}% DOD chemistry applied</small>`);
+  }
+}
+function calcBatReq(){
+  const v=parseFloat(document.getElementById('c2-v').value),w=parseFloat(document.getElementById('c2-w').value),h=parseFloat(document.getElementById('c2-h').value);
+  if(w&&h){
+    const ah=((w*h)/v)/getDOD();
+    showRes('res-batreq',`Required: <strong>${ah.toFixed(0)} Ah @ ${v}V</strong><br><small style="opacity:0.7">Factoring ${getDOD()*100}% DOD</small>`);
+  }
+}
+function calcPanels(){
+  const v=parseFloat(document.getElementById('c3-v').value),ah=parseFloat(document.getElementById('c3-ah').value),sun=parseFloat(document.getElementById('c3-sun').value);
+  if(ah&&sun){
+    const w=((ah*v)/sun)*1.2;
+    showRes('res-panels',`Recommended PV Array: <strong>${w.toFixed(0)}W</strong><br><small style="opacity:0.7">Includes 20% inefficiency buffer</small>`);
+  }
+}
+function calcBreaker(){
+  const v=parseFloat(document.getElementById('c4-v').value),w=parseFloat(document.getElementById('c4-w').value);
+  if(w){
+    const a=(w/v)*1.25;
+    showRes('res-breaker',`Recommended Breaker: <strong>${Math.ceil(a)}A</strong><br><small style="opacity:0.7">125% continuous load rule applied</small>`);
+  }
+}
+function generateDoc(type) {
+  // Guard
+  const rawGT = parseFloat(
+    (document.getElementById('sys-grandtotal').value || '0').replace(/[^0-9.-]/g, '')
+  );
+  if (!rawGT) return toast('Build BOM first — system total is ₱0.', 'error');
+
+  const p = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const sysKw   = document.getElementById('sys-size').value || '?';
+  const batQtyV = parseInt(document.getElementById('qty-battery').value) || 0;
+  const aQty    = parseInt(document.getElementById('qty-acc').value) || 0;
+  const iQty    = parseInt(document.getElementById('qty-inverter').value) || 1;
+  const panels  = parseInt(document.getElementById('qty-panels').value) || 0;
+  const phaseTxt = document.getElementById('sys-phase').options[document.getElementById('sys-phase').selectedIndex].text;
+
+  // Header
+  p('p-doc-title', type === 'client' ? 'PROJECT PROPOSAL' : 'INTERNAL JOB ORDER');
+  p('p-quote-ref', 'Quote Reference: ' + (document.getElementById('quoteRefBadge')
+      ? document.getElementById('quoteRefBadge').textContent.replace('REF: ','') : ''));
+
+  // Client info
+  p('p-cli-name',    document.getElementById('cli-name')?.value    || 'N/A');
+  p('p-cli-date',    document.getElementById('cli-date')?.value    || 'N/A');
+  p('p-cli-address', document.getElementById('cli-address')?.value || 'N/A');
+  p('p-system-size', sysKw + ' kW (' + phaseTxt.split(' ')[0] + ')');
+  p('p-sys-type',    document.getElementById('sys-type')?.value?.replace(/[⚡🔌🔋]/g,'').trim() || '');
+
+  // Investment
+  p('p-sys-anchor',         document.getElementById('sys-anchor')?.value       || '');
+  p('p-sys-discount-label', document.getElementById('sys-discount-label')?.value || 'Engineering System Design');
+  p('p-sys-discount-val-print', '(₱5,000) Waived');
+  p('p-sys-grandtotal',     document.getElementById('sys-grandtotal')?.value   || '');
+
+  // Internal notes
+  p('p-installer-name', document.getElementById('installer-name')?.value || 'N/A');
+  document.getElementById('p-sys-notes').textContent = document.getElementById('sys-notes')?.value || '';
+
+  if (type === 'client') {
+    document.body.className = 'print-client';
+
+    // Scope of work
+    const invClient = document.getElementById('desc-inverter')?.dataset?.client
+                   || document.getElementById('desc-inverter')?.value || '';
+    let cleanInv = invClient.replace(/^\d+x\s*/,'');
+    if (!cleanInv.includes(sysKw + 'kW')) cleanInv = sysKw + 'kW ' + cleanInv;
+    p('c-desc-panels',   `${sysKw} kW High-Efficiency PV Array`);
+    p('c-desc-inverter', cleanInv);
+    p('c-desc-mount',    'FDG Solar Visayas Engineered Aluminum Structural Mounting');
+    p('c-desc-electrical','Code-Compliant BOS, Protection Devices & Metering');
+    p('c-desc-labor',    'FDG Solar Visayas Engineering, Installation, Testing & Commissioning');
+
+    // Battery row
+    if (batQtyV === 0) {
+      document.getElementById('c-row-battery').style.display = 'none';
+    } else {
+      document.getElementById('c-row-battery').style.display = '';
+      let batDesc = document.getElementById('desc-battery')?.dataset?.client
+                 || document.getElementById('desc-battery')?.value || '';
+      batDesc = batDesc.replace(/^\d+x\s*/,'');
+      // Show TOTAL bank capacity (qty × per-pack Ah), not per-pack rating.
+      // E.g. 2× Elite 48V 300Ah → "Elite Series 48V 600Ah Storage System"
+      const totalAh = batQtyV * (batSizeAh || 0);
+      if (totalAh > 0) {
+        batDesc = batDesc.replace(/\b\d+\s*Ah\b/i, totalAh + 'Ah');
+        // If pattern not matched (custom desc), append safe fallback
+        if (!/\d+Ah/i.test(batDesc)) batDesc = `${batDesc.trim()} ${totalAh}Ah`;
+      }
+      p('c-desc-battery', batDesc);
+    }
+    // Accessories row
+    if (aQty > 0) {
+      document.getElementById('c-row-acc').style.display = '';
+      p('c-desc-acc', document.getElementById('desc-acc')?.dataset?.client
+                   || document.getElementById('desc-acc')?.value || '');
+    } else {
+      document.getElementById('c-row-acc').style.display = 'none';
+    }
+
+    // Pitch
+    const tier = invClient.includes('Elite') ? 'Elite'
+               : invClient.includes('Advanced') ? 'Advanced' : 'Essential';
+    const sysType = document.getElementById('sys-type')?.value || '';
+    const isHyb = sysType.includes('Hybrid');
+    const isOG  = sysType.includes('Off-Grid') || sysType.includes('Stand');
+    const isGT  = sysType.includes('Grid-Tied');
+    const pitches = {
+      Elite: `<h4>🌟 PREMIUM ENGINEERING. MAXIMUM YIELD.</h4>
+        <p>Your ${sysKw}kW FDG Solar Visayas system is engineered at the highest level — precision-designed for maximum energy output, zero compromise. Elite-grade inverter with real-time MPPT optimization, 24/7 cloud monitoring, and 6,000+ cycle battery storage.${isHyb?' Complete blackout protection with seamless automatic switchover — your home stays powered, always.':''}${isOG?' Fully autonomous — complete independence from the utility grid.':''}${isGT?' Maximum daytime offset with intelligent export management — zero-waste solar generation every day.':''} Built to last for years. This is a long-term energy asset.</p>`,
+      Advanced: `<h4>⚖️ PROVEN RELIABILITY. SMART INVESTMENT.</h4>
+        <p>Your ${sysKw}kW FDG Solar Visayas system delivers the ideal balance of performance, reliability, and financial return. Industry-standard components trusted by thousands of Philippine installations.${isHyb?' Hybrid architecture saves on every sunny day AND protects during brownouts and outages.':''}${isOG?' Off-grid independence — no more monthly bills, no more outage anxiety. Your power, your rules.':''}${isGT?' Smart grid-tied savings with proven technology — consistent daily bill reduction, year after year.':''}</p>`,
+      Essential: `<h4>🔋 CORE ENERGY SECURITY. EVERY PESO COUNTS.</h4>
+        <p>Your ${sysKw}kW FDG Solar Visayas system — your first step toward genuine energy freedom. Purpose-built for households and small businesses.${isHyb?' Backup power when needed most — keeps essentials running through grid interruptions.':''}${isOG?' Stable, dependable power fully independent from utility pricing.':''}${isGT?' Reduce your monthly electricity bill from Day 1.':''} Every FDG Solar Visayas installation follows the same professional Engineering.Procurement.Construction standard.</p>`
+    };
+    document.getElementById('p-client-pitch').innerHTML = pitches[tier] || pitches.Essential;
+
+    // ROI — cap at client's actual bill so oversized systems don't fake-inflate savings
+    const rate = autoRate || 12.56;
+    const anchor = rawGT;
+    const generatedKwh = parseFloat(sysKw) * 4.5 * 30;          // theoretical generation
+    const billCapKwh   = clientMonthlyKwh > 0 ? clientMonthlyKwh : generatedKwh;
+    const usefulKwh    = Math.min(generatedKwh, billCapKwh);    // can't save more than you spend
+    const ms = usefulKwh * rate;
+    p('p-roi-monthly', '₱' + ms.toLocaleString(undefined,{maximumFractionDigits:0}));
+    p('p-roi-yearly',  '₱' + (ms*12).toLocaleString(undefined,{maximumFractionDigits:0}));
+    p('p-roi-payback', anchor>0&&ms>0 ? (anchor/(ms*12)).toFixed(1)+' Years' : 'N/A');
+    p('p-roi-10yr',    '₱' + (ms*120).toLocaleString(undefined,{maximumFractionDigits:0}));
+
+  } else {
+    // INTERNAL JOB ORDER
+    document.body.className = 'print-internal';
+
+    const sInvKw = parseFloat(sysKw) / iQty;
+    const dcBase = sInvKw>=20?8 : sInvKw>=14?6 : sInvKw>=10?4 : sInvKw>=8?3 : 2;
+    const dcProt = dcBase * iQty;
+    const rails  = Math.ceil(panels/2)*2;
+    const batC   = batQtyV===0?0 : batQtyV>1?batQtyV+2:2;
+    const batBr  = batQtyV===0?0 : batQtyV>1?batQtyV+1:1;
+
+    // === Breaker Amperage Calculations (per system voltage, NEC 125% continuous rule) ===
+    const sysPhaseVal = parseInt(document.getElementById('sys-phase')?.value) || 1;
+    const V_AC = sysPhaseVal === 3 ? 400 : 230;          // PH grid: 230V 1ph / 400V 3ph
+    const V_DC_BAT = invVolts || 48;                      // battery bus voltage
+    const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;          // typical MPPT string voltage
+    const PF = 0.9;                                       // assumed power factor
+
+    // AC main per inverter: I = kW*1000 / (V * (√3 if 3ph) * PF)
+    const acDivisor = (sysPhaseVal === 3 ? 1.732 : 1) * V_AC * PF;
+    const acA_inv   = (sInvKw * 1000) / acDivisor;
+    const acBr      = nextBreaker(acA_inv * 1.25);
+    // DC battery per inverter: I = kW*1000 / V_DC (full-bank current)
+    const dcA_bat   = batQtyV > 0 ? (sInvKw * 1000) / V_DC_BAT : 0;
+    const dcBatMainBr = batQtyV > 0 ? nextBreaker(dcA_bat * 1.25) : 0;
+    // Per-string breaker (parallel banks): each string carries totalA / N share, ×1.25 NEC
+    const perStringA  = (batQtyV > 1) ? (dcA_bat / batQtyV) : 0;
+    const perStringBr = (batQtyV > 1) ? nextBreaker(perStringA * 1.25) : 0;
+    // Busbar pair (positive + negative) needed for clean termination on parallel >2 (3+ strings)
+    const needBusbar  = batQtyV > 2;
+    // DC PV array per string: assume 14A Isc (550W panel)
+    const dcA_pv    = 14;
+    const dcPvBr    = nextBreaker(dcA_pv * 1.25);
+    const phaseLbl  = sysPhaseVal === 3 ? '3P' : '2P';
+
+    const rows = [
+      ['PV Array',    document.getElementById('desc-panels')?.value, panels],
+      ['Inverter',    document.getElementById('desc-inverter')?.value, iQty],
+      ['Storage',     document.getElementById('desc-battery')?.value, batQtyV],
+      ['Accessories', document.getElementById('desc-acc')?.value, aQty],
+      ['Mounting', 'Aluminum Rails (2.1m)', rails],
+      ['Mounting', 'L-Feet / Roof Hooks w/ EPDM', rails*3],
+      ['Mounting', 'Mid Clamps', panels>1?(panels-1)*2:0],
+      ['Mounting', 'End Clamps', 4],
+      ['Mounting', 'Splice Kits', Math.max(0,rails-2)],
+      ['Mounting', 'Grounding Lugs', 2],
+      ['Grounding', 'Copper Grounding Rod 2.4M (5/8")', 1],
+      ['Grounding', 'Ground Clamp (for Cu rod)', 1],
+      ['Grounding', 'Bare Copper Wire #6 AWG (16mm²) — bonding', 10],
+      ['Grounding', 'Exothermic / Mechanical Connector', 2],
+      ['Electrical', 'PV Wire 6mm² (R/B)', 40],
+      ['Electrical', 'Panel Box', iQty],
+      ['Electrical', `AC Breakers ${V_AC}V ${phaseLbl} — ${acBr}A (Main/Line/Load/Gen) [calc ${acA_inv.toFixed(1)}A × 1.25]`, 4*iQty],
+      ['Electrical', `DC Breakers ${V_DC_PV}V — ${dcPvBr}A (PV Array, per string) [Isc ${dcA_pv}A × 1.25]`, dcProt],
+      ['Electrical', `DC Surge Protectors ${V_DC_PV}V (SPD)`, dcProt],
+      ['Electrical', `AC Surge Protector ${V_AC}V (SPD)`, iQty],
+      ['Electrical', `ATS System ${V_AC}V ${phaseLbl}`, 1],
+      // Battery DC protection — separate rows for per-string vs main (clarity for installer)
+      ['Battery DC', batQtyV > 1 ? `Per-String DC Breaker ${V_DC_BAT}V — ${perStringBr}A [calc ${perStringA.toFixed(1)}A × 1.25]` : '', batQtyV > 1 ? batQtyV : 0],
+      ['Battery DC', batQtyV > 0 ? `Main Battery DC Breaker ${V_DC_BAT}V — ${dcBatMainBr}A [calc ${dcA_bat.toFixed(1)}A × 1.25]` : '', batQtyV > 0 ? 1 : 0],
+      ['Battery DC', needBusbar ? `DC Terminal Busbar Pair (+/−) ${V_DC_BAT}V — ${dcBatMainBr}A rated [for parallel >2 strings]` : '', needBusbar ? 1 : 0],
+      ['Electrical', 'Battery Cable & Lug Sets', batC],
+      ['Services', document.getElementById('desc-labor')?.value || 'Labor', 1],
+    ];
+
+    let html = '<tr><th>Category</th><th>Item / Specification</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>';
+    rows.forEach(([cat,spec,qty]) => {
+      if (qty > 0) html += `<tr><td><strong>${cat}</strong></td><td>${spec||''}</td><td>${qty}</td><td></td><td></td></tr>`;
+    });
+    document.getElementById('p-bom-table').innerHTML = html;
+  }
+
+  window.print();
+  window.addEventListener('afterprint', () => { document.body.className = ''; }, { once: true });
+}
+
+function calcROI(){
+  const kw=parseFloat(document.getElementById('roi-size').value),sun=parseFloat(document.getElementById('roi-sun').value),rate=parseFloat(document.getElementById('roi-rate').value),cost=parseFloat(document.getElementById('roi-cost').value);
+  if(kw&&sun&&rate&&cost){
+    const daily=kw*sun;
+    const ms=(daily*30)*rate;
+    const pb=cost/(ms*12);
+    showRes('res-roi',`Daily Yield: <strong>${daily.toFixed(1)} kWh</strong><br>Monthly Savings: <strong>₱${ms.toLocaleString(undefined,{maximumFractionDigits:0})}</strong><br>Payback Period: <strong>${pb.toFixed(1)} Years</strong><br>10-Year Savings: <strong>₱${(ms*12*10).toLocaleString(undefined,{maximumFractionDigits:0})}</strong>`);
+  }
+}
+
+// ================================================================
+// QUOTE HISTORY
+// ================================================================
+function loadQuoteHistory() {
+  try { return JSON.parse(localStorage.getItem('fdgQuoteHistory')) || []; }
+  catch(e) { return []; }
+}
+function saveQuoteHistory(arr) {
+  localStorage.setItem('fdgQuoteHistory', JSON.stringify(arr));
+}
+
+function saveQuote() {
+  if(rawGrandTotal === 0) return toast('Build BOM first before saving.', 'error');
+  const ref = currentQuoteRef;
+  const client = document.getElementById('cli-name').value || 'Unnamed Client';
+  const date = document.getElementById('cli-date').value || new Date().toISOString().slice(0,10);
+  const sysKw = document.getElementById('sys-size').value || '?';
+  const sysType = document.getElementById('sys-type').value.replace(/[⚡🔌🔋]/g,'').trim();
+  const amount = document.getElementById('sys-grandtotal').value;
+  const amountRaw = rawGrandTotal;
+
+  const history = loadQuoteHistory();
+  if(history.find(q => q.ref === ref)) {
+    toast('This quote reference is already saved.', 'warn'); return;
+  }
+  history.unshift({ ref, client, date, sysKw, sysType, amount, amountRaw, status: 'pending', saved: new Date().toISOString() });
+  saveQuoteHistory(history);
+  currentQuoteRef = generateQuoteRef();
+  document.getElementById('quoteRefBadge').textContent = 'REF: ' + currentQuoteRef;
+  renderHistoryTable();
+  toast(`Quote ${ref} saved for ${client}`, 'success');
+}
+
+function renderHistoryTable() {
+  const history = loadQuoteHistory();
+  const tbody = document.getElementById('history-tbody');
+  if(!tbody) return;
+
+  const successful = history.filter(q => q.status === 'won').length;
+  const pending = history.filter(q => q.status === 'pending').length;
+  const revenue = history.filter(q => q.status === 'won').reduce((s,q) => s + (q.amountRaw||0), 0);
+
+  document.getElementById('hstat-total').textContent = history.length;
+  document.getElementById('hstat-success').textContent = successful;
+  document.getElementById('hstat-pending').textContent = pending;
+  document.getElementById('hstat-revenue').textContent = '₱' + revenue.toLocaleString(undefined,{maximumFractionDigits:0});
+
+  if(history.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;">No saved quotes yet. Build a quotation and click "Save to History".</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = history.map((q, idx) => {
+    const sc = q.status==='won'?'var(--green)':q.status==='lost'?'var(--red)':'var(--accent)';
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);">${q.ref}</td>
+      <td style="font-weight:600;">${q.client}</td>
+      <td style="color:var(--text2);font-size:12px;">${q.date}</td>
+      <td style="font-size:12px;">${q.sysKw}kW ${q.sysType}</td>
+      <td style="font-family:var(--mono);font-weight:700;color:var(--green);">${q.amount}</td>
+      <td>
+        <select onchange="updateQuoteStatus(${idx}, this.value)" style="padding:5px 8px;font-size:11px;border-radius:4px;background:var(--bg2);color:${sc};border-color:${sc};">
+          <option value="pending" ${q.status==='pending'?'selected':''}>⏳ Pending</option>
+          <option value="won" ${q.status==='won'?'selected':''}>✅ Won</option>
+          <option value="lost" ${q.status==='lost'?'selected':''}>❌ Lost</option>
+        </select>
+      </td>
+      <td><button class="btn btn-sm btn-red" onclick="deleteQuote(${idx})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateQuoteStatus(idx, status) {
+  const history = loadQuoteHistory();
+  history[idx].status = status;
+  saveQuoteHistory(history);
+  renderHistoryTable();
+  const labels = { won:'Won ✅', pending:'Pending ⏳', lost:'Lost ❌' };
+  toast(`Quote marked as ${labels[status]||status}`, 'info');
+}
+
+async function deleteQuote(idx) {
+  const history = loadQuoteHistory();
+  const q = history[idx];
+  const ok = await showConfirm('Delete Quote', `Delete ${q.ref} for "${q.client}"? Cannot be undone.`);
+  if(ok) {
+    history.splice(idx, 1);
+    saveQuoteHistory(history);
+    renderHistoryTable();
+    toast('Quote deleted', 'warn');
+  }
+}
+
+async function clearAllTrials() {
+  const history = loadQuoteHistory();
+  const trials = history.filter(q => q.status !== 'won');
+  if(trials.length === 0) return toast('No pending/lost quotes to clear.', 'info');
+  const ok = await showConfirm('Clear Trials & Lost', `Remove all ${trials.length} pending/lost quotes? Won quotes are kept.`);
+  if(ok) {
+    saveQuoteHistory(history.filter(q => q.status === 'won'));
+    renderHistoryTable();
+    toast(`${trials.length} quotes cleared.`, 'success');
+  }
+}
+</script>
 </body>
 </html>
