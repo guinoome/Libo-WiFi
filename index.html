@@ -4,6 +4,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FDG Solar Visayas EPC | Pro Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
 <link href="./FDG Solar Claude_files/css2" rel="stylesheet">
@@ -223,6 +224,57 @@ html, body {
 .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 @media(max-width:900px) { .g2,.g3,.g4 { grid-template-columns: 1fr; } }
+
+/* === MOBILE RESPONSIVE === */
+@media(max-width:768px) {
+  .app { flex-direction: column; height: auto; overflow: visible; }
+  .sidebar {
+    position: fixed; top: 0; left: -300px; width: 260px; height: 100vh;
+    z-index: 200; transition: left 0.25s ease; overflow-y: auto;
+  }
+  .sidebar.open { left: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+  .main { padding: 14px 12px 80px; }
+  .mobile-menu-toggle {
+    display: flex !important; position: fixed; top: 12px; right: 12px;
+    z-index: 201; background: #1e293b; color: #fff;
+    width: 44px; height: 44px; border-radius: 8px;
+    border: 0; align-items: center; justify-content: center;
+    font-size: 22px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .mobile-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 199;
+  }
+  .mobile-backdrop.show { display: block; }
+  .page-title { font-size: 20px !important; }
+  .page-sub { font-size: 11px; }
+  .card { padding: 12px; }
+  .card-header { flex-wrap: wrap; gap: 8px; }
+  .btn-group { flex-direction: column; gap: 8px; }
+  .btn-group .btn { width: 100% !important; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  /* Tables: horizontal scroll */
+  .data-table, table.p-table, #inv-table-wrap, #db-table { font-size: 11px; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Forms */
+  .fg input, .fg select, .fg textarea { font-size: 16px !important; /* prevents iOS zoom */ }
+  .quote-row { grid-template-columns: 1fr !important; }
+  /* Pipeline Kanban: stack columns vertically */
+  #pl-kanban-container { flex-direction: column; }
+  .pl-column { min-width: auto; }
+  /* Pipeline tabs */
+  #pl-view-table .card-header { flex-direction: column; align-items: stretch; }
+  /* BOM grid */
+  .bom-grid { grid-template-columns: 1fr !important; }
+  /* Quote summary box */
+  .quote-summary { padding: 12px !important; }
+  /* Modal */
+  .pl-modal { padding: 14px; }
+  .pl-grid2 { grid-template-columns: 1fr; }
+  /* Toast */
+  .toast-container { left: 10px !important; right: 10px !important; max-width: none !important; }
+}
+.mobile-menu-toggle { display: none; }
 
 /* ── FORMS ── */
 .fg { margin-bottom: 14px; }
@@ -845,6 +897,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- Mobile hamburger toggle (only visible on phone) -->
+<button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('mobileBackdrop').classList.toggle('show');" aria-label="Toggle menu">☰</button>
+<div class="mobile-backdrop" id="mobileBackdrop" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('show');"></div>
+
 <div class="modal-overlay" id="confirmModal">
   <div class="modal">
     <h3 id="confirmTitle">Delete Hardware</h3>
@@ -862,6 +918,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.0</div>
     </div>
     <div class="nav">
       <div class="nav-item" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -942,6 +999,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             </div>
             <div class="fg"><label>System Capacity (kW)</label>
               <input type="number" id="sys-size" placeholder="E.g., 5" value="5" oninput="calcBOM()">
+            </div>
+            <div class="fg"><label>MPPT Count (Override) <span style="color:var(--text3);font-weight:400;font-size:10px;">— blank = auto (1 per 7 panels)</span></label>
+              <input type="number" id="sys-mppt-override" placeholder="Auto" min="1" max="20" oninput="calcBOM()">
             </div>
             <div class="fg" style="margin-bottom:0;"><label>Internal Notes (Hidden from Client)</label>
               <textarea id="sys-notes" placeholder="Roof angle notes, wire run length, etc."></textarea>
@@ -1046,8 +1106,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <button class="btn btn-green" onclick="generateDoc(&#39;client&#39;)">📄 Print Client Proposal</button>
         <button class="btn btn-slate" onclick="generateDoc(&#39;internal&#39;)">🔒 Print Internal Job Order</button>
         <button class="btn btn-blue" style="background:#2563eb;color:#fff;" onclick="openSLD()">⚡ Single-Line Diagram</button>
+        <button class="btn" style="background:#0891b2;color:#fff;" onclick="openSLDPhotoLibrary()">📷 SLD Photo Library</button>
         <button class="btn" style="background:#7c3aed;color:#fff;" onclick="generatePDFQuote()">📑 PDF Quote (Full)</button>
         <button class="btn" style="background:#059669;color:#fff;" onclick="openTurnoverForm()">📋 Turnover & Warranty Form</button>
+        <button class="btn" style="background:#1877f2;color:#fff;" onclick="generateMessengerCard()">📱 Share Card (Messenger)</button>
         <button class="btn btn-amber" style="width:auto;padding:10px 18px;" onclick="saveQuote()">💾 Save to History</button>
       </div>
     </div>
@@ -1910,6 +1972,7 @@ const defaultDB = {
     {price:650,name:"DC SPD",client:"System Base Pricing"},
     {price:650,name:"AC SPD",client:"System Base Pricing"},
     {price:1800,name:"ATS System",client:"System Base Pricing"},
+    {price:2200,name:"Islanding Relay",client:"System Base Pricing"},
     {price:1200,name:"Battery Cable Set",client:"System Base Pricing"}
   ]
 };
@@ -2111,11 +2174,44 @@ window.onload = function() {
 // ================================================================
 // NAVIGATION
 // ================================================================
+// ============================================================
+// PASSWORD GATE — protects print actions + restricted views
+// Password unlocks for current session only (sessionStorage)
+// ============================================================
+const FDG_PASSWORD = 'Lourds';
+const GATED_VIEWS = ['view-battery', 'view-history'];
+
+function isUnlocked() {
+  return sessionStorage.getItem('fdgUnlocked') === '1';
+}
+
+function requirePassword(action) {
+  if (isUnlocked()) return true;
+  const entered = prompt(`🔒 Password required to ${action || 'continue'}:`);
+  if (entered === null) return false;  // user cancelled
+  if (entered === FDG_PASSWORD) {
+    sessionStorage.setItem('fdgUnlocked', '1');
+    toast('🔓 Unlocked for this session', 'success');
+    return true;
+  }
+  toast('❌ Wrong password', 'error');
+  return false;
+}
+
 function switchView(viewId, el) {
+  // Gate restricted views
+  if (GATED_VIEWS.includes(viewId) && !requirePassword('access ' + (viewId === 'view-battery' ? 'Hardware Database' : 'Quote History'))) {
+    return;
+  }
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(viewId).classList.add('active');
   el.classList.add('active');
+  // Mobile: close sidebar after selection
+  if (window.innerWidth <= 768) {
+    document.querySelector('.sidebar')?.classList.remove('open');
+    document.getElementById('mobileBackdrop')?.classList.remove('show');
+  }
   // Pipeline auto-render on first show
   if (viewId === 'view-pipeline') {
     switchPipelineTab('kanban');
@@ -2939,13 +3035,15 @@ function calcBOM() {
   if(kw>0){
     const sInvKw=kw/iQty;
     const pbox=sInvKw<=8?getLivePrice("Panel Box (Small)"):getLivePrice("Panel Box (Large)");
-    const dcBase=sInvKw>=20?8:sInvKw>=14?6:sInvKw>=10?4:sInvKw>=8?3:2;
-    const dcProt=dcBase*iQty;
+    // DC protections: 1 breaker + 1 SPD per PV array (mpptCount)
+    const autoDcProt = p <= 7 ? 1 : Math.ceil(p / 7);
+    const manualMpptB = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
+    const dcProt = (manualMpptB > 0 && manualMpptB <= p) ? manualMpptB : autoDcProt;
     const batCables=b===0?0:b>1?b+2:2;
     const batBreakers=b===0?0:b>1?b+1:1;
     const acBrk=phase===3?getLivePrice("AC Breaker (3P/4P)"):getLivePrice("AC Breaker (1P/2P)");
     const rawBOS=(40*getLivePrice("PV Wire 6mm² (m)"))+(pbox*iQty)+(4*iQty*acBrk)+(dcProt*getLivePrice("DC Breaker"))+
-      (dcProt*getLivePrice("DC SPD"))+(iQty*getLivePrice("AC SPD"))+getLivePrice("ATS System")+
+      (dcProt*getLivePrice("DC SPD"))+(iQty*getLivePrice("AC SPD"))+getLivePrice("ATS System")+getLivePrice("Islanding Relay")+
       (batBreakers*getLivePrice("DC Breaker"))+(batCables*getLivePrice("Battery Cable Set"));
     document.getElementById('price-electrical').value=applyCeiling(rawBOS);
   }
@@ -3021,6 +3119,8 @@ function calcBreaker(){
   }
 }
 function generateDoc(type) {
+  // Password gate
+  if (!requirePassword('print ' + (type === 'client' ? 'Client Proposal' : 'Internal Job Order'))) return;
   // Guard
   const rawGT = parseFloat(
     (document.getElementById('sys-grandtotal').value || '0').replace(/[^0-9.-]/g, '')
@@ -3132,8 +3232,10 @@ function generateDoc(type) {
     document.body.className = 'print-internal';
 
     const sInvKw = parseFloat(sysKw) / iQty;
-    const dcBase = sInvKw>=20?8 : sInvKw>=14?6 : sInvKw>=10?4 : sInvKw>=8?3 : 2;
-    const dcProt = dcBase * iQty;
+    // DC protections per ARRAY (matches mpptCount — 1 breaker + 1 SPD per MPPT string)
+    const autoDcProtJO = panels <= 7 ? 1 : Math.ceil(panels / 7);
+    const manualMpptJO = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
+    const dcProt = (manualMpptJO > 0 && manualMpptJO <= panels) ? manualMpptJO : autoDcProtJO;
     const rails  = Math.ceil(panels/2)*2;
     const batC   = batQtyV===0?0 : batQtyV>1?batQtyV+2:2;
     const batBr  = batQtyV===0?0 : batQtyV>1?batQtyV+1:1;
@@ -3193,6 +3295,7 @@ function generateDoc(type) {
       ['Electrical', `DC Surge Protectors ${V_DC_PV}V (SPD)`, dcProt],
       ['Electrical', `AC Surge Protector ${V_AC}V (SPD)`, iQty],
       ['Electrical', `ATS System ${V_AC}V ${phaseLbl}`, 1],
+      ['Electrical', `Islanding / Anti-Islanding Relay ${V_AC}V ${phaseLbl} (V/f monitoring, IEEE 1547 / PEC compliance)`, 1],
       // Battery DC protection — separate rows for per-string vs main (clarity for installer)
       ['Battery DC', batQtyV > 1 ? `Per-String DC Breaker ${V_DC_BAT}V — ${perStringBr}A [calc ${perStringA.toFixed(1)}A × 1.25]` : '', batQtyV > 1 ? batQtyV : 0],
       ['Battery DC', batQtyV > 0 ? `Main Battery DC Breaker ${V_DC_BAT}V — ${dcBatMainBr}A [calc ${dcA_bat.toFixed(1)}A × 1.25]` : '', batQtyV > 0 ? 1 : 0],
@@ -3218,6 +3321,7 @@ function generateDoc(type) {
 // busbar, surge protection, equipment schedule, and engineering notes.
 
 function openSLD() {
+  if (!requirePassword('open Single-Line Diagram')) return;
   const cfg = readSLDConfig();
   const html = buildSLDPage(cfg);
   const w = window.open('', '_blank', 'width=1100,height=1500');
@@ -3251,7 +3355,10 @@ function readSLDConfig() {
   // ≤7 panels → 1 MPPT × 1 string
   // >7 panels → add another MPPT for each chunk of 7
   // Distribute equally; remainder goes to LAST MPPT
-  const mpptCount = panels <= 7 ? 1 : Math.ceil(panels / 7);
+  // Manual override if user set sys-mppt-override; else auto-compute
+  const autoMppt = panels <= 7 ? 1 : Math.ceil(panels / 7);
+  const manualMppt = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
+  const mpptCount = (manualMppt > 0 && manualMppt <= panels) ? manualMppt : autoMppt;
   const basePerMppt = mpptCount > 0 ? Math.floor(panels / mpptCount) : 0;
   const remainder   = panels - basePerMppt * mpptCount;
   // Each MPPT gets basePerMppt; the LAST MPPT absorbs the remainder
@@ -3286,10 +3393,10 @@ function readSLDConfig() {
     perStringA: perStringA.toFixed(1), perStringBr,
     dcPvA, dcPvBr,
     needBusbar,
-    clientName: document.getElementById('client-name')?.value || 'Client',
+    clientName: document.getElementById('cli-name')?.value || 'Client',
     projDate: new Date().toLocaleDateString('en-PH', {year:'numeric',month:'short',day:'numeric'}),
     revision: 'R1.0',
-    designer: 'FDG Solar Engineering'
+    designer: 'FDG Solar Visayas Engineering'
   };
 }
 
@@ -3893,453 +4000,706 @@ function callout(x, y, num, fill='#dc2626') {
   </g>`;
 }
 
+// ===== SLD PHOTO LIBRARY (localStorage) =====
+const SLD_PHOTOS_KEY = 'fdgSLDPhotos_v1';
+function loadSLDPhotos() {
+  try { return JSON.parse(localStorage.getItem(SLD_PHOTOS_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveSLDPhotos(obj) {
+  try { localStorage.setItem(SLD_PHOTOS_KEY, JSON.stringify(obj)); } catch(e) {
+    toast('Storage full — JSON photos take space. Use smaller images.', 'error');
+  }
+}
+
+// Categories matching system components
+const SLD_PHOTO_SLOTS = [
+  { id: 'pv',       label: 'PV Panel / Array',       desc: 'Roof panels or close-up of one panel'      },
+  { id: 'inverter', label: 'Inverter',                desc: 'Wall-mounted hybrid/grid-tie inverter'     },
+  { id: 'battery',  label: 'Battery Cabinet',         desc: 'Floor-standing battery or wall-mount'      },
+  { id: 'panel',    label: 'Distribution Panel',      desc: 'Closed or open panel box, exterior'        },
+  { id: 'interior', label: 'Panel Interior',          desc: 'Inside view: breakers, ATS, busbars'       },
+  { id: 'meter',    label: 'Utility Meter',           desc: 'kWh meter on wall, with or without seal'   },
+  { id: 'ats',      label: 'ATS / Transfer Switch',   desc: 'Automatic transfer switch detail'          },
+  { id: 'conduit',  label: 'Conduit / Wiring',        desc: 'DC/AC conduit run, junction box'           },
+];
+
 function buildSLDPage(c) {
-  const W = 1400, H = 2050;
-  const W_RED='#dc2626', W_BLACK='#1f2937', W_GREEN='#16a34a', W_PINK='#db2777';
-  const stringPalette = ['#2563eb','#eab308','#9333ea','#0891b2','#f97316','#84cc16'];
+  // Photo-composite SLD: pulls user's uploaded equipment photos from localStorage,
+  // arranges them with numbered callouts + connection diagram overlay.
+  const photos = loadSLDPhotos();
+  const hasAnyPhoto = Object.values(photos).some(p => p && p.src);
 
-  // === ZONES (clear lanes, generous spacing) ===
-  const TITLE_H = 110;
-  const PV_TOP = 150, PV_BOX_H = 95;
-  const SPD_TOP = 280;
-  const INV_TOP = 480, INV_W = 280, INV_H = 320;
-  const INV_LEFT = (W - INV_W) / 2;
-  const RAIL_X = W - 130;
-  const BAT_TOP = 970, BAT_LEFT = 80;
-  const ATS_TOP = 1280;
-  const LOAD_TOP = 1440;
-  const EBAR_Y = 1620;
-  const LEGEND_TOP = 1670;
+  // === HEADER ===
+  const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : 'FDGS-' + Date.now();
+  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
 
-  // === DEFS (gradients, patterns, filters for realism) ===
-  const defs = `<defs>
-    <!-- Drop shadow -->
-    <filter id="dropshadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-      <feOffset dx="2" dy="2" result="offsetblur"/>
-      <feFlood flood-color="#000" flood-opacity="0.25"/>
-      <feComposite in2="offsetblur" operator="in"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <!-- LED glow -->
-    <filter id="ledGlow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="2.5"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <!-- PV panel gradient (deep blue cells) -->
-    <linearGradient id="pvGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3b82f6"/>
-      <stop offset="50%" stop-color="#1e40af"/>
-      <stop offset="100%" stop-color="#1e3a8a"/>
-    </linearGradient>
-    <!-- Inverter front face (light gray with subtle gradient) -->
-    <linearGradient id="invFace" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="40%" stop-color="#e2e8f0"/>
-      <stop offset="100%" stop-color="#cbd5e1"/>
-    </linearGradient>
-    <!-- Brand strip (dark navy) -->
-    <linearGradient id="brandStrip" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-    <!-- LCD glass reflection -->
-    <linearGradient id="lcdGloss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <!-- Ventilation grille pattern -->
-    <pattern id="ventPattern" x="0" y="0" width="6" height="22" patternUnits="userSpaceOnUse">
-      <rect width="6" height="22" fill="#0f172a"/>
-      <line x1="3" y1="2" x2="3" y2="20" stroke="#475569" stroke-width="0.8"/>
-    </pattern>
-    <!-- Battery cabinet metal -->
-    <linearGradient id="cabinetMetal" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#e2e8f0"/>
-      <stop offset="50%" stop-color="#f1f5f9"/>
-      <stop offset="100%" stop-color="#cbd5e1"/>
-    </linearGradient>
-    <!-- Battery module faceplate -->
-    <linearGradient id="modulePlate" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#475569"/>
-      <stop offset="100%" stop-color="#334155"/>
-    </linearGradient>
-    <!-- MCB body (white plastic) -->
-    <linearGradient id="mcbBody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff"/>
-      <stop offset="100%" stop-color="#e5e7eb"/>
-    </linearGradient>
-    <!-- MCCB body (gray industrial) -->
-    <linearGradient id="mccbBody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#e5e7eb"/>
-      <stop offset="100%" stop-color="#9ca3af"/>
-    </linearGradient>
-    <!-- SPD body (yellow) -->
-    <linearGradient id="spdBody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fef3c7"/>
-      <stop offset="100%" stop-color="#fde68a"/>
-    </linearGradient>
-    <!-- Meter face -->
-    <radialGradient id="meterFace" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#f1f5f9"/>
-      <stop offset="80%" stop-color="#fff"/>
-      <stop offset="100%" stop-color="#cbd5e1"/>
-    </radialGradient>
-    <!-- House materials -->
-    <linearGradient id="roofGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#dc2626"/>
-      <stop offset="100%" stop-color="#7f1d1d"/>
-    </linearGradient>
-    <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fef3c7"/>
-      <stop offset="100%" stop-color="#fde68a"/>
-    </linearGradient>
-    <linearGradient id="doorGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#92400e"/>
-      <stop offset="100%" stop-color="#451a03"/>
-    </linearGradient>
-    <linearGradient id="windowGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#dbeafe"/>
-      <stop offset="50%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#1e3a8a"/>
-    </linearGradient>
-    <linearGradient id="ctMetal" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#e5e7eb"/>
-      <stop offset="100%" stop-color="#9ca3af"/>
-    </linearGradient>
-    <!-- Earth hatch pattern -->
-    <pattern id="earthHatch" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
-      <line x1="0" y1="6" x2="6" y2="0" stroke="#16a34a" stroke-width="1"/>
-    </pattern>
-  </defs>`;
+  // === BUILD LAYOUT ===
+  // Page 1: Photo gallery with callouts (1 photo per slot, numbered)
+  // Page 2: Connection schematic (text-based logical flow)
 
-  // === TITLE BLOCK ===
-  const titleSvg = `
-    <rect x="0" y="0" width="${W}" height="${TITLE_H}" fill="url(#brandStrip)"/>
-    <rect x="0" y="${TITLE_H-4}" width="${W}" height="4" fill="#dc2626"/>
-    <text x="40" y="42" fill="#fff" font="bold 26px sans-serif" letter-spacing="3">SINGLE-LINE DIAGRAM</text>
-    <text x="40" y="68" fill="#fbbf24" font="600 14px sans-serif">${c.clientName} · ${c.sysKw} kWp ${c.invType}</text>
-    <text x="40" y="88" fill="#cbd5e1" font="11px sans-serif">${c.batQ>0?`${c.batQ}× ${c.V_DC_BAT}V ${c.batSizeAh}Ah · `:''}${c.phase}-Phase ${c.V_AC}V · ${c.mpptCount} MPPT · ${c.panels} panels @ ${c.panelW}Wp</text>
-    <g transform="translate(${W-310}, 12)">
-      <rect x="0" y="0" width="290" height="86" fill="rgba(255,255,255,0.06)" stroke="#475569" stroke-width="1"/>
-      <line x1="0" y1="22" x2="290" y2="22" stroke="#475569"/>
-      <line x1="0" y1="56" x2="290" y2="56" stroke="#475569"/>
-      <line x1="96" y1="0" x2="96" y2="86" stroke="#475569"/>
-      <line x1="193" y1="0" x2="193" y2="86" stroke="#475569"/>
-      <text x="48" y="14" text-anchor="middle" fill="#94a3b8" font="9px sans-serif" letter-spacing="1">DESIGNED BY</text>
-      <text x="145" y="14" text-anchor="middle" fill="#94a3b8" font="9px sans-serif" letter-spacing="1">DATE</text>
-      <text x="241" y="14" text-anchor="middle" fill="#94a3b8" font="9px sans-serif" letter-spacing="1">REV</text>
-      <text x="48" y="44" text-anchor="middle" fill="#fff" font="bold 11px monospace">${c.designer.split(' ').slice(0,2).join(' ')}</text>
-      <text x="145" y="44" text-anchor="middle" fill="#fff" font="bold 11px monospace">${c.projDate}</text>
-      <text x="241" y="44" text-anchor="middle" fill="#fff" font="bold 11px monospace">${c.revision}</text>
-      <text x="48" y="72" text-anchor="middle" fill="#94a3b8" font="9px sans-serif">SHEET</text>
-      <text x="145" y="72" text-anchor="middle" fill="#94a3b8" font="9px sans-serif">SCALE</text>
-      <text x="241" y="72" text-anchor="middle" fill="#94a3b8" font="9px sans-serif">SIZE</text>
-      <text x="48" y="82" text-anchor="middle" fill="#fff" font="bold 10px monospace">1/1</text>
-      <text x="145" y="82" text-anchor="middle" fill="#fff" font="bold 10px monospace">NTS</text>
-      <text x="241" y="82" text-anchor="middle" fill="#fff" font="bold 10px monospace">A3-P</text>
-    </g>`;
+  let photoCards = '';
+  let calloutNum = 1;
+  const usedSlots = [];
 
-  // === PV ARRAY (left half) ===
-  let pvSvg = iconSun(70, 195, 24);
-  let dcWires = '';
-  const pvAreaW = INV_LEFT + INV_W - 100;
-  const stringSpacing = pvAreaW / Math.max(c.mpptCount, 1);
-  const pvStartX = 100 + (stringSpacing - 100) / 2;
-
-  c.panelsByMppt.forEach((pcs, idx) => {
-    const color = stringPalette[idx % stringPalette.length];
-    const x = pvStartX + idx * stringSpacing;
-    const cx = x + 50;
-    pvSvg += `
-      <text x="${cx}" y="${PV_TOP-58}" text-anchor="middle" fill="#0f172a" font="bold 12px sans-serif">${pcs * c.panelW}W</text>
-      <text x="${cx}" y="${PV_TOP-42}" text-anchor="middle" fill="#374151" font="10px sans-serif">MPPT${idx+1} · STRING ${idx+1}</text>
-      <g filter="url(#dropshadow)">
-        <rect x="${x}" y="${PV_TOP}" width="100" height="${PV_BOX_H}" rx="3" fill="url(#pvGrad)" stroke="#0f172a" stroke-width="1.8"/>
-        <!-- Cell grid -->
-        ${[0,1,2,3].map(r => `<line x1="${x}" y1="${PV_TOP+(r+1)*PV_BOX_H/5}" x2="${x+100}" y2="${PV_TOP+(r+1)*PV_BOX_H/5}" stroke="#0f172a" stroke-width="0.4" opacity="0.7"/>`).join('')}
-        ${[0,1,2,3].map(d => `<line x1="${x+(d+1)*20}" y1="${PV_TOP}" x2="${x+(d+1)*20}" y2="${PV_TOP+PV_BOX_H}" stroke="#0f172a" stroke-width="0.4" opacity="0.7"/>`).join('')}
-        <!-- Junction box at bottom -->
-        <rect x="${x+30}" y="${PV_TOP+PV_BOX_H-12}" width="40" height="10" rx="2" fill="#1e293b"/>
-        <!-- Glass reflection -->
-        <polygon points="${x+5},${PV_TOP+5} ${x+30},${PV_TOP+5} ${x+10},${PV_TOP+20}" fill="#fff" opacity="0.15"/>
-      </g>
-      <text x="${cx}" y="${PV_TOP+PV_BOX_H+18}" text-anchor="middle" fill="#0f172a" font="bold 11px sans-serif">${pcs}× ${c.panelW}Wp</text>
-      <text x="${cx}" y="${PV_TOP+PV_BOX_H+32}" text-anchor="middle" fill="#475569" font="9px sans-serif">Solar Panel</text>
-      <!-- Wires DOWN to SPD -->
-      <line x1="${cx-15}" y1="${PV_TOP+PV_BOX_H+8}" x2="${cx-15}" y2="${SPD_TOP}" stroke="${color}" stroke-width="2.5"/>
-      <line x1="${cx+15}" y1="${PV_TOP+PV_BOX_H+8}" x2="${cx+15}" y2="${SPD_TOP}" stroke="${color}" stroke-width="2.5" stroke-dasharray="4,3"/>
-      <text x="${cx-22}" y="${PV_TOP+PV_BOX_H+22}" font="bold 8px sans-serif" fill="${color}">+</text>
-      <text x="${cx+18}" y="${PV_TOP+PV_BOX_H+22}" font="bold 8px sans-serif" fill="${color}">−</text>
-      <!-- Per-string SPD -->
-      ${realSPD(cx-40, SPD_TOP, c.dcPvBr, `SPD ${idx+1}`)}
-      <!-- SPD ground -->
-      <line x1="${cx-40}" y1="${SPD_TOP+85}" x2="${cx-65}" y2="${SPD_TOP+85}" stroke="${W_GREEN}" stroke-width="1.5"/>
-      <line x1="${cx-65}" y1="${SPD_TOP+85}" x2="${cx-65}" y2="${EBAR_Y}" stroke="${W_GREEN}" stroke-width="1.5"/>`;
+  SLD_PHOTO_SLOTS.forEach(slot => {
+    const p = photos[slot.id];
+    if (!p || !p.src) return;
+    usedSlots.push({...slot, num: calloutNum, photo: p});
+    photoCards += `
+      <div class="photo-card">
+        <div class="photo-num">${calloutNum}</div>
+        <img src="${p.src}" alt="${slot.label}"/>
+        <div class="photo-caption">
+          <strong>${slot.label}</strong>
+          ${p.tag ? `<div class="photo-tag">${escapeHtml(p.tag)}</div>` : ''}
+          <div class="photo-spec">${slot.desc}</div>
+        </div>
+      </div>`;
+    calloutNum++;
   });
 
-  // PV combiner: collect strings, MCB, route to inverter PV port
-  const collectorY = SPD_TOP + 110;
-  const pvCx = c.panelsByMppt.map((_, idx) => pvStartX + idx * stringSpacing + 50);
-  pvCx.forEach((cx, idx) => {
-    const color = stringPalette[idx % stringPalette.length];
-    dcWires += `<line x1="${cx}" y1="${SPD_TOP+90}" x2="${cx}" y2="${collectorY}" stroke="${color}" stroke-width="2.5"/>`;
-  });
-  dcWires += `<line x1="${pvCx[0]}" y1="${collectorY}" x2="${pvCx[pvCx.length-1]}" y2="${collectorY}" stroke="${W_RED}" stroke-width="3"/>`;
-  // PV combiner MCB ①
-  const pvMcbX = INV_LEFT + 30 - 23;
-  const pvMcbY = collectorY + 10;
-  dcWires += `<line x1="${INV_LEFT+30}" y1="${collectorY}" x2="${INV_LEFT+30}" y2="${pvMcbY}" stroke="${W_RED}" stroke-width="3"/>`;
-  dcWires += realMCB(pvMcbX, pvMcbY, c.dcPvBr*c.mpptCount, '', 2, '#dc2626');
-  dcWires += callout(INV_LEFT+30+45, pvMcbY+30, '①');
-  dcWires += `<line x1="${INV_LEFT+30}" y1="${pvMcbY+60}" x2="${INV_LEFT+30}" y2="${INV_TOP-5}" stroke="${W_RED}" stroke-width="3"/>`;
-
-  // === INVERTER (centered) ===
-  let invSvg = realInverter(INV_LEFT, INV_TOP, INV_W, INV_H, c.invType, c.sInvKw, c.phase, c.V_AC, c.V_DC_BAT, c.sysKw, c.mpptCount, c.batQ>0, c.isHybrid);
-  // Inverter chassis ground
-  invSvg += `<line x1="${INV_LEFT+INV_W-10}" y1="${INV_TOP+INV_H+25}" x2="${INV_LEFT+INV_W-10}" y2="${EBAR_Y}" stroke="${W_GREEN}" stroke-width="2"/>`;
-
-  // === GRID SECTION (right column) ===
-  let gridSvg = '';
-  if (!c.isOffGrid) {
-    const gtX = RAIL_X;
-    gridSvg += `${realGridTower(gtX-30, 145)}
-      <text x="${gtX}" y="${265}" text-anchor="middle" fill="#0f172a" font="bold 11px sans-serif">UTILITY GRID</text>
-      <text x="${gtX}" y="${280}" text-anchor="middle" fill="#475569" font="9px sans-serif">${c.V_AC}V · ${c.phase}-Phase</text>
-      <line x1="${gtX}" y1="${250}" x2="${gtX}" y2="${330}" stroke="${W_RED}" stroke-width="3"/>
-      ${realMeter(gtX, 360, 38)}
-      <line x1="${gtX}" y1="${398}" x2="${gtX}" y2="${440}" stroke="${W_RED}" stroke-width="3"/>
-      ${realMCB(gtX-23, 440, c.gridIso, 'GRID ISO', c.phase===3?3:2)}
-      ${callout(gtX+45, 470, '②')}
-      <line x1="${gtX}" y1="${500}" x2="${gtX}" y2="${550}" stroke="${W_RED}" stroke-width="3"/>
-      ${realMCB(gtX-23, 550, c.acBr, 'INV GRID', c.phase===3?3:2)}
-      ${callout(gtX+45, 580, '③')}
-      <line x1="${gtX}" y1="${610}" x2="${gtX}" y2="${680}" stroke="${W_RED}" stroke-width="3"/>
-      ${realSPD(gtX-110, 555, c.gridIso, 'AC SPD')}
-      ${callout(gtX-115, 580, '④', '#d97706')}
-      <line x1="${gtX-25}" y1="${580}" x2="${gtX-30}" y2="${580}" stroke="${W_RED}" stroke-width="2"/>
-      <line x1="${gtX-70}" y1="${645}" x2="${gtX-70}" y2="${EBAR_Y}" stroke="${W_GREEN}" stroke-width="1.5"/>
-      ${realCT(gtX, 695)}
-      <text x="${gtX-30}" y="${710}" text-anchor="end" fill="${W_PINK}" font="9px sans-serif">CT clamp</text>
-      <text x="${gtX-30}" y="${724}" text-anchor="end" fill="${W_PINK}" font="9px sans-serif">anti-export</text>
-      <line x1="${gtX}" y1="${720}" x2="${gtX}" y2="${INV_TOP+INV_H+30}" stroke="${W_RED}" stroke-width="3"/>
-      <line x1="${gtX}" y1="${INV_TOP+INV_H+30}" x2="${INV_LEFT+INV_W-85}" y2="${INV_TOP+INV_H+30}" stroke="${W_RED}" stroke-width="3"/>
-      <line x1="${INV_LEFT+INV_W-85}" y1="${INV_TOP+INV_H+30}" x2="${INV_LEFT+INV_W-85}" y2="${INV_TOP+INV_H+15}" stroke="${W_RED}" stroke-width="3"/>`;
+  // Empty-state if no photos
+  if (!hasAnyPhoto) {
+    photoCards = `
+      <div class="empty-state">
+        <div style="font-size:48pt;">📷</div>
+        <h2 style="color:#dc2626;margin:10pt 0;">No equipment photos uploaded yet</h2>
+        <p>To generate a photo-realistic SLD, upload photos of your installed equipment using the <strong>SLD Photo Library</strong> button on the Quotation Generator.</p>
+        <p style="font-size:8.5pt;color:#64748b;margin-top:14pt;">Recommended uploads: ${SLD_PHOTO_SLOTS.map(s => s.label).join(' · ')}</p>
+      </div>`;
   }
 
-  // === BATTERY (left column) ===
+  // === Spatial Energy Flow Diagram (SVG) — v4 Per-Array Protections ===
+  // Each PV string, battery pack, inverter rendered as separate row with own protections.
+  function flowNode(x, y, w, h, label, detail, slot, fill, accent) {
+    const photo = photos[slot];
+    const used = usedSlots.find(s => s.id === slot);
+    const numBadge = used ? `<g><circle cx="${x+w-12}" cy="${y+12}" r="11" fill="#dc2626" stroke="#fff" stroke-width="2"/><text x="${x+w-12}" y="${y+16}" text-anchor="middle" fill="#fff" font="bold 11px sans-serif">${used.num}</text></g>` : '';
+    const thumbEl = photo && photo.src
+      ? `<image x="${x+8}" y="${y+8}" width="40" height="40" href="${photo.src}" preserveAspectRatio="xMidYMid slice" clip-path="inset(0 round 4px)"/>`
+      : `<rect x="${x+8}" y="${y+8}" width="40" height="40" rx="4" fill="#e2e8f0"/><text x="${x+28}" y="${y+34}" text-anchor="middle" font="18px sans-serif">📷</text>`;
+    return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${fill}" stroke="${accent}" stroke-width="2"/>${thumbEl}<text x="${x+58}" y="${y+22}" font="bold 11px sans-serif" fill="#0f172a">${label}</text><text x="${x+58}" y="${y+38}" font="9px sans-serif" fill="#475569">${detail}</text>${numBadge}</g>`;
+  }
+
+  function protDevice(x, y, w, h, label, kind, color) {
+    let symbol = '';
+    if (kind === 'breaker') {
+      symbol = `<circle cx="${x+w/2}" cy="${y+h/2-3}" r="${h*0.26}" fill="none" stroke="${color}" stroke-width="1.6"/><line x1="${x+w/2-h*0.22}" y1="${y+h/2+h*0.12}" x2="${x+w/2+h*0.22}" y2="${y+h/2-h*0.22}" stroke="${color}" stroke-width="1.6"/>`;
+    } else if (kind === 'spd') {
+      symbol = `<polygon points="${x+w/2},${y+6} ${x+w/2-6},${y+h/2-3} ${x+w/2+6},${y+h/2-3}" fill="${color}"/><line x1="${x+w/2}" y1="${y+h/2-3}" x2="${x+w/2}" y2="${y+h-9}" stroke="${color}" stroke-width="1.4"/><line x1="${x+w/2-5}" y1="${y+h-9}" x2="${x+w/2+5}" y2="${y+h-9}" stroke="${color}" stroke-width="1.4"/><line x1="${x+w/2-3}" y1="${y+h-6}" x2="${x+w/2+3}" y2="${y+h-6}" stroke="${color}" stroke-width="1"/>`;
+    } else if (kind === 'ct') {
+      symbol = `<circle cx="${x+w/2}" cy="${y+h/2-3}" r="${h*0.28}" fill="none" stroke="${color}" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" font="bold 7px sans-serif" fill="${color}">CT</text>`;
+    } else if (kind === 'relay') {
+      symbol = `<rect x="${x+w/2-8}" y="${y+h/2-10}" width="16" height="14" fill="none" stroke="${color}" stroke-width="1.4"/><line x1="${x+w/2-8}" y1="${y+h/2-3}" x2="${x+w/2-2}" y2="${y+h/2-9}" stroke="${color}" stroke-width="1.2"/><line x1="${x+w/2+2}" y1="${y+h/2-9}" x2="${x+w/2+8}" y2="${y+h/2-3}" stroke="${color}" stroke-width="1.2"/>`;
+    } else if (kind === 'mccb') {
+      symbol = `<rect x="${x+w/2-9}" y="${y+h/2-10}" width="18" height="14" fill="none" stroke="${color}" stroke-width="1.6"/><circle cx="${x+w/2}" cy="${y+h/2-3}" r="3.5" fill="none" stroke="${color}" stroke-width="1.4"/>`;
+    }
+    return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#fff" stroke="${color}" stroke-width="1.4"/>${symbol}<text x="${x+w/2}" y="${y+h-3}" text-anchor="middle" font="bold 6.5px sans-serif" fill="${color}">${label}</text></g>`;
+  }
+
+  function flowArrow(x1, y1, x2, y2, color, label, opts) {
+    opts = opts || {};
+    const sw = opts.sw || 2.2;
+    const bidir = !!opts.bidir;
+    const dash = opts.dash || '';
+    const colId = color.replace('#','');
+    const markerStart = bidir ? `marker-start="url(#arrowback-${colId})"` : '';
+    const markerEnd = opts.noArrow ? '' : `marker-end="url(#arrowhead-${colId})"`;
+    let path;
+    if (opts.path) path = opts.path;
+    else {
+      const midX = (x1+x2)/2, midY = (y1+y2)/2;
+      const isVert = Math.abs(y2-y1) > Math.abs(x2-x1);
+      path = isVert ? `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}` : `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+    }
+    const labelEl = label ? (() => {
+      const lx = opts.labelX !== undefined ? opts.labelX : (x1+x2)/2;
+      const ly = opts.labelY !== undefined ? opts.labelY : ((y1+y2)/2 - 4);
+      return `<text x="${lx}" y="${ly}" text-anchor="middle" font="bold 8px sans-serif" fill="${color}" stroke="#fff" stroke-width="2.5" paint-order="stroke">${label}</text>`;
+    })() : '';
+    return `<path d="${path}" fill="none" stroke="${color}" stroke-width="${sw}" ${dash?`stroke-dasharray="${dash}"`:''} ${markerStart} ${markerEnd}/>${labelEl}`;
+  }
+
+  function earthLine(x1, y1, x2, y2) {
+    return `<path d="M ${x1} ${y1} L ${x2} ${y2}" fill="none" stroke="#39ff14" stroke-width="1.6" stroke-dasharray="4,3" opacity="0.85"/>`;
+  }
+
+  const arrowColors = ['#f59e0b','#dc2626','#2563eb','#059669','#0891b2','#7c3aed','#db2777','#0f172a','#39ff14','#475569','#ca8a04','#9333ea','#e11d48'];
+  const arrowDefs = arrowColors.map(col => {
+    const id = col.replace('#','');
+    return `<marker id="arrowhead-${id}" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="${col}"/></marker><marker id="arrowback-${id}" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto"><polygon points="10 0, 0 3, 10 6" fill="${col}"/></marker>`;
+  }).join('');
+
+  const numPV = c.mpptCount || 1;
+  const numBat = c.batQ || 0;
+  const numInv = c.iQty || 1;
+  const showBat = numBat > 0;
+  const showIsland = !c.isOffGrid;
+
+  const PV_ROW_H = 56;
+  const BAT_ROW_H = 56;
+  const INV_ROW_H = 96;
+  const F_W = 1100;
+  const TOP = 80;
+
+  const pvH = numPV * PV_ROW_H;
+  const batH = showBat ? numBat * BAT_ROW_H : 0;
+  const invH = numInv * INV_ROW_H;
+
+  // Mid section height: max of PV+Bat (left column stack) vs Inv (center)
+  const leftH = pvH + (showBat ? 40 + batH : 0);
+  const midH = Math.max(leftH, invH);
+  const PROT_CHAIN_H = (showIsland ? 4 : 3) * 52 + 30;
+  const RIGHT_CHAIN_H = PROT_CHAIN_H;
+
+  const Y_MID = TOP + 30;
+  const BOT_H = 260;  // ATS → Panel → Loads stacked vertically (3 × ~85px)
+  const EARTH_H = 80;
+  const F_H = Y_MID + Math.max(midH, RIGHT_CHAIN_H) + BOT_H + EARTH_H;
+
+  const nodeW = 150, nodeH = 42;
+  const halfW = nodeW/2, halfH = nodeH/2;
+  const pw = 50, ph = 34;
+  const smW = nodeW - 30, smH = 38;  // small PV/Bat node
+
+  const PV_X = 30;
+  const PV_PROT_X = PV_X + smW + 14;
+  const SPD_X = PV_PROT_X + pw + 10;
+  const PV_BUS_X = SPD_X + pw + 30;
+
+  const BAT_X = 30;
+  const BAT_PROT_X = BAT_X + smW + 14;
+  const BAT_BUS_X = BAT_PROT_X + pw + 30;
+
+  const INV_X = F_W/2 - halfW;
+  const INV_CX = F_W/2;
+
+  // Right side: AC IN BR + GEN BR per inverter
+  const ACIN_X = INV_X + nodeW + 14;
+  const ACIN_BUS_X = ACIN_X + pw + 14;
+  const GEN_X = ACIN_X;  // GEN BR same column, below AC IN
+  const GEN_BUS_X = ACIN_BUS_X;
+
+  // AC OUT BR below each inverter
+  const ACOUT_X = INV_X + halfW - pw/2;
+
+  // Genset (far right, level with first inverter row)
+  const GENSET_X = F_W - nodeW - 30;
+  // Meter (top right)
+  const METER_X = F_W - nodeW - 30;
+  const METER_Y = 30;
+
+  // AC protection chain — RIGHT of meter going DOWN
+  const PROT_CHAIN_X = F_W - 85;
+  const PROT_Y0 = METER_Y + nodeH + 30;
+
+  // === PV strings + per-string DC BR + DC SPD ===
+  const pvBlockYStart = Y_MID;
+  let pvSvg = '';
+  let pvEarth = '';
+  const pvRowMids = [];
+  for (let i = 0; i < numPV; i++) {
+    const ry = pvBlockYStart + i * PV_ROW_H;
+    const ny = ry + (PV_ROW_H - smH) / 2;
+    const midY = ny + smH/2;
+    pvRowMids.push(midY);
+    pvSvg += `<g><rect x="${PV_X}" y="${ny}" width="${smW}" height="${smH}" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.6"/><text x="${PV_X + smW/2}" y="${ny + 14}" text-anchor="middle" font="bold 9px sans-serif" fill="#0f172a">PV String ${i+1}</text><text x="${PV_X + smW/2}" y="${ny + 28}" text-anchor="middle" font="8px sans-serif" fill="#475569">${c.panelsByMppt ? c.panelsByMppt[i] : Math.ceil(c.panels/numPV)} × ${c.panelW}Wp</text></g>`;
+    pvSvg += protDevice(PV_PROT_X, midY - ph/2, pw, ph, 'DC BR', 'breaker', '#dc2626');
+    pvSvg += protDevice(SPD_X, midY - ph/2, pw, ph, 'DC SPD', 'spd', '#dc2626');
+    pvSvg += flowArrow(PV_X + smW, midY, PV_PROT_X, midY, '#f59e0b', i===0?'DC PV':'', {labelX: PV_X + smW + 6, labelY: midY - 6});
+    pvSvg += flowArrow(PV_PROT_X + pw, midY, SPD_X, midY, '#f59e0b', '', {});
+    pvSvg += flowArrow(SPD_X + pw, midY, PV_BUS_X, midY, '#f59e0b', '', {noArrow: true});
+    pvEarth += earthLine(PV_X + smW/2, ny + smH, PV_X + smW/2, F_H - 40);
+  }
+  // PV bus
+  if (numPV >= 1) {
+    const top = pvRowMids[0], bot = pvRowMids[pvRowMids.length-1];
+    if (numPV > 1) pvSvg += `<line x1="${PV_BUS_X}" y1="${top}" x2="${PV_BUS_X}" y2="${bot}" stroke="#f59e0b" stroke-width="2.8"/>`;
+    const mid = (top+bot)/2;
+    // PV bus → inverter (top of first inverter)
+    const invFirstY = Y_MID + (midH - invH)/2 + 10 + halfH;
+    pvSvg += flowArrow(0,0,0,0, '#f59e0b', 'DC PV Bus', {
+      path: `M ${PV_BUS_X} ${mid} L ${(PV_BUS_X + INV_X)/2} ${mid} L ${(PV_BUS_X + INV_X)/2} ${invFirstY - 8} L ${INV_X} ${invFirstY - 8}`,
+      sw: 2.6, labelX: (PV_BUS_X+INV_X)/2, labelY: mid - 6
+    });
+  }
+
+  // === Battery packs + per-pack MCCB ===
   let batSvg = '';
-  if (c.batQ > 0) {
-    const bMccbX = INV_LEFT - 130;
-    const bMccbY = INV_TOP + INV_H + 30;
-    batSvg += realMCCB(bMccbX, bMccbY, c.dcBatMain, 'BATTERY MAIN');
-    batSvg += callout(bMccbX+105, bMccbY+50, '⑤');
-    // From BAT port → DOWN → LEFT to MCCB
-    batSvg += `<line x1="${INV_LEFT+85}" y1="${INV_TOP+INV_H+25}" x2="${INV_LEFT+85}" y2="${bMccbY+50}" stroke="${W_RED}" stroke-width="3.5"/>`;
-    batSvg += `<line x1="${INV_LEFT+85}" y1="${bMccbY+50}" x2="${bMccbX+45}" y2="${bMccbY+50}" stroke="${W_RED}" stroke-width="3.5"/>`;
-    batSvg += `<line x1="${bMccbX+45}" y1="${bMccbY+100}" x2="${bMccbX+45}" y2="${BAT_TOP-30}" stroke="${W_RED}" stroke-width="3.5"/>`;
+  let batEarth = '';
+  const batRowMids = [];
+  if (showBat) {
+    const batYStart = pvBlockYStart + pvH + 40;
+    for (let i = 0; i < numBat; i++) {
+      const ry = batYStart + i * BAT_ROW_H;
+      const ny = ry + (BAT_ROW_H - smH)/2;
+      const midY = ny + smH/2;
+      batRowMids.push(midY);
+      batSvg += `<g><rect x="${BAT_X}" y="${ny}" width="${smW}" height="${smH}" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="1.6"/><text x="${BAT_X + smW/2}" y="${ny + 14}" text-anchor="middle" font="bold 9px sans-serif" fill="#0f172a">Battery ${i+1}</text><text x="${BAT_X + smW/2}" y="${ny + 28}" text-anchor="middle" font="8px sans-serif" fill="#475569">${c.V_DC_BAT}V · ${c.batSizeAh}Ah</text></g>`;
+      batSvg += protDevice(BAT_PROT_X, midY - ph/2, pw, ph, 'MCCB', 'mccb', '#dc2626');
+      batSvg += flowArrow(BAT_X + smW, midY, BAT_PROT_X, midY, '#dc2626', i===0?'DC BAT (↔)':'', {bidir: true, sw: 2.2, labelX: BAT_X + smW + 8, labelY: midY - 6});
+      batSvg += flowArrow(BAT_PROT_X + pw, midY, BAT_BUS_X, midY, '#dc2626', '', {bidir: true, sw: 2.2});
+      batEarth += earthLine(BAT_X + smW/2, ny + smH, BAT_X + smW/2, F_H - 40);
+    }
+    // Battery bus
+    const top = batRowMids[0], bot = batRowMids[batRowMids.length-1];
+    if (numBat > 1) batSvg += `<line x1="${BAT_BUS_X}" y1="${top}" x2="${BAT_BUS_X}" y2="${bot}" stroke="#dc2626" stroke-width="2.8"/>`;
+    const mid = (top+bot)/2;
+    const invLastY = Y_MID + (midH - invH)/2 + (numInv-1)*INV_ROW_H + 10 + halfH;
 
-    // Battery cabinet(s)
-    const cabSpacing = 160;
-    const startX = BAT_LEFT;
-    if (c.batQ === 1) {
-      batSvg += realBatteryCabinet(startX, BAT_TOP, 1, c.V_DC_BAT, c.batSizeAh, 1);
-      batSvg += `<line x1="${bMccbX+45}" y1="${BAT_TOP-30}" x2="${startX+30}" y2="${BAT_TOP-30}" stroke="${W_RED}" stroke-width="3"/>`;
-      batSvg += `<line x1="${startX+30}" y1="${BAT_TOP-30}" x2="${startX+30}" y2="${BAT_TOP}" stroke="${W_RED}" stroke-width="3"/>`;
+    // Main Battery MCCB (only when >1 pack) — placed AFTER the bus before going to inverter
+    let routeStartX = BAT_BUS_X;
+    if (numBat > 1) {
+      const mainBrX = BAT_BUS_X + 30;
+      batSvg += protDevice(mainBrX, mid - ph/2, pw, ph, 'MAIN MCCB', 'mccb', '#dc2626');
+      batSvg += flowArrow(BAT_BUS_X, mid, mainBrX, mid, '#dc2626', '', {bidir: true, sw: 2.4});
+      routeStartX = mainBrX + pw;
+    }
+    batSvg += flowArrow(0,0,0,0, '#dc2626', 'DC Bat Bus (↔)', {
+      path: `M ${routeStartX} ${mid} L ${(routeStartX + INV_X)/2} ${mid} L ${(routeStartX + INV_X)/2} ${invLastY + 8} L ${INV_X} ${invLastY + 8}`,
+      sw: 2.6, bidir: true, labelX: (routeStartX+INV_X)/2, labelY: mid - 6
+    });
+  }
+
+  // === Inverters + per-inv AC IN BR + GEN BR + AC OUT BR ===
+  let invSvg = '';
+  let invEarth = '';
+  const invRowYs = [];
+  const acOutBottomYs = [];
+  const acInMidYs = [];
+  const genMidYs = [];
+  const invBlockYStart = Y_MID + (midH - invH)/2;
+  for (let i = 0; i < numInv; i++) {
+    const ry = invBlockYStart + i * INV_ROW_H;
+    const ny = ry + 10;
+    const midY = ny + halfH;
+    invRowYs.push(midY);
+    invSvg += `<g><rect x="${INV_X}" y="${ny}" width="${nodeW}" height="${nodeH}" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="2"/><text x="${INV_X + halfW}" y="${ny + 16}" text-anchor="middle" font="bold 10px sans-serif" fill="#0f172a">Inverter ${numInv>1?(i+1):''}</text><text x="${INV_X + halfW}" y="${ny + 30}" text-anchor="middle" font="8.5px sans-serif" fill="#475569">${c.sInvKw} kW ${c.invType}</text></g>`;
+    // AC IN BR (right side, top)
+    const acInY = ny - 4;
+    invSvg += protDevice(ACIN_X, acInY, pw, ph, 'AC IN BR', 'breaker', '#2563eb');
+    acInMidYs.push(acInY + ph/2);
+    // GEN BR (right side, below inverter)
+    const genY = ny + nodeH - ph + 4;
+    invSvg += protDevice(GEN_X, genY, pw, ph, 'GEN BR', 'breaker', '#0891b2');
+    genMidYs.push(genY + ph/2);
+    // AC OUT BR (below center)
+    const acOutY = ny + nodeH + 14;
+    invSvg += protDevice(ACOUT_X, acOutY, pw, ph, 'AC OUT BR', 'breaker', '#059669');
+    acOutBottomYs.push(acOutY + ph);
+    // Arrows
+    invSvg += flowArrow(ACIN_X, acInY + ph/2, INV_X + nodeW, ny + 10, '#2563eb', '', {});
+    invSvg += flowArrow(GEN_X, genY + ph/2, INV_X + nodeW, ny + nodeH - 10, '#0891b2', '', {});
+    invSvg += flowArrow(INV_X + halfW, ny + nodeH, ACOUT_X + pw/2, acOutY, '#059669', '', {});
+    invEarth += earthLine(INV_X + halfW + 30, ny + nodeH + ph + 14, INV_X + halfW + 30, F_H - 40);
+  }
+
+  // AC IN bus (right of AC IN BRs)
+  let acInBusSvg = '';
+  if (numInv >= 1) {
+    if (numInv > 1) acInBusSvg += `<line x1="${ACIN_BUS_X}" y1="${acInMidYs[0]}" x2="${ACIN_BUS_X}" y2="${acInMidYs[acInMidYs.length-1]}" stroke="#2563eb" stroke-width="2.8"/>`;
+    acInMidYs.forEach(y => acInBusSvg += `<line x1="${ACIN_X + pw}" y1="${y}" x2="${ACIN_BUS_X}" y2="${y}" stroke="#2563eb" stroke-width="2"/>`);
+  }
+  // GEN bus (slightly right of GEN BRs)
+  const GEN_BUS_X2 = GEN_BUS_X + 10;
+  let genBusSvg = '';
+  if (numInv >= 1) {
+    if (numInv > 1) genBusSvg += `<line x1="${GEN_BUS_X2}" y1="${genMidYs[0]}" x2="${GEN_BUS_X2}" y2="${genMidYs[genMidYs.length-1]}" stroke="#0891b2" stroke-width="2.8"/>`;
+    genMidYs.forEach(y => genBusSvg += `<line x1="${GEN_X + pw}" y1="${y}" x2="${GEN_BUS_X2}" y2="${y}" stroke="#0891b2" stroke-width="2"/>`);
+  }
+  // AC OUT bus (vertical down through all AC OUT BRs to ATS)
+  let acOutBusSvg = '';
+  const acOutBusX = INV_X + halfW;
+  if (numInv > 1) {
+    const top = invBlockYStart + 10 + nodeH + 14 + ph;
+    const bot = invBlockYStart + (numInv-1)*INV_ROW_H + 10 + nodeH + 14 + ph;
+    acOutBusSvg += `<line x1="${acOutBusX}" y1="${top}" x2="${acOutBusX}" y2="${bot}" stroke="#059669" stroke-width="2.8"/>`;
+  }
+
+  // === AC PROTECTION CHAIN (right side, vertical, from meter down) ===
+  let acChainSvg = '';
+  acChainSvg += flowNode(METER_X, METER_Y, nodeW, nodeH, 'Utility Meter', `${c.phase}-Ph ${c.V_AC}V · Bi-dir`, 'meter', '#dbeafe', '#2563eb');
+  // chain devices vertically
+  const chainItems = [
+    {label: 'AC MAIN', kind: 'breaker', color: '#2563eb'},
+    {label: 'LV/HV',   kind: 'relay',   color: '#9333ea'},
+    {label: 'CT',      kind: 'ct',      color: '#0891b2'},
+  ];
+  if (showIsland) chainItems.push({label: 'ISLAND', kind: 'relay', color: '#db2777'});
+  const chainCx = METER_X + halfW;
+  const chainSpacing = 52;
+  const chainYs = [];
+  chainItems.forEach((it, i) => {
+    const y = PROT_Y0 + i * chainSpacing;
+    chainYs.push(y);
+    acChainSvg += protDevice(chainCx - pw/2, y, pw, ph, it.label, it.kind, it.color);
+    if (i === 0) {
+      acChainSvg += flowArrow(METER_X + halfW, METER_Y + nodeH, chainCx, y, '#2563eb', 'AC Grid', {labelX: chainCx - 30, labelY: METER_Y + nodeH + 18});
     } else {
-      // Distribute horizontally with optional busbar
-      const busY = BAT_TOP - 50;
-      const busX1 = startX + 20;
-      const busX2 = startX + (c.batQ-1)*cabSpacing + 100;
-      batSvg += `<line x1="${bMccbX+45}" y1="${busY}" x2="${busX1}" y2="${busY}" stroke="${W_RED}" stroke-width="3"/>`;
-      if (c.needBusbar) {
-        batSvg += `<rect x="${busX1}" y="${busY-7}" width="${busX2-busX1}" height="14" fill="#fbbf24" stroke="#92400e" stroke-width="1.5" filter="url(#dropshadow)"/>`;
-        batSvg += `<text x="${(busX1+busX2)/2}" y="${busY-15}" text-anchor="middle" font="bold 9px sans-serif" fill="#92400e">DC BUSBAR (+/−) · ${c.dcBatMain}A</text>`;
-      } else {
-        batSvg += `<line x1="${busX1}" y1="${busY}" x2="${busX2}" y2="${busY}" stroke="${W_RED}" stroke-width="3"/>`;
-      }
-      for (let i = 0; i < c.batQ; i++) {
-        const px = startX + i * cabSpacing;
-        const cxp = px + 65;
-        batSvg += `<line x1="${cxp}" y1="${busY+7}" x2="${cxp}" y2="${BAT_TOP-25}" stroke="${W_RED}" stroke-width="2.5"/>`;
-        batSvg += realMCB(cxp-23, BAT_TOP-25, c.perStringBr, `STR${i+1}`, 2);
-        if (i === 0) batSvg += callout(cxp+50, BAT_TOP-5, '⑥');
-        batSvg += `<line x1="${cxp}" y1="${BAT_TOP+35}" x2="${cxp}" y2="${BAT_TOP+30}" stroke="${W_RED}" stroke-width="2.5"/>`;
-        batSvg += realBatteryCabinet(px, BAT_TOP+30, 1, c.V_DC_BAT, c.batSizeAh, i+1);
-      }
+      const prevY = chainYs[i-1] + ph;
+      acChainSvg += flowArrow(chainCx, prevY, chainCx, y, chainItems[i-1].color, '', {});
     }
-  }
-
-  // === ATS (hybrid only) ===
-  let atsSvg = '';
-  if (c.isHybrid) {
-    const ATS_X = INV_LEFT - 80;
-    const ATS_W = INV_W + 160;
-    const ATS_H = 110;
-    atsSvg += `
-      <g filter="url(#dropshadow)">
-        <rect x="${ATS_X}" y="${ATS_TOP}" width="${ATS_W}" height="${ATS_H}" rx="10" fill="url(#cabinetMetal)" stroke="#0f172a" stroke-width="2.5"/>
-        <rect x="${ATS_X+8}" y="${ATS_TOP+8}" width="${ATS_W-16}" height="32" rx="5" fill="url(#brandStrip)"/>
-        <text x="${ATS_X+ATS_W/2}" y="${ATS_TOP+30}" text-anchor="middle" fill="#fff" font="bold 14px sans-serif" letter-spacing="1.5">AUTOMATIC TRANSFER SWITCH</text>
-        <!-- 3 terminal blocks -->
-        <rect x="${ATS_X+30}" y="${ATS_TOP+50}" width="120" height="50" rx="4" fill="#fff" stroke="#16a34a" stroke-width="2"/>
-        <text x="${ATS_X+90}" y="${ATS_TOP+68}" text-anchor="middle" fill="#16a34a" font="bold 11px sans-serif">NORMAL</text>
-        <text x="${ATS_X+90}" y="${ATS_TOP+82}" text-anchor="middle" fill="#16a34a" font="9px sans-serif">Inverter LOAD</text>
-        <circle cx="${ATS_X+90}" cy="${ATS_TOP+95}" r="4" fill="#16a34a" filter="url(#ledGlow)"/>
-        <rect x="${ATS_X+ATS_W/2-60}" y="${ATS_TOP+50}" width="120" height="50" rx="4" fill="#fff" stroke="#d97706" stroke-width="2"/>
-        <text x="${ATS_X+ATS_W/2}" y="${ATS_TOP+68}" text-anchor="middle" fill="#d97706" font="bold 11px sans-serif">RESERVE</text>
-        <text x="${ATS_X+ATS_W/2}" y="${ATS_TOP+82}" text-anchor="middle" fill="#d97706" font="9px sans-serif">Utility Grid</text>
-        <circle cx="${ATS_X+ATS_W/2}" cy="${ATS_TOP+95}" r="4" fill="#d97706" filter="url(#ledGlow)"/>
-        <rect x="${ATS_X+ATS_W-150}" y="${ATS_TOP+50}" width="120" height="50" rx="4" fill="#fff" stroke="#0e7490" stroke-width="2"/>
-        <text x="${ATS_X+ATS_W-90}" y="${ATS_TOP+68}" text-anchor="middle" fill="#0e7490" font="bold 11px sans-serif">OUTPUT</text>
-        <text x="${ATS_X+ATS_W-90}" y="${ATS_TOP+82}" text-anchor="middle" fill="#0e7490" font="9px sans-serif">to Loads</text>
-        <circle cx="${ATS_X+ATS_W-90}" cy="${ATS_TOP+95}" r="4" fill="#0e7490" filter="url(#ledGlow)"/>
-        <text x="${ATS_X+ATS_W/2}" y="${ATS_TOP+ATS_H+15}" text-anchor="middle" fill="${W_PINK}" font="9px sans-serif">Auto-switches NORMAL→RESERVE on inverter shutdown · ≤30ms transfer</text>
-      </g>`;
-    // LOAD breaker ⑦
-    const loadBrY = INV_TOP + INV_H + 80;
-    atsSvg += `<line x1="${INV_LEFT+INV_W-30}" y1="${INV_TOP+INV_H+25}" x2="${INV_LEFT+INV_W-30}" y2="${loadBrY}" stroke="${W_RED}" stroke-width="3"/>`;
-    atsSvg += realMCB(INV_LEFT+INV_W-30-23, loadBrY, c.acBr, 'LOAD OUT', c.phase===3?3:2);
-    atsSvg += callout(INV_LEFT+INV_W-30+45, loadBrY+30, '⑦');
-    atsSvg += `<line x1="${INV_LEFT+INV_W-30}" y1="${loadBrY+60}" x2="${INV_LEFT+INV_W-30}" y2="${ATS_TOP-15}" stroke="${W_RED}" stroke-width="3"/>`;
-    atsSvg += `<line x1="${INV_LEFT+INV_W-30}" y1="${ATS_TOP-15}" x2="${ATS_X+90}" y2="${ATS_TOP-15}" stroke="${W_RED}" stroke-width="3"/>`;
-    atsSvg += `<line x1="${ATS_X+90}" y1="${ATS_TOP-15}" x2="${ATS_X+90}" y2="${ATS_TOP+50}" stroke="${W_RED}" stroke-width="3"/>`;
-    // Reserve from grid (dashed)
-    if (!c.isOffGrid) {
-      atsSvg += `<line x1="${RAIL_X-23}" y1="${ATS_TOP+95}" x2="${ATS_X+ATS_W/2}" y2="${ATS_TOP+95}" stroke="${W_RED}" stroke-width="2.5" stroke-dasharray="6,3"/>`;
-      atsSvg += `<text x="${RAIL_X-30}" y="${ATS_TOP+88}" text-anchor="end" fill="${W_PINK}" font="bold 9px sans-serif">Reserve feed</text>`;
-    }
-  }
-
-  // === LOADS ===
-  let loadSvg = '';
-  if (c.isHybrid) {
-    const backupX = INV_LEFT - 30;
-    const homeX = INV_LEFT + INV_W - 70;
-    // Backup Load (from ATS Output)
-    loadSvg += realHouse(backupX, LOAD_TOP, 100, 90, 'BACKUP LOAD');
-    loadSvg += `<text x="${backupX+50}" y="${LOAD_TOP+105}" text-anchor="middle" fill="${W_PINK}" font="9px sans-serif">via ATS Output</text>`;
-    // ATS_X+ATS_W-90 was OUTPUT terminal
-    const ATS_X = INV_LEFT - 80, ATS_W = INV_W + 160;
-    loadSvg += `<line x1="${ATS_X+ATS_W-90}" y1="${ATS_TOP+110}" x2="${ATS_X+ATS_W-90}" y2="${LOAD_TOP-30}" stroke="${W_RED}" stroke-width="3"/>`;
-    loadSvg += `<line x1="${ATS_X+ATS_W-90}" y1="${LOAD_TOP-30}" x2="${backupX+50}" y2="${LOAD_TOP-30}" stroke="${W_RED}" stroke-width="3"/>`;
-    loadSvg += `<line x1="${backupX+50}" y1="${LOAD_TOP-30}" x2="${backupX+50}" y2="${LOAD_TOP}" stroke="${W_RED}" stroke-width="3"/>`;
-    // Home Load (direct from grid via ⑨)
-    loadSvg += realHouse(homeX, LOAD_TOP, 100, 90, 'HOME LOAD');
-    loadSvg += `<text x="${homeX+50}" y="${LOAD_TOP+105}" text-anchor="middle" fill="${W_PINK}" font="9px sans-serif">grid-direct loads</text>`;
-    const homeBrX = homeX + 30;
-    const homeBrY = LOAD_TOP - 70;
-    loadSvg += realMCB(homeBrX-23, homeBrY, c.acBr, 'HOME LOAD', c.phase===3?3:2);
-    loadSvg += callout(homeBrX+45, homeBrY+30, '⑨');
-    // Wire from Inv Grid breaker (gtX, 610) → home breaker → home load
-    loadSvg += `<line x1="${RAIL_X}" y1="${homeBrY+30}" x2="${homeBrX}" y2="${homeBrY+30}" stroke="${W_RED}" stroke-width="3"/>`;
-    loadSvg += `<line x1="${homeBrX}" y1="${homeBrY+60}" x2="${homeBrX}" y2="${LOAD_TOP-10}" stroke="${W_RED}" stroke-width="3"/>`;
-    loadSvg += `<line x1="${homeBrX}" y1="${LOAD_TOP-10}" x2="${homeX+50}" y2="${LOAD_TOP-10}" stroke="${W_RED}" stroke-width="3"/>`;
-    loadSvg += `<line x1="${homeX+50}" y1="${LOAD_TOP-10}" x2="${homeX+50}" y2="${LOAD_TOP}" stroke="${W_RED}" stroke-width="3"/>`;
-    // Earth bonds
-    loadSvg += `<line x1="${backupX+50}" y1="${LOAD_TOP+90}" x2="${backupX+50}" y2="${EBAR_Y}" stroke="${W_GREEN}" stroke-width="1.5"/>`;
-    loadSvg += `<line x1="${homeX+50}" y1="${LOAD_TOP+90}" x2="${homeX+50}" y2="${EBAR_Y}" stroke="${W_GREEN}" stroke-width="1.5"/>`;
-  } else if (c.isGridTie) {
-    const homeX = INV_LEFT + 80;
-    loadSvg += realHouse(homeX, LOAD_TOP, 100, 90, 'HOME LOAD');
-  }
-
-  // === E-BAR (with hatched ground) ===
-  const ebarX1 = 40, ebarX2 = W - 40;
-  let ebarSvg = `
-    <rect x="${ebarX1}" y="${EBAR_Y-8}" width="${ebarX2-ebarX1}" height="16" fill="#16a34a" stroke="#14532d" stroke-width="1.5" filter="url(#dropshadow)"/>
-    <rect x="${ebarX1+2}" y="${EBAR_Y-7}" width="${ebarX2-ebarX1-4}" height="3" fill="url(#earthHatch)" opacity="0.5"/>
-    <text x="${ebarX1+15}" y="${EBAR_Y+4}" fill="#fff" font="bold 11px sans-serif" letter-spacing="1.5">E-BAR · Main Earth Bus</text>
-    <line x1="${ebarX2-30}" y1="${EBAR_Y+8}" x2="${ebarX2-30}" y2="${EBAR_Y+30}" stroke="${W_GREEN}" stroke-width="3"/>
-    ${iconEarthRod(ebarX2-30, EBAR_Y+30)}
-    <text x="${ebarX2-30}" y="${EBAR_Y+78}" text-anchor="middle" fill="#14532d" font="bold 8px sans-serif">Cu Rod 5/8"×2.4M</text>
-    <text x="${ebarX2-30}" y="${EBAR_Y+90}" text-anchor="middle" fill="#475569" font="8px sans-serif">≤25Ω target</text>`;
-
-  // === CALLOUT LEGEND (inline, compact, professional) ===
-  const legendItems = [];
-  legendItems.push(['①', `PV Combiner DC Breaker — ${c.dcPvBr*c.mpptCount}A · 2P · ${c.V_DC_BAT*2}V DC`]);
-  if (!c.isOffGrid) {
-    legendItems.push(['②', `Grid Isolator MCB — ${c.gridIso}A · ${c.phase===3?3:2}P · ${c.V_AC}V AC`]);
-    legendItems.push(['③', `Inverter Grid Breaker — ${c.acBr}A · ${c.phase===3?3:2}P · ${c.V_AC}V AC`]);
-    legendItems.push(['④', `AC Surge Protector Type II — ${c.gridIso}A · ${c.V_AC}V AC`]);
-  }
-  if (c.batQ>0) {
-    legendItems.push(['⑤', `Battery Main DC MCCB — ${c.dcBatMain}A · 2P · ${c.V_DC_BAT}V DC`]);
-    if (c.batQ>1) legendItems.push(['⑥', `Battery Per-String DC MCB — ${c.perStringBr}A · 2P · ${c.batQ} pcs`]);
-  }
-  if (c.isHybrid) {
-    legendItems.push(['⑦', `Inverter Load Output Breaker — ${c.acBr}A · ${c.phase===3?3:2}P`]);
-    legendItems.push(['⑨', `Home Load Breaker — ${c.acBr}A · ${c.phase===3?3:2}P`]);
-  }
-  let legendSvg = `
-    <rect x="50" y="${LEGEND_TOP}" width="${W-100}" height="280" rx="8" fill="#fff" stroke="#0f172a" stroke-width="1.5" filter="url(#dropshadow)"/>
-    <rect x="50" y="${LEGEND_TOP}" width="${W-100}" height="32" rx="8" fill="url(#brandStrip)"/>
-    <rect x="50" y="${LEGEND_TOP+22}" width="${W-100}" height="10" fill="url(#brandStrip)"/>
-    <text x="65" y="${LEGEND_TOP+22}" fill="#fbbf24" font="bold 13px sans-serif" letter-spacing="1.5">PROTECTIVE DEVICE SCHEDULE</text>
-    <text x="${W-65}" y="${LEGEND_TOP+22}" text-anchor="end" fill="#94a3b8" font="9px sans-serif">${legendItems.length} items · numbered callouts on diagram</text>`;
-  legendItems.forEach((it, i) => {
-    const col = i < 4 ? 0 : 1;
-    const row = col === 0 ? i : i - 4;
-    const x = 80 + col * 660;
-    const y = LEGEND_TOP + 65 + row * 38;
-    legendSvg += `
-      <circle cx="${x}" cy="${y-3}" r="14" fill="#dc2626" stroke="#fff" stroke-width="2" filter="url(#dropshadow)"/>
-      <text x="${x}" y="${y+1}" text-anchor="middle" fill="#fff" font="bold 12px sans-serif">${it[0]}</text>
-      <text x="${x+25}" y="${y+1}" fill="#0f172a" font="11px sans-serif">${it[1]}</text>`;
   });
-  // Wire color note at bottom
-  legendSvg += `
-    <line x1="80" y1="${LEGEND_TOP+240}" x2="${W-80}" y2="${LEGEND_TOP+240}" stroke="#cbd5e1" stroke-width="1"/>
-    <text x="80" y="${LEGEND_TOP+258}" fill="#0f172a" font="bold 10px sans-serif">WIRE LEGEND:</text>
-    <line x1="200" y1="${LEGEND_TOP+255}" x2="230" y2="${LEGEND_TOP+255}" stroke="#dc2626" stroke-width="3"/>
-    <text x="236" y="${LEGEND_TOP+258}" fill="#0f172a" font="10px sans-serif">L (Live) / DC+</text>
-    <line x1="350" y1="${LEGEND_TOP+255}" x2="380" y2="${LEGEND_TOP+255}" stroke="#1f2937" stroke-width="3"/>
-    <text x="386" y="${LEGEND_TOP+258}" fill="#0f172a" font="10px sans-serif">N (Neutral)</text>
-    <line x1="490" y1="${LEGEND_TOP+255}" x2="520" y2="${LEGEND_TOP+255}" stroke="#16a34a" stroke-width="3"/>
-    <text x="526" y="${LEGEND_TOP+258}" fill="#0f172a" font="10px sans-serif">PE (Earth)</text>
-    <line x1="620" y1="${LEGEND_TOP+255}" x2="650" y2="${LEGEND_TOP+255}" stroke="#2563eb" stroke-width="3"/>
-    <text x="656" y="${LEGEND_TOP+258}" fill="#0f172a" font="10px sans-serif">PV strings</text>
-    <line x1="760" y1="${LEGEND_TOP+255}" x2="790" y2="${LEGEND_TOP+255}" stroke="#db2777" stroke-width="2" stroke-dasharray="4,2"/>
-    <text x="796" y="${LEGEND_TOP+258}" fill="#0f172a" font="10px sans-serif">Sense / Optional</text>`;
+  // Last chain item (ISLAND or CT) → AC IN bus
+  const lastChainY = chainYs[chainYs.length-1] + ph;
+  const acInMid = numInv > 0 ? (acInMidYs[0] + acInMidYs[acInMidYs.length-1])/2 : (Y_MID + midH/2);
+  acChainSvg += flowArrow(0,0,0,0, chainItems[chainItems.length-1].color, '', {
+    path: `M ${chainCx} ${lastChainY} L ${chainCx} ${acInMid} L ${ACIN_BUS_X} ${acInMid}`,
+    sw: 2.4
+  });
 
-  const svg = `
-  <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; background:#fff;">
-    ${defs}
-    ${titleSvg}
-    ${pvSvg}
-    ${dcWires}
-    ${gridSvg}
-    ${invSvg}
-    ${atsSvg}
-    ${batSvg}
-    ${loadSvg}
-    ${ebarSvg}
-    ${legendSvg}
-  </svg>`;
+  // === Bottom layout per user spec:
+  //   ATS (center, top of bottom-stack)
+  //   ↓
+  //   Distribution Panel (center, under ATS)
+  //   ↓
+  //   AC Loads (center, under Distribution Panel) — backup AC out from inverter feeds here too
+  //   Genset → bottom-right corner ===
+  const STACK_CX = INV_CX;
+  const stackTopY = Y_MID + Math.max(midH, RIGHT_CHAIN_H) + 20;
+  const ATS_X = STACK_CX - halfW;
+  const ATS_Y = stackTopY;
+  const PANEL_X = STACK_CX - halfW;
+  const PANEL_Y = stackTopY + nodeH + 24;
+  const LOADS_X = STACK_CX - halfW;
+  const LOADS_Y = PANEL_Y + nodeH + 24;
+  const GENSET_X2 = F_W - nodeW - 30;
+  const GENSET_Y = LOADS_Y;  // bottom-right corner (same Y as Loads bottom row)
 
+  // Utility → ATS Reserve (route from AC MAIN around right side down to ATS right edge)
+  // Utility Reserve to ATS: branch from AFTER LV/HV (between LV/HV and CT)
+  // chainYs[0]=AC MAIN, [1]=LV/HV, [2]=CT, [3]=ISLAND. Tap right side at LV/HV bottom edge.
+  const tapY = chainYs[1] + ph;  // bottom of LV/HV
+  const utilReserveSvg = flowArrow(0,0,0,0, '#2563eb', 'Utility → ATS (Reserve)', {
+    path: `M ${chainCx + pw/2} ${tapY - ph/2} L ${F_W - 30} ${tapY - ph/2} L ${F_W - 30} ${ATS_Y + halfH} L ${ATS_X + nodeW} ${ATS_Y + halfH}`,
+    dash: '6,4', sw: 2,
+    labelX: F_W - 130, labelY: ATS_Y - 6
+  });
+
+  // Inverter AC OUT bus → ATS (Solar Normal feed) — vertical drop from inverter section to ATS top
+  const lastAcOutY = acOutBottomYs[acOutBottomYs.length-1];
+  const acOutToAtsSvg = flowArrow(0,0,0,0, '#059669', 'Solar AC (Normal)', {
+    path: `M ${acOutBusX} ${lastAcOutY} L ${acOutBusX} ${ATS_Y}`,
+    sw: 2.4, labelX: acOutBusX + 60, labelY: (lastAcOutY + ATS_Y)/2
+  });
+
+  // Genset bottom-right → GEN bus
+  let gensetSvg = flowNode(GENSET_X2, GENSET_Y, nodeW, nodeH, 'Genset', `Backup Generator · ${c.V_AC}V`, 'ats', '#fff1f2', '#e11d48');
+  // Route Genset (bottom-right) up-and-left to GEN bus on right of inverters
+  gensetSvg += flowArrow(0,0,0,0, '#0891b2', 'Genset → GEN BR', {
+    path: `M ${GENSET_X2 + halfW} ${GENSET_Y} L ${GENSET_X2 + halfW} ${genMidYs[0] - 30} L ${GEN_BUS_X2 + 30} ${genMidYs[0] - 30} L ${GEN_BUS_X2 + 30} ${genMidYs[0]} L ${GEN_BUS_X2} ${genMidYs[0]}`,
+    sw: 2.4, labelX: GENSET_X2 - 20, labelY: GENSET_Y - 8
+  });
+
+  // === Bottom stack: ATS → Distribution Panel → AC Loads (vertical, centered) ===
+  let bottomSvg = '';
+  bottomSvg += flowNode(ATS_X, ATS_Y, nodeW, nodeH, 'ATS / Transfer', 'Solar=Normal · Utility=Reserve', 'ats', '#ede9fe', '#7c3aed');
+  bottomSvg += flowNode(PANEL_X, PANEL_Y, nodeW, nodeH, 'Distribution Panel', `Main ${c.gridIso}A · ${c.phase}-Ph`, 'panel', '#f1f5f9', '#475569');
+  bottomSvg += flowNode(LOADS_X, LOADS_Y, nodeW, nodeH, 'AC Loads', 'Home circuits + backup', 'load', '#fef9c3', '#ca8a04');
+  // ATS → Panel (vertical)
+  bottomSvg += flowArrow(ATS_X + halfW, ATS_Y + nodeH, PANEL_X + halfW, PANEL_Y, '#7c3aed', 'ATS Out', {labelX: PANEL_X + halfW + 60, labelY: ATS_Y + nodeH + 16});
+  // Panel → Loads (vertical)
+  bottomSvg += flowArrow(PANEL_X + halfW, PANEL_Y + nodeH, LOADS_X + halfW, LOADS_Y, '#ca8a04', 'AC Loads', {labelX: LOADS_X + halfW + 60, labelY: PANEL_Y + nodeH + 16});
+
+  // Backup AC Out from Inverter → Loads directly (bypass ATS/Panel — emergency path)
+  // Route from leftmost inverter's left edge, going down-and-around to Loads
+  const invFirstY = invRowYs[0];
+  bottomSvg += flowArrow(0, 0, 0, 0, '#059669', 'Backup AC Out', {
+    path: `M ${INV_X} ${invFirstY} L ${INV_X - 40} ${invFirstY} L ${INV_X - 40} ${LOADS_Y + halfH} L ${LOADS_X} ${LOADS_Y + halfH}`,
+    sw: 1.8, dash: '5,3',
+    labelX: INV_X - 100, labelY: LOADS_Y + halfH - 8
+  });
+
+  // Earth bonds for bottom stack + meter + genset
+  const otherEarth = earthLine(METER_X + halfW, METER_Y + nodeH, METER_X + halfW, METER_Y + nodeH + 12)
+    + earthLine(ATS_X + halfW - 30, ATS_Y + nodeH, ATS_X + halfW - 30, F_H - 40)
+    + earthLine(PANEL_X + halfW + 30, PANEL_Y + nodeH, PANEL_X + halfW + 30, F_H - 40)
+    + earthLine(LOADS_X + halfW, LOADS_Y + nodeH, LOADS_X + halfW, F_H - 40)
+    + earthLine(GENSET_X2 + halfW, GENSET_Y + nodeH, GENSET_X2 + halfW, F_H - 40);
+
+  // Update F_H so it covers full bottom stack
+  // (note: F_H already declared above using BOT_H constant; if stack overflows, add safety)
+  const EARTH_Y = Math.max(F_H - 40, LOADS_Y + nodeH + 50);
+
+  const flowSVG = `
+    <svg viewBox="0 0 ${F_W} ${F_H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;display:block;margin:0 auto;background:#fafbfc;border:1px solid #cbd5e1;border-radius:4px;">
+      <defs>${arrowDefs}</defs>
+      <text x="${F_W/2}" y="22" text-anchor="middle" font="bold 13px sans-serif" fill="#0f172a" letter-spacing="2.5">⟨ SINGLE-LINE DIAGRAM · PER-ARRAY PROTECTION VIEW ⟩</text>
+      <text x="${F_W/2}" y="40" text-anchor="middle" font="9.5px sans-serif" fill="#94a3b8">${c.clientName} · ${c.invType} · ${c.sysKw} kWp · ${c.phase}-Phase ${c.V_AC}V</text>
+      <text x="${F_W/2}" y="56" text-anchor="middle" font="8.5px sans-serif" fill="#64748b">${numPV} PV string${numPV>1?'s':''} · ${numBat||'no'} battery pack${numBat!==1?'s':''} · ${numInv} inverter${numInv>1?'s':''} · all parallel paths shown</text>
+
+      ${pvSvg}
+      ${batSvg}
+      ${invSvg}
+      ${acInBusSvg}
+      ${genBusSvg}
+      ${acOutBusSvg}
+      ${acChainSvg}
+      ${utilReserveSvg}
+      ${acOutToAtsSvg}
+      ${gensetSvg}
+      ${bottomSvg}
+
+      ${pvEarth}${batEarth}${invEarth}${otherEarth}
+      <line x1="${LOADS_X}" y1="${EARTH_Y}" x2="${GENSET_X + nodeW}" y2="${EARTH_Y}" stroke="#39ff14" stroke-width="2.8" stroke-dasharray="6,3"/>
+      <text x="${F_W/2}" y="${EARTH_Y - 5}" text-anchor="middle" font="bold 9px sans-serif" fill="#16a34a" letter-spacing="1.8">⏚ EARTH / GROUND BUS (PE)</text>
+      <g transform="translate(${GENSET_X + nodeW + 14}, ${EARTH_Y})">
+        <line x1="0" y1="0" x2="0" y2="12" stroke="#16a34a" stroke-width="2"/>
+        <line x1="-10" y1="12" x2="10" y2="12" stroke="#16a34a" stroke-width="2.5"/>
+        <line x1="-7" y1="16" x2="7" y2="16" stroke="#16a34a" stroke-width="2"/>
+        <line x1="-4" y1="20" x2="4" y2="20" stroke="#16a34a" stroke-width="1.6"/>
+        <text x="0" y="32" text-anchor="middle" font="7px sans-serif" fill="#16a34a">2.4m Cu rod</text>
+      </g>
+    </svg>`;
+
+  const flowHTML = flowSVG;
+
+  // === ASSEMBLE PAGE ===
   return `<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
-<title>SLD - ${c.clientName} - ${c.sysKw} kWp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SLD — ${c.clientName} — ${c.sysKw} kWp</title>
 <style>
-  *{box-sizing:border-box} body{margin:0;background:#0f172a;color:#fff;font-family:system-ui,sans-serif}
-  .toolbar{position:sticky;top:0;background:#1e293b;padding:14px 24px;display:flex;gap:12px;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,0.4);z-index:10}
-  .toolbar h1{margin:0;font-size:15px;font-weight:600}
-  .toolbar .spacer{flex:1}
-  .toolbar button{background:#3b82f6;color:#fff;border:0;padding:9px 18px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px}
-  .toolbar button:hover{background:#2563eb}
-  .toolbar button.secondary{background:#64748b}
-  .page{background:#fff;max-width:1200px;margin:24px auto;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
-  @media print{body{background:#fff;color:#000;margin:0}.toolbar{display:none}.page{box-shadow:none;margin:0;max-width:none}@page{size:A3 portrait;margin:8mm}}
-</style></head>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#e2e8f0;font-size:9.5pt;line-height:1.4;}
+  .toolbar{position:sticky;top:0;background:#1e293b;color:#fff;padding:12px 22px;display:flex;gap:10px;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,0.4);z-index:100;flex-wrap:wrap;}
+  .toolbar h1{font-size:14px;font-weight:600;margin:0;}.toolbar .spacer{flex:1;}
+  .toolbar button{background:#3b82f6;color:#fff;border:0;padding:8px 16px;border-radius:5px;font-weight:600;cursor:pointer;font-size:12px;}
+  .toolbar button:hover{background:#2563eb;}.toolbar button.secondary{background:#64748b;}
+  .doc{max-width:780px;margin:18px auto;}
+
+  .pg{background:#fff;width:210mm;min-height:297mm;padding:9mm 11mm;margin:0 auto 8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);page-break-after:always;position:relative;}
+  .pg:last-of-type{page-break-after:auto;}
+
+  .pg-header{border-bottom:3px solid #fbbf24;padding-bottom:8pt;margin-bottom:10pt;display:flex;justify-content:space-between;align-items:flex-end;}
+  .pg-logo{font-size:17pt;font-weight:900;letter-spacing:1.5px;color:#0f172a;display:flex;align-items:baseline;gap:4px;}
+  .pg-logo span{color:#dc2626;}
+  .pg-logo-suffix{font-size:9pt;font-weight:700;letter-spacing:2pt;color:#dc2626;}
+  .pg-tag{font-size:7.5pt;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-top:2pt;}
+  .pg-meta{text-align:right;font-size:8pt;color:#64748b;}
+  .pg-meta strong{display:block;color:#0f172a;font-size:9pt;}
+  .pg-badge{display:inline-block;background:#2563eb;color:#fff;padding:3pt 10pt;font-size:8.5pt;font-weight:700;letter-spacing:1px;border-radius:3px;margin-bottom:3pt;}
+
+  h1.doc-title{font-size:18pt;font-weight:900;color:#0f172a;margin-bottom:2pt;}
+  .doc-sub{font-size:9.5pt;color:#dc2626;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:12pt;}
+  h2{font-size:11pt;color:#0f172a;border-left:4px solid #fbbf24;padding-left:8pt;margin:12pt 0 6pt;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;}
+
+  .specs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6pt;margin:6pt 0;}
+  .spec-card{background:#f8fafc;border-left:3px solid #fbbf24;padding:6pt 8pt;}
+  .spec-card-label{font-size:7pt;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;}
+  .spec-card-val{font-size:13pt;font-weight:900;color:#0f172a;margin-top:1pt;line-height:1.1;}
+  .spec-card-sub{font-size:7pt;color:#64748b;}
+
+  /* Photo gallery grid */
+  .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-top:8pt;}
+  .photo-card{position:relative;border:1.5px solid #cbd5e1;border-radius:5px;overflow:hidden;background:#f8fafc;page-break-inside:avoid;}
+  .photo-card img{width:100%;height:140px;object-fit:cover;display:block;}
+  .photo-num{
+    position:absolute;top:6pt;left:6pt;
+    background:#dc2626;color:#fff;
+    width:28px;height:28px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:14pt;
+    border:2.5px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  }
+  .photo-caption{padding:6pt 9pt;}
+  .photo-caption strong{display:block;color:#0f172a;font-size:9.5pt;}
+  .photo-tag{font-size:8pt;color:#dc2626;font-weight:600;margin-top:1pt;}
+  .photo-spec{font-size:7.5pt;color:#64748b;margin-top:2pt;}
+
+  .empty-state{text-align:center;padding:60pt 20pt;color:#64748b;}
+  .empty-state h2{border:0;padding:0;margin:0 0 8pt;}
+
+  /* Flow chart (Page 2) */
+  .flow-container{display:flex;flex-direction:column;align-items:center;gap:4pt;margin:10pt 0;}
+  .flow-step{
+    display:flex;align-items:center;gap:12pt;
+    background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:6px;
+    padding:8pt 12pt;width:90%;max-width:520pt;
+    position:relative;
+  }
+  .flow-thumb{
+    width:60pt;height:60pt;border-radius:4px;overflow:hidden;
+    background:#e2e8f0;display:flex;align-items:center;justify-content:center;
+    font-size:24pt;color:#94a3b8;flex-shrink:0;
+  }
+  .flow-thumb img{width:100%;height:100%;object-fit:cover;}
+  .flow-thumb.empty{font-size:20pt;}
+  .flow-num{
+    position:absolute;top:-8pt;left:50pt;
+    background:#dc2626;color:#fff;
+    width:22pt;height:22pt;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:11pt;
+    border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .flow-info{flex:1;}
+  .flow-label{font-weight:800;font-size:11pt;color:#0f172a;}
+  .flow-detail{font-size:8.5pt;color:#475569;margin-top:1pt;}
+  .flow-arrow{font-size:16pt;color:#dc2626;line-height:1;}
+
+  table{width:100%;border-collapse:collapse;margin:5pt 0;font-size:8.5pt;}
+  table th{background:#0f172a;color:#fbbf24;padding:5pt 7pt;text-align:left;font-size:8pt;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;}
+  table td{padding:4pt 7pt;border-bottom:1px solid #e2e8f0;}
+  .info-block{background:#dbeafe;border-left:4px solid #2563eb;padding:8pt 12pt;margin:8pt 0;font-size:8.5pt;}
+  .info-block strong{color:#1e40af;}
+
+  .footer-line{margin-top:10pt;padding-top:5pt;border-top:1px solid #cbd5e1;font-size:7.5pt;color:#94a3b8;text-align:center;}
+
+  @media print{
+    body{background:#fff;}
+    .toolbar{display:none;}
+    .doc{max-width:none;margin:0;}
+    .pg{box-shadow:none;margin:0;}
+    @page{size:A4 portrait;margin:0;}
+  }
+
+  /* Mobile */
+  @media(max-width:768px){
+    .doc{margin:0;}
+    .pg{width:100%;min-height:auto;padding:14px;}
+    .photo-grid{grid-template-columns:1fr;}
+    .specs-grid{grid-template-columns:1fr 1fr;}
+    .flow-step{width:100%;flex-wrap:wrap;}
+    .toolbar{padding:10px 14px;}
+    .toolbar button{padding:8px 12px;font-size:11px;}
+  }
+</style>
+<` + `script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></` + `script>
+</head>
 <body>
   <div class="toolbar">
-    <h1>⚡ Single-Line Diagram — ${c.clientName} · ${c.sysKw} kWp</h1>
+    <h1>⚡ Single-Line Diagram — ${c.clientName}</h1>
     <div class="spacer"></div>
-    <button onclick="window.print()">🖨 Print / PDF (A3 Portrait)</button>
+    <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
+    <button style="background:#059669;" onclick="downloadSLDAsPNG()">📷 Download PNG</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
-  <div class="page">${svg}</div>
+  <` + `script>
+    async function downloadSLDAsPNG() {
+      if (typeof html2canvas === 'undefined') {
+        alert('PNG library not loaded yet. Wait a moment then try again.');
+        return;
+      }
+      const btn = event.currentTarget;
+      const orig = btn.textContent;
+      btn.textContent = '⏳ Rendering...';
+      btn.disabled = true;
+      try {
+        // Render each page as separate image, stitched vertically
+        const pages = document.querySelectorAll('.pg');
+        const canvases = [];
+        for (const pg of pages) {
+          const c = await html2canvas(pg, {scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false});
+          canvases.push(c);
+        }
+        // Stitch
+        const maxW = Math.max(...canvases.map(c => c.width));
+        const totalH = canvases.reduce((s, c) => s + c.height + 20, 0) - 20;
+        const final = document.createElement('canvas');
+        final.width = maxW;
+        final.height = totalH;
+        const ctx = final.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, maxW, totalH);
+        let y = 0;
+        canvases.forEach(c => { ctx.drawImage(c, (maxW - c.width)/2, y); y += c.height + 20; });
+
+        // Download
+        const link = document.createElement('a');
+        link.download = "SLD-${(c.clientName || 'client').replace(/[^a-zA-Z0-9]/g, '_')}-${refNo}.png";
+        link.href = final.toDataURL('image/png');
+        link.click();
+      } catch (e) {
+        alert('PNG export failed: ' + e.message);
+      } finally {
+        btn.textContent = orig;
+        btn.disabled = false;
+      }
+    }
+  </` + `script>
+
+  <div class="doc">
+    <!-- PAGE 1: PHOTO GALLERY -->
+    <div class="pg">
+      <div class="pg-header">
+        <div>
+          <div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div>
+          <div class="pg-tag">Engineering · Procurement · Construction</div>
+        </div>
+        <div class="pg-meta">
+          <span class="pg-badge">SINGLE-LINE DIAGRAM</span><br/>
+          <strong>${refNo}</strong>
+          ${today}
+        </div>
+      </div>
+
+      <h1 class="doc-title">System Single-Line Diagram</h1>
+      <div class="doc-sub">${c.clientName} · ${c.sysKw} kWp ${c.invType}</div>
+
+      <h2>System Specifications</h2>
+      <div class="specs-grid">
+        <div class="spec-card"><div class="spec-card-label">Capacity</div><div class="spec-card-val">${c.sysKw} kWp</div><div class="spec-card-sub">${(c.panels*c.panelW/1000).toFixed(2)} kWp total</div></div>
+        <div class="spec-card"><div class="spec-card-label">Inverter</div><div class="spec-card-val">${c.sInvKw} kW</div><div class="spec-card-sub">${c.phase}-Ph ${c.V_AC}V</div></div>
+        ${c.batQ>0?`<div class="spec-card"><div class="spec-card-label">Storage</div><div class="spec-card-val">${(c.batQ*c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">${c.batQ}× ${c.V_DC_BAT}V LiFePO4</div></div>`:''}
+        <div class="spec-card"><div class="spec-card-label">MPPT</div><div class="spec-card-val">${c.mpptCount}</div><div class="spec-card-sub">DC tracking</div></div>
+      </div>
+
+      <h2>Installed Equipment (Photographic Record)</h2>
+      ${hasAnyPhoto
+        ? `<p style="font-size:8.5pt;color:#64748b;margin-bottom:6pt;">Numbered callouts identify each major component. Same numbers used in connection flow on next page.</p>
+           <div class="photo-grid">${photoCards}</div>`
+        : photoCards}
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.0 of 2</div>
+    </div>
+
+    <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Energy Flow & Equipment Schedule</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${c.clientName}</div>
+      </div>
+
+      <h2>Energy Flow Diagram</h2>
+      <p style="font-size:8.5pt;color:#64748b;">Power flow from generation source through protection and conversion equipment to loads. Numbers correspond to photographs on Page 1.</p>
+      <div class="flow-container">${flowHTML}</div>
+
+      <h2>Equipment Schedule</h2>
+      <table>
+        <thead><tr><th>Tag</th><th>Component</th><th>Specification</th><th>Quantity</th></tr></thead>
+        <tbody>
+          <tr><td><strong>PV-1</strong></td><td>Solar PV Modules</td><td>${c.panelW}Wp Mono-Crystalline</td><td>${c.panels} pcs</td></tr>
+          <tr><td><strong>INV-1</strong></td><td>${c.invType} Inverter</td><td>${c.sInvKw} kW · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>1 pc</td></tr>
+          ${c.batQ>0?`<tr><td><strong>BAT-1</strong></td><td>LiFePO4 Battery</td><td>${c.V_DC_BAT}V × ${c.batSizeAh}Ah · ${(c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh/unit</td><td>${c.batQ} pc${c.batQ>1?'s':''}</td></tr>`:''}
+          <tr><td><strong>ATS-1</strong></td><td>Auto Transfer Switch</td><td>${c.gridIso}A · ${c.phase===3?3:2}P · SOLAR/GEN/UTILITY</td><td>1 pc</td></tr>
+          <tr><td><strong>CB-PV</strong></td><td>DC PV Breaker</td><td>${c.dcPvBr}A · 2P · 1000V DC</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
+          <tr><td><strong>CB-AC</strong></td><td>AC Breakers (Grid/Load/Gen)</td><td>${c.acBr}A · ${c.phase===3?3:2}P · ${c.V_AC}V AC</td><td>3 pcs</td></tr>
+          ${c.batQ>0?`<tr><td><strong>MCCB-B</strong></td><td>DC Battery Main MCCB</td><td>${c.dcBatMain}A · 2P · ${c.V_DC_BAT}V DC</td><td>1 pc</td></tr>`:''}
+          <tr><td><strong>SPD-DC</strong></td><td>DC Surge Protector Type II</td><td>${c.dcPvBr}A · 1000V DC · per array</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
+          <tr><td><strong>SPD-AC</strong></td><td>AC Surge Protector Type II</td><td>${c.gridIso}A · ${c.V_AC}V AC</td><td>1 pc</td></tr>
+          <tr><td><strong>RLY-ISL</strong></td><td>Islanding / Anti-Islanding Relay</td><td>Voltage/Frequency monitoring · ${c.V_AC}V AC</td><td>1 pc</td></tr>
+          <tr><td><strong>METER</strong></td><td>Utility kWh Meter</td><td>Bi-directional Net Meter</td><td>1 pc</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-block">
+        <strong>NOTES:</strong>
+        <ol style="margin:4pt 0 0 18pt;font-size:8.5pt;">
+          <li>All metallic enclosures bonded to common earth bus (E-BAR).</li>
+          <li>Earth electrode: 5/8" × 2.4M copper rod.</li>
+          <li>PV strings: 6 mm² double-insulated PV-rated cable, UV resistant.</li>
+          <li>Battery cables: 35 mm² minimum (verified per current).</li>
+          <li>AC distribution: per ${c.phase}-phase ${c.V_AC}V configuration.</li>
+          <li>Protective devices sized per NEC 125% continuous-load rule.</li>
+        </ol>
+      </div>
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.0 of 2</div>
+    </div>
+  </div>
 </body></html>`;
 }
 
@@ -4460,6 +4820,7 @@ async function clearAllTrials() {
 
 // ===== PDF CLIENT QUOTE (FULL) — A4 FORMAT MATCHING JO =====
 function generatePDFQuote() {
+  if (!requirePassword('generate PDF Quote (Full)')) return;
   // Force refresh of all Client Proposal display values so PDF Quote uses live numbers
   if (typeof calcBOM === 'function') calcBOM();
 
@@ -4512,7 +4873,14 @@ function generatePDFQuote() {
 
   const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
   const validUntil = new Date(Date.now() + 30*86400000).toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
-  const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
+  // Ref priority: most recent saved quote for this client → currentQuoteRef → freshly generated
+  let refNo = '';
+  try {
+    const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
+    const match = hist.find(q => q.client && q.client.trim().toLowerCase() === clientName.trim().toLowerCase());
+    if (match && match.ref) refNo = match.ref;
+  } catch(e) {}
+  if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
   const slotsBooked = (typeof loadPipeline === 'function' ? loadPipeline().filter(l => PL_ACTIVE_STAGES.includes(l.stage)).length : 0);
   const slotsTotal = 4;
   const slotsLeft = Math.max(0, slotsTotal - slotsBooked);
@@ -4544,13 +4912,14 @@ function generatePDFQuote() {
     const sMonth = consumptionPesosPerMonth * s.genMod * s.rateMod;
     const sYear = sMonth * 12;
     const pMonths = (grandTotal > 0 && sMonth > 0) ? (grandTotal / sMonth).toFixed(0) : '—';
+    const pYears  = (grandTotal > 0 && sMonth > 0) ? (grandTotal / sMonth / 12).toFixed(1) : '—';
     sens += `<tr>
       <td><strong style="color:${s.cls};">${s.name}</strong></td>
       <td style="text-align:center;">${(s.rateMod*100).toFixed(0)}%</td>
       <td style="text-align:center;">${(s.genMod*100).toFixed(0)}%</td>
       <td style="text-align:right;font-family:monospace;">₱${sMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
       <td style="text-align:right;font-family:monospace;">₱${sYear.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
-      <td style="text-align:center;font-family:monospace;">${pMonths} mos</td>
+      <td style="text-align:center;font-family:monospace;">${pMonths} mos / ${pYears} yrs</td>
     </tr>`;
   });
 
@@ -4569,11 +4938,13 @@ function generatePDFQuote() {
   let monthlyChart = '';
   monthlyVar.forEach((v,i) => {
     const kwh = baseMonthKwh * v;
+    const pesoVal = kwh * rate;
     const pct = (kwh / maxMonth) * 100;
     monthlyChart += `<tr>
-      <td style="width:40px;font-weight:700;">${monthNames[i]}</td>
+      <td style="width:32px;font-weight:700;">${monthNames[i]}</td>
       <td><div style="height:14px;background:#f1f5f9;border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#fbbf24,#f59e0b);"></div></div></td>
-      <td style="width:80px;text-align:right;font-family:monospace;">${kwh.toFixed(0)} kWh</td>
+      <td style="width:70px;text-align:right;font-family:monospace;">${kwh.toFixed(0)} kWh</td>
+      <td style="width:90px;text-align:right;font-family:monospace;color:#059669;font-weight:700;">₱${pesoVal.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
     </tr>`;
   });
 
@@ -4581,7 +4952,7 @@ function generatePDFQuote() {
   const html = `<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
-<title>FDG Solar Proposal — ${clientName} — ${refNo}</title>
+<title>FDG Solar Visayas Proposal — ${clientName} — ${refNo}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#e2e8f0;font-size:9.5pt;line-height:1.4;}
@@ -4613,8 +4984,9 @@ function generatePDFQuote() {
     justify-content:space-between;
     align-items:flex-end;
   }
-  .pg-logo{font-size:17pt;font-weight:900;letter-spacing:1.5px;color:#0f172a;}
+  .pg-logo{font-size:17pt;font-weight:900;letter-spacing:1.5px;color:#0f172a;display:flex;align-items:baseline;gap:4px;}
   .pg-logo span{color:#dc2626;}
+  .pg-logo-suffix{font-size:9pt;font-weight:700;letter-spacing:2pt;color:#dc2626;}
   .pg-tag{font-size:7.5pt;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-top:2pt;}
   .pg-meta{text-align:right;font-size:8pt;color:#64748b;}
   .pg-meta strong{display:block;color:#0f172a;font-size:9pt;}
@@ -4666,6 +5038,89 @@ function generatePDFQuote() {
   .sig-block{border-top:1.2px solid #0f172a;padding-top:4pt;font-size:8pt;}
   .sig-block strong{display:block;font-size:10pt;color:#0f172a;margin-bottom:1pt;}
 
+  /* Signature v2: title on top, blank signing space, line below space, name + role below */
+  .signature-v2{
+    margin-top:14pt;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:24pt 48pt auto auto;
+    column-gap:24pt;
+    row-gap:0;
+    align-items:stretch;
+  }
+  .sig-col{display:contents;}
+  .sig-title{
+    grid-row:1;
+    font-size:8.5pt;font-weight:800;color:#0f172a;letter-spacing:0.3px;
+    text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;
+    border-bottom:0.6pt dotted #cbd5e1;
+    line-height:1.15;
+    padding:0 4pt;
+  }
+  .sig-title.col1{grid-column:1;}
+  .sig-title.col2{grid-column:2;}
+  .sig-space{grid-row:2;}
+  .sig-space.col1{grid-column:1;}
+  .sig-space.col2{grid-column:2;}
+  .sig-line-bottom{
+    grid-row:3;
+    border-top:1.4px solid #0f172a;padding-top:3pt;
+    font-size:10pt;font-weight:700;color:#0f172a;
+    text-align:center;
+    min-height:14pt;
+  }
+  .sig-line-bottom.col1{grid-column:1;}
+  .sig-line-bottom.col2{grid-column:2;}
+  .sig-role{
+    grid-row:4;
+    font-size:7.5pt;color:#64748b;margin-top:1pt;
+    text-align:center;font-style:italic;
+  }
+  .sig-role.col1{grid-column:1;}
+  .sig-role.col2{grid-column:2;}
+
+  /* Cover page styling (dramatic, dedicated) */
+  .cover-pg{padding:0;overflow:hidden;position:relative;}
+  .cover-bg{
+    position:absolute;inset:0;
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#dc2626 100%);
+  }
+  .cover-content{
+    position:relative;z-index:2;
+    padding:18mm 16mm;
+    min-height:297mm;display:flex;flex-direction:column;justify-content:space-between;
+    color:#fff;
+  }
+  .cover-logo-big{font-size:38pt;font-weight:900;letter-spacing:3pt;color:#fff;display:flex;align-items:baseline;gap:8px;}
+  .cover-logo-suffix{font-size:14pt;font-weight:700;letter-spacing:4pt;color:#fbbf24;}
+  .cover-logo-big span{color:#fbbf24;}
+  .cover-tag-big{font-size:10pt;color:#94a3b8;letter-spacing:2pt;text-transform:uppercase;margin-top:4pt;}
+  .cover-mid{margin:auto 0;}
+  .cover-title-big{font-size:46pt;font-weight:900;line-height:1.05;margin-bottom:18pt;color:#fff;}
+  .cover-divider{width:60pt;height:4pt;background:#fbbf24;margin-bottom:14pt;}
+  .cover-prepared{font-size:9.5pt;letter-spacing:3pt;color:#fbbf24;text-transform:uppercase;margin-bottom:6pt;}
+  .cover-client-name{font-size:26pt;font-weight:700;color:#fff;margin-bottom:4pt;}
+  .cover-client-addr{font-size:11pt;color:#cbd5e1;}
+  .cover-bottom{border-top:2px solid #fbbf24;padding-top:10pt;}
+  .cover-foot-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10pt;margin-bottom:8pt;}
+  .cover-foot-label{font-size:7.5pt;color:#94a3b8;letter-spacing:1.5pt;text-transform:uppercase;}
+  .cover-foot-val{font-size:11pt;font-weight:700;color:#fff;margin-top:2pt;font-family:monospace;}
+  .cover-contact-line{font-size:9pt;color:#cbd5e1;text-align:center;letter-spacing:0.8pt;margin-top:8pt;}
+
+  /* Hero Investment block (Page 2) */
+  .hero-investment{
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+    color:#fff;
+    padding:18pt 22pt;border-radius:6px;margin:10pt 0 14pt;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    border-left:6px solid #fbbf24;
+  }
+  .hero-inv-label{font-size:9pt;color:#fbbf24;letter-spacing:2pt;text-transform:uppercase;font-weight:700;}
+  .hero-inv-val{font-size:38pt;font-weight:900;margin:4pt 0 4pt;line-height:1;color:#fff;}
+  .hero-inv-sub{font-size:9pt;color:#cbd5e1;}
+
   .footer-line{
     margin-top:14pt;padding-top:6pt;border-top:1px solid #cbd5e1;
     font-size:7.5pt;color:#94a3b8;text-align:center;
@@ -4676,6 +5131,7 @@ function generatePDFQuote() {
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;}
     .pg{box-shadow:none;margin:0;}
+    .cover-pg{padding:0;}
     @page{size:A4 portrait;margin:0;}
   }
 </style></head>
@@ -4688,12 +5144,55 @@ function generatePDFQuote() {
   </div>
 
   <div class="doc">
-    <!-- ━━━ PAGE 1: COVER + EXECUTIVE SUMMARY ━━━ -->
+    <!-- ━━━ PAGE 1: COVER (dedicated, dramatic) ━━━ -->
+    <div class="pg cover-pg">
+      <div class="cover-bg"></div>
+      <div class="cover-content">
+        <div class="cover-top">
+          <div class="cover-logo-big">FDG<span>SOLAR</span><small class="cover-logo-suffix"> VISAYAS</small></div>
+          <div class="cover-tag-big">Engineering · Procurement · Construction · Visayas</div>
+        </div>
+
+        <div class="cover-mid">
+          <div class="cover-title-big">Solar Power<br/>Investment<br/>Proposal</div>
+          <div class="cover-divider"></div>
+          <div class="cover-prepared">PREPARED EXCLUSIVELY FOR</div>
+          <div class="cover-client-name">${escapeHtml(clientName)}</div>
+          ${clientAddress ? `<div class="cover-client-addr">${escapeHtml(clientAddress)}</div>` : ''}
+        </div>
+
+        <div class="cover-bottom">
+          <div class="cover-foot-grid">
+            <div>
+              <div class="cover-foot-label">REFERENCE</div>
+              <div class="cover-foot-val">${refNo}</div>
+            </div>
+            <div>
+              <div class="cover-foot-label">ISSUED</div>
+              <div class="cover-foot-val">${today}</div>
+            </div>
+            <div>
+              <div class="cover-foot-label">VALID UNTIL</div>
+              <div class="cover-foot-val">${validUntil}</div>
+            </div>
+            <div>
+              <div class="cover-foot-label">SYSTEM</div>
+              <div class="cover-foot-val">${sysSize} kWp ${escapeHtml(sysType)}</div>
+            </div>
+          </div>
+          <div class="cover-contact-line">
+            FDG Solar Visayas · Engr. Francis Dale Guinoo · 0915 1983 899 · fmguinoo@gmail.com
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ━━━ PAGE 2: HERO FINANCIALS (Final Investment + Specs + Savings) ━━━ -->
     <div class="pg">
       <div class="pg-header">
         <div>
-          <div class="pg-logo">FDG<span>SOLAR</span></div>
-          <div class="pg-tag">Engineering · Procurement · Construction</div>
+          <div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div>
+          <div class="pg-tag">Investment Summary · The Numbers At A Glance</div>
         </div>
         <div class="pg-meta">
           <span class="pg-badge">CLIENT PROPOSAL</span><br/>
@@ -4703,27 +5202,24 @@ function generatePDFQuote() {
         </div>
       </div>
 
-      <h1 class="doc-title">Solar Power Investment Proposal</h1>
-      <div class="doc-sub">Prepared exclusively for ${escapeHtml(clientName)}</div>
-
-      <h2>Client Details</h2>
-      <table>
-        <tr><td style="background:#f1f5f9;font-weight:700;width:30%;">Client / Owner</td><td><strong>${escapeHtml(clientName)}</strong></td></tr>
-        <tr><td style="background:#f1f5f9;font-weight:700;">Site Address</td><td>${escapeHtml(clientAddress) || '_____________________________'}</td></tr>
-        <tr><td style="background:#f1f5f9;font-weight:700;">System Capacity</td><td><strong>${sysSize} kWp ${escapeHtml(sysType)}</strong></td></tr>
-        <tr><td style="background:#f1f5f9;font-weight:700;">Reference No.</td><td style="font-family:monospace;">${refNo}</td></tr>
-      </table>
+      <!-- ⭐ HERO: FINAL INVESTMENT (biggest number, top of page) -->
+      <div class="hero-investment">
+        <div class="hero-inv-label">⭐ TOTAL INVESTMENT (VAT EXCLUSIVE)</div>
+        <div class="hero-inv-val">₱${grandTotal.toLocaleString()}</div>
+        <div class="hero-inv-sub">${sysSize} kWp ${escapeHtml(sysType)} · Turnkey EPC Solution · 80% downpayment, balance after commissioning</div>
+      </div>
 
       <h2>System Specifications</h2>
       <div class="specs-grid">
-        <div class="spec-card"><div class="spec-card-label">Total Capacity</div><div class="spec-card-val">${sysSize} kWp</div><div class="spec-card-sub">${cfg.panels} × ${cfg.panelW}Wp panels</div></div>
+        <div class="spec-card"><div class="spec-card-label">Total Capacity</div><div class="spec-card-val">${sysSize} kWp</div><div class="spec-card-sub">${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp total</div></div>
         <div class="spec-card"><div class="spec-card-label">System Type</div><div class="spec-card-val">${escapeHtml(sysType)}</div><div class="spec-card-sub">${cfg.phase}-Phase ${cfg.V_AC}V AC</div></div>
         ${cfg.batQ>0?`<div class="spec-card"><div class="spec-card-label">Energy Storage</div><div class="spec-card-val">${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4</div></div>`:''}
-        <div class="spec-card"><div class="spec-card-label">Daily Equivalent (Eng. Calc)</div><div class="spec-card-val">${dailyKwh.toFixed(1)} kWh</div><div class="spec-card-sub">${engDailyKwh > 0 ? 'Client load profile' : `${PEAK_SUN}h sun × ${(SYS_LOSS*100).toFixed(0)}% derate`}</div></div>
+        <div class="spec-card"><div class="spec-card-label">Daily Equivalent</div><div class="spec-card-val">${dailyKwh.toFixed(1)} kWh</div><div class="spec-card-sub">${engDailyKwh > 0 ? 'Client load profile' : `${PEAK_SUN}h sun × ${(SYS_LOSS*100).toFixed(0)}% derate`}</div></div>
       </div>
 
+      <!-- ⭐ HERO: ESTIMATED MONTHLY SAVINGS -->
       <div class="savings-box">
-        <div class="savings-box-label">Estimated Monthly Savings</div>
+        <div class="savings-box-label">⭐ Estimated Monthly Savings</div>
         <div class="savings-box-val">₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
         <div class="savings-box-sub">Replaces your current monthly electric bill · 25-year warranty on panels</div>
         <div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>
@@ -4741,13 +5237,13 @@ function generatePDFQuote() {
         <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · Engineering | Procurement | Construction · ${refNo} · Page 1</div>
+      <div class="footer-line">© FDG Solar Visayas · REV 3.0 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.0</div>
     </div>
 
-    <!-- ━━━ PAGE 2: GENERATION FORECAST + CASHFLOW ━━━ -->
+    <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
     <div class="pg">
       <div class="pg-header">
-        <div><div class="pg-logo">FDG<span>SOLAR</span></div><div class="pg-tag">Generation & Financial Projection</div></div>
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Generation & Financial Projection</div></div>
         <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
       </div>
 
@@ -4779,13 +5275,13 @@ function generatePDFQuote() {
         <tbody>${sens}</tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.0</div>
     </div>
 
     <!-- ━━━ PAGE 3: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
     <div class="pg">
       <div class="pg-header">
-        <div><div class="pg-logo">FDG<span>SOLAR</span></div><div class="pg-tag">Tiers, Inclusions & Acceptance</div></div>
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Tiers, Inclusions & Acceptance</div></div>
         <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
       </div>
 
@@ -4821,7 +5317,7 @@ function generatePDFQuote() {
         <div class="contact-grid">
           <div>
             <strong style="color:#fbbf24;">Engr. Francis Dale Guinoo</strong><br/>
-            Lead Engineer · FDG Solar<br/>
+            Lead Engineer · FDG Solar Visayas<br/>
             📱 0915 1983 899<br/>
             ✉ fmguinoo@gmail.com
           </div>
@@ -4835,12 +5331,18 @@ function generatePDFQuote() {
 
       <h2>Acceptance &amp; Authorization</h2>
       <p style="font-size:8.5pt;">By signing below, the Client confirms acceptance of this proposal and agrees to the terms (80% downpayment upon contract signing, balance after commissioning).</p>
-      <div class="signature">
-        <div class="sig-block"><strong>Client Signature</strong>${escapeHtml(clientName)}<br/><span style="color:#64748b;font-size:8pt;">Signature over Printed Name &amp; Date</span></div>
-        <div class="sig-block"><strong>FDG Solar</strong>Engr. Francis Dale Guinoo<br/><span style="color:#64748b;font-size:8pt;">Lead Engineer · Signature &amp; Date</span></div>
+      <div class="signature-v2">
+        <div class="sig-title col1">CLIENT / OWNER</div>
+        <div class="sig-title col2">FDG Solar Visayas</div>
+        <div class="sig-space col1"></div>
+        <div class="sig-space col2"></div>
+        <div class="sig-line-bottom col1">${escapeHtml(clientName)}</div>
+        <div class="sig-line-bottom col2">Engr. Francis Dale Guinoo</div>
+        <div class="sig-role col1">Signature over Printed Name &amp; Date</div>
+        <div class="sig-role col2">Lead Engineer · Signature &amp; Date</div>
       </div>
 
-      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · VAT exclusive · Page 3 of 3</div>
+      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · VAT exclusive · Page 4 of 4</div>
     </div>
   </div>
 </body></html>`;
@@ -4851,16 +5353,137 @@ function generatePDFQuote() {
 }
 
 // ===== TURNOVER & ACCEPTANCE FORM — A4 FORMAT MATCHING JO =====
+// ===== MESSENGER QUOTE CARD — 1080×1080 square shareable image =====
+async function generateMessengerCard() {
+  if (!requirePassword('generate Messenger Card')) return;
+  if (typeof html2canvas === 'undefined') {
+    toast('Image library not loaded yet — wait a sec and retry', 'error');
+    return;
+  }
+
+  // Refresh client proposal numbers
+  if (typeof calcBOM === 'function') calcBOM();
+
+  const cfg = readSLDConfig();
+  const clientName = document.getElementById('cli-name')?.value || 'Valued Client';
+  const sysSize = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
+  const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
+  const rate = (typeof autoRate !== 'undefined' ? autoRate : null) || 12.56;
+
+  // Pull final investment from rendered client proposal
+  let grandTotal = 0;
+  const finalInvEl = document.getElementById('p-sys-grandtotal');
+  if (finalInvEl) {
+    const txt = (finalInvEl.textContent || '').replace(/[₱,\s]/g, '');
+    grandTotal = parseFloat(txt) || 0;
+  }
+  if (!grandTotal) grandTotal = parseFloat(document.getElementById('grand-total')?.value) || 0;
+
+  const monthlyBillPesos = parseFloat(document.getElementById('flowBill')?.value) || 0;
+  const engDailyKwh = (typeof clientMonthlyKwh !== 'undefined' && clientMonthlyKwh > 0) ? (clientMonthlyKwh / 30) : (cfg.sysKw * 4.5 * 0.81);
+  const monthlySav = monthlyBillPesos > 0 ? monthlyBillPesos : (engDailyKwh * 30 * rate);
+  const paybackMonths = (grandTotal > 0 && monthlySav > 0) ? (grandTotal / monthlySav).toFixed(0) : '—';
+  const paybackYears  = (grandTotal > 0 && monthlySav > 0) ? (grandTotal / monthlySav / 12).toFixed(1) : '—';
+  const yearlySav = monthlySav * 12;
+
+  let refNo = '';
+  try {
+    const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
+    const match = hist.find(q => q.client && q.client.trim().toLowerCase() === clientName.trim().toLowerCase());
+    if (match && match.ref) refNo = match.ref;
+  } catch(e) {}
+  if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : 'FDGS-' + Date.now();
+
+  // Build hidden 1080×1080 div
+  const card = document.createElement('div');
+  card.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;height:1080px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 45%,#dc2626 100%);color:#fff;font-family:\"Helvetica Neue\",Arial,sans-serif;padding:60px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;';
+  card.innerHTML = `
+    <div>
+      <div style="display:flex;align-items:baseline;gap:14px;">
+        <div style="font-size:62px;font-weight:900;letter-spacing:5px;">FDG<span style="color:#fbbf24;">SOLAR</span></div>
+        <div style="font-size:22px;font-weight:700;letter-spacing:6px;color:#fbbf24;">VISAYAS</div>
+      </div>
+      <div style="font-size:18px;color:#94a3b8;letter-spacing:3px;text-transform:uppercase;margin-top:6px;">Engineering · Procurement · Construction</div>
+      <div style="width:80px;height:5px;background:#fbbf24;margin:32px 0;"></div>
+      <div style="font-size:26px;color:#fbbf24;letter-spacing:4px;text-transform:uppercase;font-weight:700;">Solar Investment Summary</div>
+      <div style="font-size:48px;font-weight:900;margin-top:14px;line-height:1.1;">${escapeHtml(clientName)}</div>
+      <div style="font-size:24px;color:#cbd5e1;margin-top:8px;">${sysSize} kWp · ${escapeHtml(sysType)} System</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px 0;">
+      <div style="background:rgba(0,0,0,0.35);border-left:6px solid #fbbf24;padding:20px 24px;border-radius:6px;">
+        <div style="font-size:14px;letter-spacing:2px;color:#fbbf24;text-transform:uppercase;font-weight:700;">⭐ Total Investment</div>
+        <div style="font-size:46px;font-weight:900;margin-top:6px;line-height:1;">₱${grandTotal.toLocaleString()}</div>
+        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">VAT exclusive · Turnkey</div>
+      </div>
+      <div style="background:rgba(251,191,36,0.95);color:#0f172a;padding:20px 24px;border-radius:6px;">
+        <div style="font-size:14px;letter-spacing:2px;text-transform:uppercase;font-weight:700;">💰 Monthly Savings</div>
+        <div style="font-size:46px;font-weight:900;margin-top:6px;line-height:1;">₱${monthlySav.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        <div style="font-size:13px;margin-top:4px;font-weight:600;">Replaces electric bill</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.35);border-left:6px solid #10b981;padding:20px 24px;border-radius:6px;">
+        <div style="font-size:14px;letter-spacing:2px;color:#10b981;text-transform:uppercase;font-weight:700;">📅 Payback Period</div>
+        <div style="font-size:46px;font-weight:900;margin-top:6px;line-height:1;">${paybackYears} yrs</div>
+        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">${paybackMonths} months · 25-yr panels</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.35);border-left:6px solid #3b82f6;padding:20px 24px;border-radius:6px;">
+        <div style="font-size:14px;letter-spacing:2px;color:#60a5fa;text-transform:uppercase;font-weight:700;">📈 Yearly Savings</div>
+        <div style="font-size:46px;font-weight:900;margin-top:6px;line-height:1;">₱${yearlySav.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">Plus 4% rate increase /yr</div>
+      </div>
+    </div>
+
+    <div>
+      <div style="background:rgba(0,0,0,0.55);padding:22px 28px;border-radius:8px;border:2px solid #fbbf24;">
+        <div style="font-size:16px;letter-spacing:3px;color:#fbbf24;text-transform:uppercase;font-weight:800;margin-bottom:6px;">Reserve Your Free Site Assessment</div>
+        <div style="display:flex;gap:30px;font-size:19px;font-weight:600;">
+          <div>📱 0915 1983 899</div>
+          <div>✉ fmguinoo@gmail.com</div>
+        </div>
+        <div style="font-size:14px;color:#cbd5e1;margin-top:6px;">Engr. Francis Dale Guinoo · Lead Engineer · Cebu, Philippines</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-size:13px;color:#94a3b8;letter-spacing:1.5px;">
+        <div>REF: <strong style="color:#fff;font-family:monospace;">${refNo}</strong></div>
+        <div>${new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(card);
+
+  try {
+    toast('Generating share card...', 'info');
+    const canvas = await html2canvas(card, {scale: 1, backgroundColor: null, useCORS: true, logging: false, width: 1080, height: 1080});
+    const link = document.createElement('a');
+    const safeName = clientName.replace(/[^a-zA-Z0-9]/g, '_');
+    link.download = `FDG-Quote-${safeName}-${refNo}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('✓ Card downloaded — ready to share on Messenger/Viber', 'success');
+  } catch(e) {
+    toast('Share card failed: ' + e.message, 'error');
+  } finally {
+    document.body.removeChild(card);
+  }
+}
+
 function openTurnoverForm() {
+  if (!requirePassword('open Turnover & Warranty Form')) return;
   const cfg = readSLDConfig();
   const clientName = document.getElementById('cli-name')?.value || 'Client';
   const clientAddress = document.getElementById('cli-address')?.value || '_______________________________________________';
   const sysKw = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
   const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
-  const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
+  // Ref priority: most recent saved quote for this client → currentQuoteRef → freshly generated
+  let refNo = '';
+  try {
+    const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
+    const match = hist.find(q => q.client && q.client.trim().toLowerCase() === clientName.trim().toLowerCase());
+    if (match && match.ref) refNo = match.ref;
+  } catch(e) {}
+  if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
 
-  const panelDesc = `${cfg.panels} × ${cfg.panelW}Wp Solar Panels`;
+  const panelDesc = `${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp Solar Panels (Total)`;
   const invDesc = `${cfg.sInvKw}kW ${escapeHtml(cfg.invType)} · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
   const batDesc = cfg.batQ > 0 ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 (${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh)` : 'N/A — Grid-Tied system';
 
@@ -4890,8 +5513,9 @@ function openTurnoverForm() {
     border-bottom:3px solid #fbbf24;padding-bottom:8pt;margin-bottom:10pt;
     display:flex;justify-content:space-between;align-items:flex-end;
   }
-  .pg-logo{font-size:17pt;font-weight:900;letter-spacing:1.5px;color:#0f172a;}
+  .pg-logo{font-size:17pt;font-weight:900;letter-spacing:1.5px;color:#0f172a;display:flex;align-items:baseline;gap:4px;}
   .pg-logo span{color:#dc2626;}
+  .pg-logo-suffix{font-size:9pt;font-weight:700;letter-spacing:2pt;color:#dc2626;}
   .pg-tag{font-size:7.5pt;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-top:2pt;}
   .pg-meta{text-align:right;font-size:8pt;color:#64748b;}
   .pg-meta strong{display:block;color:#0f172a;font-size:9pt;}
@@ -4932,6 +5556,49 @@ function openTurnoverForm() {
   .signature{margin-top:14pt;display:grid;grid-template-columns:1fr 1fr;gap:20pt;}
   .sig-block{border-top:1.2px solid #0f172a;padding-top:4pt;font-size:8pt;}
   .sig-block strong{display:block;font-size:10pt;color:#0f172a;margin-bottom:1pt;}
+
+  /* Signature v2: title on top, blank space, line below, name + role below */
+  .signature-v2{
+    margin-top:14pt;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:24pt 48pt auto auto;
+    column-gap:24pt;
+    row-gap:0;
+    align-items:stretch;
+  }
+  .sig-col{display:contents;}
+  .sig-title{
+    grid-row:1;
+    font-size:8.5pt;font-weight:800;color:#0f172a;letter-spacing:0.3px;
+    text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;
+    border-bottom:0.6pt dotted #cbd5e1;
+    line-height:1.15;
+    padding:0 4pt;
+  }
+  .sig-title.col1{grid-column:1;}
+  .sig-title.col2{grid-column:2;}
+  .sig-space{grid-row:2;}
+  .sig-space.col1{grid-column:1;}
+  .sig-space.col2{grid-column:2;}
+  .sig-line-bottom{
+    grid-row:3;
+    border-top:1.4px solid #0f172a;padding-top:3pt;
+    font-size:10pt;font-weight:700;color:#0f172a;
+    text-align:center;
+    min-height:14pt;
+  }
+  .sig-line-bottom.col1{grid-column:1;}
+  .sig-line-bottom.col2{grid-column:2;}
+  .sig-role{
+    grid-row:4;
+    font-size:7.5pt;color:#64748b;margin-top:1pt;
+    text-align:center;font-style:italic;
+  }
+  .sig-role.col1{grid-column:1;}
+  .sig-role.col2{grid-column:2;}
 
   .footer-line{
     margin-top:14pt;padding-top:6pt;border-top:1px solid #cbd5e1;
@@ -5000,7 +5667,7 @@ function openTurnoverForm() {
     <div class="pg">
       <div class="pg-header">
         <div>
-          <div class="pg-logo">FDG<span>SOLAR</span></div>
+          <div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div>
           <div class="pg-tag">Engineering · Procurement · Construction</div>
         </div>
         <div class="pg-meta">
@@ -5018,7 +5685,7 @@ function openTurnoverForm() {
         <tr><td>Client / Owner</td><td><strong>${escapeHtml(clientName)}</strong></td></tr>
         <tr><td>Site Address</td><td>${escapeHtml(clientAddress)}</td></tr>
         <tr><td>System Capacity</td><td><strong>${sysKw} kWp ${escapeHtml(sysType)}</strong></td></tr>
-        <tr><td>Panel Configuration</td><td>${cfg.panels} × ${cfg.panelW}Wp · ${cfg.mpptCount} MPPT</td></tr>
+        <tr><td>Panel Configuration</td><td>${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp · ${cfg.mpptCount} MPPT</td></tr>
         <tr><td>Inverter</td><td>${invDesc}</td></tr>
         <tr><td>Battery Bank</td><td>${batDesc}</td></tr>
         <tr><td>Energization Date</td><td>_____________________ &nbsp;&nbsp; (warranty start)</td></tr>
@@ -5038,13 +5705,13 @@ function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.0</div>
     </div>
 
     <!-- ━━━ PAGE 2: SERIAL NUMBER PHOTOS + APP CREDENTIAL IMAGES ━━━ -->
     <div class="pg">
       <div class="pg-header">
-        <div><div class="pg-logo">FDG<span>SOLAR</span></div><div class="pg-tag">Equipment Documentation</div></div>
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Equipment Documentation</div></div>
         <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
       </div>
 
@@ -5090,13 +5757,13 @@ function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.0</div>
     </div>
 
     <!-- ━━━ PAGE 3: WARRANTY + ACCEPTANCE + SIGNATURE ━━━ -->
     <div class="pg">
       <div class="pg-header">
-        <div><div class="pg-logo">FDG<span>SOLAR</span></div><div class="pg-tag">Warranty & Acceptance Terms</div></div>
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Warranty & Acceptance Terms</div></div>
         <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
       </div>
 
@@ -5136,17 +5803,15 @@ function openTurnoverForm() {
       </table>
       <p style="font-size:8pt;color:#64748b;margin-top:4pt;"><em>Punch-list items (if any): _________________________________________________________</em></p>
 
-      <div class="signature">
-        <div class="sig-block">
-          <strong>OWNER / CLIENT</strong>
-          ${escapeHtml(clientName)}<br/>
-          <span style="color:#64748b;font-size:8pt;">Signature over Printed Name &amp; Date</span>
-        </div>
-        <div class="sig-block">
-          <strong>Engineering | Procurement | Construction</strong>
-          Engr. Francis Dale Guinoo · FDG Solar<br/>
-          <span style="color:#64748b;font-size:8pt;">Lead Engineer · Signature &amp; Date</span>
-        </div>
+      <div class="signature-v2">
+        <div class="sig-title col1">OWNER / CLIENT</div>
+        <div class="sig-title col2">Engineering | Procurement | Construction</div>
+        <div class="sig-space col1"></div>
+        <div class="sig-space col2"></div>
+        <div class="sig-line-bottom col1">${escapeHtml(clientName)}</div>
+        <div class="sig-line-bottom col2">Engr. Francis Dale Guinoo · FDG Solar Visayas</div>
+        <div class="sig-role col1">Signature over Printed Name &amp; Date</div>
+        <div class="sig-role col2">Lead Engineer · Signature &amp; Date</div>
       </div>
 
       <div class="footer-line">Project Reference: <strong>${refNo}</strong> · Issued ${today} · Page 3 of 3</div>
@@ -5557,8 +6222,101 @@ async function deletePipelineLead(id) {
 document.addEventListener('DOMContentLoaded', applyAdminMode);
 // Also call right away in case DOM already loaded
 if (document.readyState !== 'loading') applyAdminMode();
+
+// ===== SLD PHOTO LIBRARY HANDLERS =====
+function openSLDPhotoLibrary() {
+  renderSLDPhotoSlots();
+  document.getElementById('sld-photo-modal').classList.add('active');
+}
+function closeSLDPhotoLibrary() {
+  document.getElementById('sld-photo-modal').classList.remove('active');
+}
+
+function renderSLDPhotoSlots() {
+  const photos = loadSLDPhotos();
+  const container = document.getElementById('sld-photo-slots');
+  if (!container) return;
+  let html = '';
+  SLD_PHOTO_SLOTS.forEach(slot => {
+    const p = photos[slot.id];
+    const hasPhoto = p && p.src;
+    html += `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;">
+        <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:2px;">${slot.label}</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">${slot.desc}</div>
+        ${hasPhoto ? `
+          <img src="${p.src}" style="width:100%;height:90px;object-fit:cover;border-radius:4px;border:1px solid var(--border);margin-bottom:6px;"/>
+          <input type="text" placeholder="Optional tag (e.g. SN: ABC123)" value="${escapeHtml(p.tag||'')}" oninput="updateSLDPhotoTag('${slot.id}', this.value)" style="width:100%;padding:5px 8px;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);margin-bottom:6px;"/>
+          <div style="display:flex;gap:4px;">
+            <label class="btn btn-sm btn-slate" style="flex:1;text-align:center;cursor:pointer;font-size:11px;" for="sld-photo-${slot.id}">Replace</label>
+            <button class="btn btn-sm btn-red" style="font-size:11px;" onclick="removeSLDPhoto('${slot.id}')">✕</button>
+          </div>
+        ` : `
+          <label class="btn btn-sm btn-amber" style="display:block;text-align:center;cursor:pointer;font-size:11px;padding:18px 8px;" for="sld-photo-${slot.id}">+ Upload Photo</label>
+        `}
+        <input type="file" id="sld-photo-${slot.id}" accept="image/*" style="display:none;" onchange="handleSLDPhotoUpload('${slot.id}', event)"/>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function handleSLDPhotoUpload(slotId, event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (file.size > 1024 * 1024) {
+    if (!confirm('File is over 1MB. Large photos may exceed storage. Continue?')) return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const photos = loadSLDPhotos();
+    photos[slotId] = { src: e.target.result, tag: photos[slotId]?.tag || '', filename: file.name };
+    saveSLDPhotos(photos);
+    renderSLDPhotoSlots();
+    toast('✓ Photo uploaded', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSLDPhotoTag(slotId, tag) {
+  const photos = loadSLDPhotos();
+  if (photos[slotId]) {
+    photos[slotId].tag = tag;
+    saveSLDPhotos(photos);
+  }
+}
+
+function removeSLDPhoto(slotId) {
+  if (!confirm('Remove this photo?')) return;
+  const photos = loadSLDPhotos();
+  delete photos[slotId];
+  saveSLDPhotos(photos);
+  renderSLDPhotoSlots();
+  toast('Photo removed', 'info');
+}
+
+async function clearAllSLDPhotos() {
+  const ok = await showConfirm('Clear All Photos', 'Remove all SLD photos from this device? This cannot be undone.');
+  if (!ok) return;
+  localStorage.removeItem(SLD_PHOTOS_KEY);
+  renderSLDPhotoSlots();
+  toast('All SLD photos cleared', 'info');
+}
 </script>
 
+
+<!-- SLD Photo Library Modal -->
+<div class="pl-modal-bg" id="sld-photo-modal" onclick="if(event.target===this)closeSLDPhotoLibrary()">
+  <div class="pl-modal" style="max-width:760px;">
+    <h3>📷 SLD Photo Library</h3>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:14px;">Upload one photo per equipment category. Photos appear as numbered callouts in your SLD. Use JPG/PNG under 500KB each to avoid storage limits.</p>
+    <div id="sld-photo-slots" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+    <div class="pl-modal-actions">
+      <button class="btn btn-red" onclick="clearAllSLDPhotos()">🗑 Clear All</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-slate" onclick="closeSLDPhotoLibrary()">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- Pipeline Lead Modal -->
 <div class="pl-modal-bg" id="pl-modal-bg" onclick="if(event.target===this)closePipelineModal()">
