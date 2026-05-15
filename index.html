@@ -5204,7 +5204,7 @@ function generatePDFQuote() {
 
       <!-- ⭐ HERO: FINAL INVESTMENT (biggest number, top of page) -->
       <div class="hero-investment">
-        <div class="hero-inv-label">⭐ TOTAL INVESTMENT (VAT EXCLUSIVE)</div>
+        <div class="hero-inv-label">⭐ TOTAL INVESTMENT (VAT Exclusive — Acknowledge Receipt Only)</div>
         <div class="hero-inv-val">₱${grandTotal.toLocaleString()}</div>
         <div class="hero-inv-sub">${sysSize} kWp ${escapeHtml(sysType)} · Turnkey EPC Solution · 80% downpayment, balance after commissioning</div>
       </div>
@@ -5342,7 +5342,7 @@ function generatePDFQuote() {
         <div class="sig-role col2">Lead Engineer · Signature &amp; Date</div>
       </div>
 
-      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · VAT exclusive · Page 4 of 4</div>
+      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · VAT Exclusive — Acknowledge Receipt Only · Page 4 of 4</div>
     </div>
   </div>
 </body></html>`;
@@ -5414,7 +5414,7 @@ async function generateMessengerCard() {
       <div style="background:rgba(0,0,0,0.35);border-left:6px solid #fbbf24;padding:20px 24px;border-radius:6px;">
         <div style="font-size:14px;letter-spacing:2px;color:#fbbf24;text-transform:uppercase;font-weight:700;">⭐ Total Investment</div>
         <div style="font-size:46px;font-weight:900;margin-top:6px;line-height:1;">₱${grandTotal.toLocaleString()}</div>
-        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">VAT exclusive · Turnkey</div>
+        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">VAT Exclusive — Acknowledge Receipt Only · Turnkey</div>
       </div>
       <div style="background:rgba(251,191,36,0.95);color:#0f172a;padding:20px 24px;border-radius:6px;">
         <div style="font-size:14px;letter-spacing:2px;text-transform:uppercase;font-weight:700;">💰 Monthly Savings</div>
