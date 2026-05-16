@@ -921,8 +921,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.0</div>
     </div>
     <div class="nav">
-      <div class="nav-item" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
-      <div class="nav-item active" onclick="switchView(&#39;view-quote&#39;, this)"><span class="nav-icon">📄</span>Quotation Generator</div>
+      <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
+      <div class="nav-item" onclick="switchView(&#39;view-quote&#39;, this)"><span class="nav-icon">📄</span>Quotation Generator</div>
       <div class="nav-item" onclick="switchView(&#39;view-battery&#39;, this)"><span class="nav-icon">🗄️</span>Hardware Database</div>
       <div class="nav-item" onclick="switchView(&#39;view-history&#39;, this)"><span class="nav-icon">📋</span>Quote History</div>
       <div class="nav-item admin-only" id="nav-pipeline" onclick="switchView(&#39;view-pipeline&#39;, this)" style="display:none;"><span class="nav-icon">🎯</span>Pipeline <span style="font-size:9px;background:#dc2626;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px;">ADMIN</span></div>
@@ -936,7 +936,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <div class="main">
 
-    <div id="view-quote" class="view-section active">
+    <div id="view-quote" class="view-section">
       <div class="page-header">
         <div class="quote-ref" id="quoteRefBadge">REF: FDGS-260509-548</div>
         <div class="page-title">Project <span>Quotation</span></div>
@@ -1114,7 +1114,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
     </div>
 
-    <div id="view-calc" class="view-section">
+    <div id="view-calc" class="view-section active">
       <div class="page-header">
         <div class="page-title">Engineering <span>Calculators</span></div>
       </div>
@@ -1142,7 +1142,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                 Electrical Phase &amp; Voltage
               </div>
               <div style="display:flex;width:100%;">
-                <button id="s1-1ph" type="button" style="flex:1;padding:8px 4px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.45);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px 0 0 5px;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;1|230&#39;,&#39;s1-1ph&#39;)">1-Phase<br><span style="font-size:10px;font-weight:400;">220/230V</span></button>
+                <button id="s1-1ph" type="button" style="flex:1;padding:8px 4px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.45);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px 0 0 5px;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;1|220&#39;,&#39;s1-1ph&#39;)">1-Phase<br><span style="font-size:10px;font-weight:400;">220V AC · PH Std</span></button>
                 <button id="s1-3ph220" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;3|220&#39;,&#39;s1-3ph220&#39;)">3-Phase<br><span style="font-size:10px;font-weight:400;">220V L-L</span></button>
                 <button id="s1-3ph380" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0 5px 5px 0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;3|380&#39;,&#39;s1-3ph380&#39;)">3-Phase<br><span style="font-size:10px;font-weight:400;">380V L-L</span></button>
               </div>
@@ -1663,7 +1663,12 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <div class="card-header">
           <div class="card-icon icon-green">📋</div>
           <div><div class="card-title">Saved Quotations</div><div class="card-desc">Click a row to load it back. Use status to track conversion.</div></div>
-          <button class="btn btn-red btn-sm" style="margin-left:auto;" onclick="clearAllTrials()">🗑 Clear All Trials</button>
+          <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-amber btn-sm" onclick="exportQuoteHistory()">📤 Export JSON</button>
+            <label class="btn btn-blue btn-sm" style="cursor:pointer;margin:0;" for="qh-import-file">📥 Import JSON</label>
+            <input type="file" id="qh-import-file" accept=".json,application/json" style="display:none;" onchange="importQuoteHistory(event)"/>
+            <button class="btn btn-red btn-sm" onclick="clearAllTrials()">🗑 Clear All Trials</button>
+          </div>
         </div>
         <div style="overflow-x:auto;">
           <table class="data-table" id="history-table" style="min-width:700px;">
@@ -2185,22 +2190,63 @@ function isUnlocked() {
   return sessionStorage.getItem('fdgUnlocked') === '1';
 }
 
-function requirePassword(action) {
-  if (isUnlocked()) return true;
-  const entered = prompt(`🔒 Password required to ${action || 'continue'}:`);
-  if (entered === null) return false;  // user cancelled
-  if (entered === FDG_PASSWORD) {
-    sessionStorage.setItem('fdgUnlocked', '1');
-    toast('🔓 Unlocked for this session', 'success');
-    return true;
-  }
-  toast('❌ Wrong password', 'error');
-  return false;
+// Custom masked password dialog (replaces prompt() which shows text)
+function showPasswordDialog(action) {
+  return new Promise(resolve => {
+    document.getElementById('pwd-dialog-bg')?.remove();
+    const bg = document.createElement('div');
+    bg.id = 'pwd-dialog-bg';
+    bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+    bg.innerHTML = `
+      <div style="background:#0f172a;color:#fff;border:1px solid #fbbf24;border-radius:10px;padding:28px;width:92%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="font-size:36px;text-align:center;margin-bottom:6px;">🔒</div>
+        <h3 style="margin:0 0 8px;text-align:center;color:#fbbf24;font-size:16px;letter-spacing:1px;">PASSWORD REQUIRED</h3>
+        <p style="margin:0 0 16px;text-align:center;font-size:12px;color:#cbd5e1;">to ${action || 'continue'}</p>
+        <input type="password" id="pwd-input" autocomplete="current-password" placeholder="Enter password..." style="width:100%;padding:12px 14px;font-size:16px;border:2px solid #475569;border-radius:6px;background:#1e293b;color:#fff;letter-spacing:4px;text-align:center;outline:none;box-sizing:border-box;"/>
+        <div id="pwd-err" style="display:none;color:#fca5a5;font-size:11px;text-align:center;margin-top:8px;">❌ Wrong password — try again</div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button id="pwd-cancel" style="flex:1;padding:10px;background:#475569;color:#fff;border:0;border-radius:6px;font-weight:600;cursor:pointer;">Cancel</button>
+          <button id="pwd-ok" style="flex:2;padding:10px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;border:0;border-radius:6px;font-weight:800;cursor:pointer;letter-spacing:1px;">UNLOCK</button>
+        </div>
+      </div>`;
+    document.body.appendChild(bg);
+    const input = document.getElementById('pwd-input');
+    const err = document.getElementById('pwd-err');
+    setTimeout(() => input.focus(), 50);
+    const cleanup = () => bg.remove();
+    const tryUnlock = () => {
+      const v = input.value;
+      if (v === FDG_PASSWORD) { cleanup(); resolve(true); }
+      else {
+        err.style.display = 'block';
+        input.value = '';
+        input.style.borderColor = '#dc2626';
+        setTimeout(() => { input.style.borderColor = '#475569'; }, 1200);
+      }
+    };
+    document.getElementById('pwd-ok').onclick = tryUnlock;
+    document.getElementById('pwd-cancel').onclick = () => { cleanup(); resolve(false); };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); tryUnlock(); }
+      if (e.key === 'Escape') { cleanup(); resolve(false); }
+    });
+    bg.addEventListener('click', e => { if (e.target === bg) { cleanup(); resolve(false); } });
+  });
 }
 
-function switchView(viewId, el) {
+async function requirePassword(action) {
+  if (isUnlocked()) return true;
+  const ok = await showPasswordDialog(action);
+  if (ok) {
+    sessionStorage.setItem('fdgUnlocked', '1');
+    toast('🔓 Unlocked for this session', 'success');
+  }
+  return ok;
+}
+
+async function switchView(viewId, el) {
   // Gate restricted views
-  if (GATED_VIEWS.includes(viewId) && !requirePassword('access ' + (viewId === 'view-battery' ? 'Hardware Database' : 'Quote History'))) {
+  if (GATED_VIEWS.includes(viewId) && !(await requirePassword('access ' + (viewId === 'view-battery' ? 'Hardware Database' : 'Quote History')))) {
     return;
   }
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
@@ -3118,9 +3164,9 @@ function calcBreaker(){
     showRes('res-breaker',`Recommended Breaker: <strong>${Math.ceil(a)}A</strong><br><small style="opacity:0.7">125% continuous load rule applied</small>`);
   }
 }
-function generateDoc(type) {
+async function generateDoc(type) {
   // Password gate
-  if (!requirePassword('print ' + (type === 'client' ? 'Client Proposal' : 'Internal Job Order'))) return;
+  if (!(await requirePassword('print ' + (type === 'client' ? 'Client Proposal' : 'Internal Job Order')))) return;
   // Guard
   const rawGT = parseFloat(
     (document.getElementById('sys-grandtotal').value || '0').replace(/[^0-9.-]/g, '')
@@ -3242,7 +3288,7 @@ function generateDoc(type) {
 
     // === Breaker Amperage Calculations (per system voltage, NEC 125% continuous rule) ===
     const sysPhaseVal = parseInt(document.getElementById('sys-phase')?.value) || 1;
-    const V_AC = sysPhaseVal === 3 ? 400 : 230;          // PH grid: 230V 1ph / 400V 3ph
+    const V_AC = sysPhaseVal === 3 ? 400 : 220;          // PH grid: 230V 1ph / 400V 3ph
     const V_DC_BAT = invVolts || 48;                      // battery bus voltage
     const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;          // typical MPPT string voltage
     const PF = 0.9;                                       // assumed power factor
@@ -3320,8 +3366,8 @@ function generateDoc(type) {
 // ATS section (Normal=Inverter Load / Reserve=Utility), per-string DC MCCBs,
 // busbar, surge protection, equipment schedule, and engineering notes.
 
-function openSLD() {
-  if (!requirePassword('open Single-Line Diagram')) return;
+async function openSLD() {
+  if (!(await requirePassword('open Single-Line Diagram'))) return;
   const cfg = readSLDConfig();
   const html = buildSLDPage(cfg);
   const w = window.open('', '_blank', 'width=1100,height=1500');
@@ -3340,7 +3386,7 @@ function readSLDConfig() {
   const sysKw  = parseFloat(document.getElementById('out-system')?.textContent) || (invQ * (invSize||5));
   const panelW = panels > 0 ? Math.round(sysKw * 1000 / panels) : 0;
   const V_DC_BAT = invVolts || 48;
-  const V_AC = phase === 3 ? 400 : 230;
+  const V_AC = phase === 3 ? 400 : 220;
 
   // === Inverter type classification (generic, no brand) ===
   let invType;
@@ -4320,13 +4366,12 @@ function buildSLDPage(c) {
   // === AC PROTECTION CHAIN (right side, vertical, from meter down) ===
   let acChainSvg = '';
   acChainSvg += flowNode(METER_X, METER_Y, nodeW, nodeH, 'Utility Meter', `${c.phase}-Ph ${c.V_AC}V · Bi-dir`, 'meter', '#dbeafe', '#2563eb');
-  // chain devices vertically
+  // Vertical chain: Meter → AC MAIN → LV/HV → CT (then horizontal to AC IN bus → ISLAND → inverter)
   const chainItems = [
     {label: 'AC MAIN', kind: 'breaker', color: '#2563eb'},
     {label: 'LV/HV',   kind: 'relay',   color: '#9333ea'},
     {label: 'CT',      kind: 'ct',      color: '#0891b2'},
   ];
-  if (showIsland) chainItems.push({label: 'ISLAND', kind: 'relay', color: '#db2777'});
   const chainCx = METER_X + halfW;
   const chainSpacing = 52;
   const chainYs = [];
@@ -4341,13 +4386,19 @@ function buildSLDPage(c) {
       acChainSvg += flowArrow(chainCx, prevY, chainCx, y, chainItems[i-1].color, '', {});
     }
   });
-  // Last chain item (ISLAND or CT) → AC IN bus
+  // After CT, route HORIZONTALLY to AC IN bus
   const lastChainY = chainYs[chainYs.length-1] + ph;
   const acInMid = numInv > 0 ? (acInMidYs[0] + acInMidYs[acInMidYs.length-1])/2 : (Y_MID + midH/2);
-  acChainSvg += flowArrow(0,0,0,0, chainItems[chainItems.length-1].color, '', {
+  acChainSvg += flowArrow(0,0,0,0, '#0891b2', '', {
     path: `M ${chainCx} ${lastChainY} L ${chainCx} ${acInMid} L ${ACIN_BUS_X} ${acInMid}`,
     sw: 2.4
   });
+  // ISLAND relay sits between AC IN bus and inverter (horizontal)
+  if (showIsland) {
+    const islandX = (ACIN_BUS_X + INV_X + nodeW) / 2 - pw/2 + 20;
+    const islandY = acInMid - ph/2;
+    acChainSvg += protDevice(islandX, islandY, pw, ph, 'ISLAND', 'relay', '#db2777');
+  }
 
   // === Bottom layout per user spec:
   //   ATS (center, top of bottom-stack)
@@ -4389,14 +4440,18 @@ function buildSLDPage(c) {
   // Route Genset (bottom-right) up-and-left to GEN bus on right of inverters
   gensetSvg += flowArrow(0,0,0,0, '#0891b2', 'Genset → GEN BR', {
     path: `M ${GENSET_X2 + halfW} ${GENSET_Y} L ${GENSET_X2 + halfW} ${genMidYs[0] - 30} L ${GEN_BUS_X2 + 30} ${genMidYs[0] - 30} L ${GEN_BUS_X2 + 30} ${genMidYs[0]} L ${GEN_BUS_X2} ${genMidYs[0]}`,
-    sw: 2.4, labelX: GENSET_X2 - 20, labelY: GENSET_Y - 8
+    sw: 2.4, dash: '6,4', labelX: GENSET_X2 - 20, labelY: GENSET_Y - 8
   });
 
-  // === Bottom stack: ATS → Distribution Panel → AC Loads (vertical, centered) ===
+  // === Bottom stack: ATS → Distribution Panel → Essential Loads (vertical, centered)
+  //     PLUS Non-Essential Loads (N. LOADS) beside, fed by dashed line from LV/HV ===
   let bottomSvg = '';
   bottomSvg += flowNode(ATS_X, ATS_Y, nodeW, nodeH, 'ATS / Transfer', 'Solar=Normal · Utility=Reserve', 'ats', '#ede9fe', '#7c3aed');
   bottomSvg += flowNode(PANEL_X, PANEL_Y, nodeW, nodeH, 'Distribution Panel', `Main ${c.gridIso}A · ${c.phase}-Ph`, 'panel', '#f1f5f9', '#475569');
-  bottomSvg += flowNode(LOADS_X, LOADS_Y, nodeW, nodeH, 'AC Loads', 'Home circuits + backup', 'load', '#fef9c3', '#ca8a04');
+  bottomSvg += flowNode(LOADS_X, LOADS_Y, nodeW, nodeH, 'Essential Loads', 'Critical/backup circuits', 'load', '#fef9c3', '#ca8a04');
+  // N. LOADS — non-essential, grid-only, beside Essential Loads
+  const NLOADS_X = LOADS_X + nodeW + 30;
+  bottomSvg += flowNode(NLOADS_X, LOADS_Y, nodeW, nodeH, 'N. LOADS', 'Non-Essential · grid-only', 'load', '#fef9c3', '#94a3b8');
   // ATS → Panel (vertical)
   bottomSvg += flowArrow(ATS_X + halfW, ATS_Y + nodeH, PANEL_X + halfW, PANEL_Y, '#7c3aed', 'ATS Out', {labelX: PANEL_X + halfW + 60, labelY: ATS_Y + nodeH + 16});
   // Panel → Loads (vertical)
@@ -4411,11 +4466,20 @@ function buildSLDPage(c) {
     labelX: INV_X - 100, labelY: LOADS_Y + halfH - 8
   });
 
-  // Earth bonds for bottom stack + meter + genset
+  // Non-Essential Loads (N. LOADS) — dashed from LV/HV around right side to N. LOADS top
+  const lvhvBottomY = chainYs[1] + ph;
+  bottomSvg += flowArrow(0, 0, 0, 0, '#94a3b8', 'Non-Essential (grid-only)', {
+    path: `M ${chainCx + pw/2 - 2} ${lvhvBottomY - ph/2} L ${F_W - 20} ${lvhvBottomY - ph/2} L ${F_W - 20} ${LOADS_Y - 14} L ${NLOADS_X + halfW} ${LOADS_Y - 14} L ${NLOADS_X + halfW} ${LOADS_Y}`,
+    sw: 1.8, dash: '5,3',
+    labelX: F_W - 140, labelY: LOADS_Y - 20
+  });
+
+  // Earth bonds for bottom stack + meter + genset + N. LOADS
   const otherEarth = earthLine(METER_X + halfW, METER_Y + nodeH, METER_X + halfW, METER_Y + nodeH + 12)
     + earthLine(ATS_X + halfW - 30, ATS_Y + nodeH, ATS_X + halfW - 30, F_H - 40)
     + earthLine(PANEL_X + halfW + 30, PANEL_Y + nodeH, PANEL_X + halfW + 30, F_H - 40)
     + earthLine(LOADS_X + halfW, LOADS_Y + nodeH, LOADS_X + halfW, F_H - 40)
+    + earthLine(NLOADS_X + halfW, LOADS_Y + nodeH, NLOADS_X + halfW, F_H - 40)
     + earthLine(GENSET_X2 + halfW, GENSET_Y + nodeH, GENSET_X2 + halfW, F_H - 40);
 
   // Update F_H so it covers full bottom stack
@@ -4442,9 +4506,9 @@ function buildSLDPage(c) {
       ${bottomSvg}
 
       ${pvEarth}${batEarth}${invEarth}${otherEarth}
-      <line x1="${LOADS_X}" y1="${EARTH_Y}" x2="${GENSET_X + nodeW}" y2="${EARTH_Y}" stroke="#39ff14" stroke-width="2.8" stroke-dasharray="6,3"/>
+      <line x1="${LOADS_X}" y1="${EARTH_Y}" x2="${GENSET_X2 + nodeW}" y2="${EARTH_Y}" stroke="#39ff14" stroke-width="2.8" stroke-dasharray="6,3"/>
       <text x="${F_W/2}" y="${EARTH_Y - 5}" text-anchor="middle" font="bold 9px sans-serif" fill="#16a34a" letter-spacing="1.8">⏚ EARTH / GROUND BUS (PE)</text>
-      <g transform="translate(${GENSET_X + nodeW + 14}, ${EARTH_Y})">
+      <g transform="translate(${GENSET_X2 + nodeW + 14}, ${EARTH_Y})">
         <line x1="0" y1="0" x2="0" y2="12" stroke="#16a34a" stroke-width="2"/>
         <line x1="-10" y1="12" x2="10" y2="12" stroke="#16a34a" stroke-width="2.5"/>
         <line x1="-7" y1="16" x2="7" y2="16" stroke="#16a34a" stroke-width="2"/>
@@ -4716,12 +4780,57 @@ function calcROI(){
 // ================================================================
 // QUOTE HISTORY
 // ================================================================
+// QUOTE HISTORY — localStorage key `fdgQuoteHistory_v1` (legacy `fdgQuoteHistory`)
+// ================================================================
+const QH_KEY = 'fdgQuoteHistory_v1';
 function loadQuoteHistory() {
-  try { return JSON.parse(localStorage.getItem('fdgQuoteHistory')) || []; }
-  catch(e) { return []; }
+  try {
+    let arr = JSON.parse(localStorage.getItem(QH_KEY));
+    if (arr && arr.length) return arr;
+    // Migrate from legacy
+    const legacy = JSON.parse(localStorage.getItem('fdgQuoteHistory'));
+    if (legacy && legacy.length) {
+      localStorage.setItem(QH_KEY, JSON.stringify(legacy));
+      return legacy;
+    }
+  } catch(e) {}
+  return [];
 }
 function saveQuoteHistory(arr) {
-  localStorage.setItem('fdgQuoteHistory', JSON.stringify(arr));
+  localStorage.setItem(QH_KEY, JSON.stringify(arr));
+}
+
+function exportQuoteHistory() {
+  const arr = loadQuoteHistory();
+  if (!arr.length) { toast('No quote history to export', 'error'); return; }
+  const blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href = url;
+  a.download = `fdg-quote-history-${ts}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`✓ Exported ${arr.length} quote${arr.length>1?'s':''}`, 'success');
+}
+
+async function importQuoteHistory(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const incoming = JSON.parse(await file.text());
+    if (!Array.isArray(incoming)) throw new Error('Invalid format — must be JSON array');
+    const cur = loadQuoteHistory();
+    const ok = await showConfirm('Import Quote History', `Found <strong>${incoming.length}</strong> quotes in file. Currently <strong>${cur.length}</strong> on this device.<br/><br/>Replace current data?<br/><span style="font-size:11px;color:#94a3b8;">Tip: Backup first via Export JSON if unsure.</span>`);
+    if (!ok) return;
+    saveQuoteHistory(incoming);
+    if (typeof renderQuoteHistory === 'function') renderQuoteHistory();
+    toast(`✓ Imported ${incoming.length} quote${incoming.length>1?'s':''}`, 'success');
+  } catch(e) {
+    toast('Import failed: ' + e.message, 'error');
+  } finally {
+    event.target.value = '';
+  }
 }
 
 function saveQuote() {
@@ -4819,10 +4928,20 @@ async function clearAllTrials() {
 }
 
 // ===== PDF CLIENT QUOTE (FULL) — A4 FORMAT MATCHING JO =====
-function generatePDFQuote() {
-  if (!requirePassword('generate PDF Quote (Full)')) return;
+async function generatePDFQuote() {
+  if (!(await requirePassword('generate PDF Quote (Full)'))) return;
   // Force refresh of all Client Proposal display values so PDF Quote uses live numbers
   if (typeof calcBOM === 'function') calcBOM();
+
+  // CRITICAL: PDF Quote reads `p-sys-grandtotal` (client-proposal display element).
+  // That element is only populated when user opens Print Client Proposal.
+  // Force-sync the proposal display fields RIGHT NOW so PDF Quote always uses live values.
+  // Mirrors the logic at the end of generateDoc() — keeps PDF Quote independent.
+  const psync = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  psync('p-sys-grandtotal', document.getElementById('sys-grandtotal')?.value || '');
+  psync('p-sys-anchor',     document.getElementById('sys-anchor')?.value     || '');
+  psync('p-sys-discount-label', document.getElementById('sys-discount-label')?.value || 'Engineering System Design');
+  psync('p-sys-discount-val-print', '(₱5,000) Waived');
 
   const cfg = readSLDConfig();
   const clientName = document.getElementById('cli-name')?.value || 'Valued Client';
@@ -4882,7 +5001,7 @@ function generatePDFQuote() {
   } catch(e) {}
   if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
   const slotsBooked = (typeof loadPipeline === 'function' ? loadPipeline().filter(l => PL_ACTIVE_STAGES.includes(l.stage)).length : 0);
-  const slotsTotal = 4;
+  const slotsTotal = 2;
   const slotsLeft = Math.max(0, slotsTotal - slotsBooked);
 
   // 10-year cashflow (4% annual rate increase) — based on consumption pesos saved
@@ -5204,7 +5323,7 @@ function generatePDFQuote() {
 
       <!-- ⭐ HERO: FINAL INVESTMENT (biggest number, top of page) -->
       <div class="hero-investment">
-        <div class="hero-inv-label">⭐ TOTAL INVESTMENT (VAT Exclusive — Acknowledge Receipt Only)</div>
+        <div class="hero-inv-label">⭐ TOTAL INVESTMENT (VAT EXCLUSIVE / ACKNOWLEDGEMENT RECEIPT)</div>
         <div class="hero-inv-val">₱${grandTotal.toLocaleString()}</div>
         <div class="hero-inv-sub">${sysSize} kWp ${escapeHtml(sysType)} · Turnkey EPC Solution · 80% downpayment, balance after commissioning</div>
       </div>
@@ -5251,9 +5370,21 @@ function generatePDFQuote() {
       <p style="font-size:8.5pt;color:#64748b;">Estimated kWh produced per month, accounting for typical Philippine solar yield variation (rainy / dry season).</p>
       <table>${monthlyChart}</table>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt;margin-top:6pt;">
-        <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;"><div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">Monthly Avg</div><div style="font-size:11pt;font-weight:900;">${monthlyKwh.toFixed(0)} kWh</div></div>
-        <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;"><div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">Yearly Total</div><div style="font-size:11pt;font-weight:900;">${yearlyKwh.toFixed(0)} kWh</div></div>
-        <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;"><div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">25-Yr Total</div><div style="font-size:11pt;font-weight:900;">${(yearlyKwh*25/1000).toFixed(0)} MWh</div></div>
+        <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;">
+          <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">Monthly Avg</div>
+          <div style="font-size:11pt;font-weight:900;">${monthlyKwh.toFixed(0)} kWh</div>
+          <div style="font-size:9pt;font-weight:700;color:#059669;">₱${(monthlyKwh*rate).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;">
+          <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">Yearly Total</div>
+          <div style="font-size:11pt;font-weight:900;">${yearlyKwh.toFixed(0)} kWh</div>
+          <div style="font-size:9pt;font-weight:700;color:#059669;">₱${(yearlyKwh*rate).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;">
+          <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">10-Yr Total</div>
+          <div style="font-size:11pt;font-weight:900;">${(yearlyKwh*10/1000).toFixed(1)} MWh</div>
+          <div style="font-size:9pt;font-weight:700;color:#059669;">₱${(yearlyKwh*10*rate).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        </div>
       </div>
 
       <h2>10-Year Cashflow Projection</h2>
@@ -5294,11 +5425,11 @@ function generatePDFQuote() {
         <tbody>
           <tr><td style="font-weight:700;width:30%;">Engineering Design</td><td>System sizing, single-line diagram, structural assessment</td></tr>
           <tr><td style="font-weight:700;">Equipment Supply</td><td>All panels, inverter, batteries, mounting, BOS, breakers, wires</td></tr>
-          <tr><td style="font-weight:700;">Professional Installation</td><td>Supervised by Licensed Engineer · ${cfg.panels} panels, full system</td></tr>
+          <tr><td style="font-weight:700;">Professional Installation</td><td>Supervised by Licensed Engineer · Full system installation &amp; commissioning</td></tr>
           <tr><td style="font-weight:700;">Commissioning &amp; Testing</td><td>String I-V test · App setup &amp; monitoring activation</td></tr>
-          <tr><td style="font-weight:700;">Workmanship Warranty</td><td>12 months from energization (installation defects)</td></tr>
+          <tr><td style="font-weight:700;">Workmanship Warranty</td><td>12 months from energization (installation defects). <strong>Exclusions:</strong> warranty does not cover (a) modifications by third parties, (b) physical damage from external causes (typhoon, flood, lightning beyond SPD rating, vandalism), (c) consumable items (fuses, AC contactor wear), (d) fading/weathering of cosmetic finishes.</td></tr>
           <tr><td style="font-weight:700;">Turnover &amp; Acceptance</td><td>Formal handover document with system schematics &amp; commissioning report</td></tr>
-          <tr><td style="font-weight:700;">Free Support</td><td>FDG Solar Visayas assists with warranty matters at no charge for the first 5 years</td></tr>
+          <tr><td style="font-weight:700;">Free Support</td><td>FDG Solar Visayas assists with warranty matters at no charge for the first 5 years. This excludes drafting RMA <em>(Return Merchandise Authorization)</em> correspondence, packing/shipping coordination, and re-installation labor (these may incur material/courier costs).</td></tr>
         </tbody>
       </table>
 
@@ -5332,7 +5463,7 @@ function generatePDFQuote() {
       <h2>Acceptance &amp; Authorization</h2>
       <p style="font-size:8.5pt;">By signing below, the Client confirms acceptance of this proposal and agrees to the terms (80% downpayment upon contract signing, balance after commissioning).</p>
       <div class="signature-v2">
-        <div class="sig-title col1">CLIENT / OWNER</div>
+        <div class="sig-title col1">VALUED CLIENT</div>
         <div class="sig-title col2">FDG Solar Visayas</div>
         <div class="sig-space col1"></div>
         <div class="sig-space col2"></div>
@@ -5355,7 +5486,7 @@ function generatePDFQuote() {
 // ===== TURNOVER & ACCEPTANCE FORM — A4 FORMAT MATCHING JO =====
 // ===== MESSENGER QUOTE CARD — 1080×1080 square shareable image =====
 async function generateMessengerCard() {
-  if (!requirePassword('generate Messenger Card')) return;
+  if (!(await requirePassword('generate Messenger Card'))) return;
   if (typeof html2canvas === 'undefined') {
     toast('Image library not loaded yet — wait a sec and retry', 'error');
     return;
@@ -5466,8 +5597,8 @@ async function generateMessengerCard() {
   }
 }
 
-function openTurnoverForm() {
-  if (!requirePassword('open Turnover & Warranty Form')) return;
+async function openTurnoverForm() {
+  if (!(await requirePassword('open Turnover & Warranty Form'))) return;
   const cfg = readSLDConfig();
   const clientName = document.getElementById('cli-name')?.value || 'Client';
   const clientAddress = document.getElementById('cli-address')?.value || '_______________________________________________';
@@ -5804,7 +5935,7 @@ function openTurnoverForm() {
       <p style="font-size:8pt;color:#64748b;margin-top:4pt;"><em>Punch-list items (if any): _________________________________________________________</em></p>
 
       <div class="signature-v2">
-        <div class="sig-title col1">OWNER / CLIENT</div>
+        <div class="sig-title col1">VALUED CLIENT</div>
         <div class="sig-title col2">Engineering | Procurement | Construction</div>
         <div class="sig-space col1"></div>
         <div class="sig-space col2"></div>
