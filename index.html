@@ -918,7 +918,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.0</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.1</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -927,6 +927,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="nav-item" onclick="switchView(&#39;view-history&#39;, this)"><span class="nav-icon">📋</span>Quote History</div>
       <div class="nav-item admin-only" id="nav-pipeline" onclick="switchView(&#39;view-pipeline&#39;, this)" style="display:none;"><span class="nav-icon">🎯</span>Pipeline <span style="font-size:9px;background:#dc2626;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px;">ADMIN</span></div>
       <div class="nav-item" onclick="switchView(&#39;view-learn&#39;, this)"><span class="nav-icon">📖</span>Costing &amp; Economics</div>
+      <div class="nav-item" onclick="switchView(&#39;view-portfolio&#39;, this)"><span class="nav-icon">⭐</span>Portfolio</div>
+      <div class="nav-item" onclick="openCloudSyncDialog()"><span class="nav-icon">☁️</span>Cloud Sync</div>
     </div>
     <div class="sidebar-footer">
       <strong>FDG Solar Visayas</strong>
@@ -1000,8 +1002,16 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             <div class="fg"><label>System Capacity (kW)</label>
               <input type="number" id="sys-size" placeholder="E.g., 5" value="5" oninput="calcBOM()">
             </div>
-            <div class="fg"><label>MPPT Count (Override) <span style="color:var(--text3);font-weight:400;font-size:10px;">— blank = auto (1 per 7 panels)</span></label>
+            <div class="fg"><label>MPPT Count (Override) <span style="color:var(--text3);font-weight:400;font-size:10px;">— blank = auto (1 per 4kW inverter)</span></label>
               <input type="number" id="sys-mppt-override" placeholder="Auto" min="1" max="20" oninput="calcBOM()">
+            </div>
+            <div class="g2">
+              <div class="fg"><label>Slots Booked <span style="color:var(--text3);font-size:10px;">(scarcity)</span></label>
+                <input type="number" id="slots-booked" placeholder="0" min="0" max="20" value="0">
+              </div>
+              <div class="fg"><label>Slots Total / Month</label>
+                <input type="number" id="slots-total" placeholder="2" min="1" max="20" value="2">
+              </div>
             </div>
             <div class="fg" style="margin-bottom:0;"><label>Internal Notes (Hidden from Client)</label>
               <textarea id="sys-notes" placeholder="Roof angle notes, wire run length, etc."></textarea>
@@ -1015,8 +1025,31 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
               <div class="fg"><label>Mobilization (₱)</label><input type="number" id="sys-mob" value="0" oninput="calcGrandTotal()"></div>
               <div class="fg"><label>Logistics (₱)</label><input type="number" id="sys-delivery" value="0" oninput="calcGrandTotal()"></div>
             </div>
+            <div class="g2">
+              <div class="fg" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:10px;">
+                <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--accent);font-weight:700;">
+                  <input type="checkbox" id="add-blueprint" onchange="calcGrandTotal()" style="margin:2px 0 0 0;width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+                  <span style="line-height:1.4;">📋 Add: 5 Copies of Blueprint w/ Sign &amp; Seal
+                    <div style="font-size:10px;font-weight:400;color:var(--text3);margin-top:2px;">Check to include · auto-adds to total + flips proposal "Included/Excluded" line</div>
+                  </span>
+                </label>
+              </div>
+              <div class="fg"><label>Blueprint Cost (₱)</label>
+                <input type="number" id="sys-blueprint" value="5000" min="0" oninput="calcGrandTotal()">
+              </div>
+            </div>
             <div class="fg"><label style="color:var(--accent);">Turnkey Anchor Price (Rounded ↑ to nearest 1,000)</label>
               <input type="text" id="sys-anchor" class="input-accent" readonly="">
+            </div>
+            <div class="fg"><label>VAT Treatment</label>
+              <select id="vat-mode" onchange="calcGrandTotal()">
+                <option value="ex" selected>VAT Exclusive (Acknowledgement Receipt — no 12% VAT, no 10% prof fee)</option>
+                <option value="in">VAT Inclusive (+12% VAT + 10% Professional Fee · Official Receipt)</option>
+              </select>
+            </div>
+            <div class="fg" id="vat-breakdown-row" style="display:none;">
+              <label style="color:var(--text2);">VAT-In Breakdown</label>
+              <div id="vat-breakdown" style="background:var(--card2);padding:8px 10px;border-radius:6px;font-size:11px;line-height:1.6;color:var(--text2);font-family:var(--mono);"></div>
             </div>
             <div class="fg"><label style="color:var(--text2);">Marketing Discount Label</label>
               <input type="text" id="sys-discount-label" value="Engineering System Design">
@@ -1024,8 +1057,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             <div class="fg"><label>Discount (Waived)</label>
               <input type="text" id="sys-discount-val" readonly="" style="color:var(--red);">
             </div>
-            <div class="fg" style="margin-bottom:0;"><label style="color:var(--green);">⭐ Final Investment (₱)</label>
+            <div class="fg" style="margin-bottom:0;">
+              <label style="color:var(--green);display:flex;justify-content:space-between;align-items:center;">
+                <span>⭐ Final Investments.(₱)</span>
+                <span id="vat-mode-indicator" style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:1px;text-transform:uppercase;">VAT-EX</span>
+              </label>
               <input type="text" id="sys-grandtotal" class="input-grand" readonly="">
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">Auto-updates when VAT mode, Mobilization, Logistics, or Blueprint changes.</div>
             </div>
           </div>
         </div>
@@ -1144,7 +1182,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
               <div style="display:flex;width:100%;">
                 <button id="s1-1ph" type="button" style="flex:1;padding:8px 4px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.45);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px 0 0 5px;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;1|220&#39;,&#39;s1-1ph&#39;)">1-Phase<br><span style="font-size:10px;font-weight:400;">220V AC · PH Std</span></button>
                 <button id="s1-3ph220" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;3|220&#39;,&#39;s1-3ph220&#39;)">3-Phase<br><span style="font-size:10px;font-weight:400;">220V L-L</span></button>
-                <button id="s1-3ph380" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0 5px 5px 0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;3|380&#39;,&#39;s1-3ph380&#39;)">3-Phase<br><span style="font-size:10px;font-weight:400;">380V L-L</span></button>
+                <button id="s1-3ph400" type="button" style="flex:1;padding:8px 4px;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;border-radius:0 5px 5px 0;border-left:none;line-height:1.4;text-align:center;font-family:var(--body);" onclick="setPhase(&#39;3|400&#39;,&#39;s1-3ph400&#39;)">3-Phase<br><span style="font-size:10px;font-weight:400;">400V L-L · Industrial</span></button>
               </div>
             </div>
 
@@ -1198,7 +1236,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                 </div>
               </div>
               <div id="s4-amps-wrap" style="display:none;">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:0;">
                   <div>
                     <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Target Amperage (A)</label>
                     <input type="number" id="flowAmps" value="60" min="0" oninput="calculateFlow()">
@@ -1207,9 +1245,16 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                     <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Hours / Day</label>
                     <input type="number" id="flowAmpsHours" value="4" min="0" oninput="calculateFlow()">
                   </div>
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Rate ₱/kWh (optional)</label>
+                    <input type="number" id="flowAmpsRate" placeholder="blank = no peso" step="0.01" min="0" oninput="calculateFlow()">
+                  </div>
                 </div>
                 <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);">
                   Derived: <span id="flowAmpsDerived" style="color:var(--accent);font-weight:700;">—</span> kWh / month
+                </div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;line-height:1.5;">
+                  💡 Enter your ₱/kWh rate (e.g. 12.56 for residential, 9-11 for industrial TOU) so Monthly Savings, ROI, Cashflow Forecast and Payback can compute in pesos. Leave blank for kWh-only display.
                 </div>
               </div>
               <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);">
@@ -1310,7 +1355,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                   <div id="out-batah" style="font-size:10px;color:var(--text2);margin-top:1px;">600Ah @ 48V — 28.80 kWh gross — delivers 23.89 kWh @ 82.9% DOD (TOLERABLE)</div>
                 </div>
                 <div style="grid-column:1/-1;background:var(--green-dim);border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:9px 12px;">
-                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;">💰 Estimated Investment</div>
+                  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:3px;">💰 Estimated  Investments.</div>
                   <div id="out-investment" style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono);">₱639,000.00</div>
                 </div>
               </div>
@@ -1373,6 +1418,32 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <div class="fg"><label>Max Load (Watts)</label><input type="number" id="c4-w" placeholder="3000"></div>
           <button class="btn btn-amber" onclick="calcBreaker()">Calculate</button>
           <div id="res-breaker" class="res res-blue"></div>
+        </div>
+
+        <div class="card" style="grid-column:span 2;">
+          <div class="card-header"><div class="card-icon icon-red">⚡</div><div>
+            <div class="card-title">Battery Lifecycle Estimator</div>
+            <div class="card-desc">Real-world years-to-replacement based on daily depth-of-discharge (DoD) and cycle aging</div>
+          </div></div>
+          <div class="g3">
+            <div class="fg"><label>Battery Tier</label>
+              <select id="bl-tier" onchange="calcBatteryLife()">
+                <option value="lead">Lead Acid (VRLA / Gel) — 800 cyc @ 50% DoD</option>
+                <option value="li-std" selected>Lithium Standard (LiFePO4) — 3,500 cyc @ 80% DoD</option>
+                <option value="li-elite">Lithium Elite (Premium LFP+BMS) — 6,000 cyc @ 90% DoD</option>
+              </select>
+            </div>
+            <div class="fg"><label>Installed Capacity (kWh)</label>
+              <input type="number" id="bl-cap" placeholder="9.6" step="0.1" value="9.6" oninput="calcBatteryLife()">
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">Bank size: e.g. 48V × 200Ah = 9.6 kWh</div>
+            </div>
+            <div class="fg"><label>Daily Energy Demand (kWh)</label>
+              <input type="number" id="bl-demand" placeholder="6" step="0.1" value="6" oninput="calcBatteryLife()">
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">From Eng. Calc daily kWh</div>
+            </div>
+          </div>
+          <button class="btn btn-amber" onclick="calcBatteryLife()">Recalculate</button>
+          <div id="res-batlife" class="res res-amber"></div>
         </div>
       </div>
     </div><div id="view-battery" class="view-section">
@@ -1739,10 +1810,105 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <div class="fg"><label>System Size (kW)</label><input type="number" id="roi-size" value="5"></div>
           <div class="fg"><label>Effective Sun Hours</label><input type="number" id="roi-sun" value="4.5"></div>
           <div class="fg"><label>Electricity Rate (₱/kWh)</label><input type="number" id="roi-rate" value="12.56" step="0.1"></div>
-          <div class="fg"><label>Total Investment (₱)</label><input type="number" id="roi-cost" value="184900"></div>
+          <div class="fg"><label>Total  Investments. (₱)</label><input type="number" id="roi-cost" value="184900"></div>
         </div>
         <button class="btn btn-green" onclick="calcROI()">Calculate ROI</button>
         <div id="res-roi" class="res res-green"></div>
+      </div>
+    </div>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- ⭐ PORTFOLIO VIEW                                            -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="view-portfolio" class="view-section">
+      <div class="page-header">
+        <div class="page-title">Professional <span>Portfolio</span></div>
+        <div class="page-sub">A4-formatted prospect-facing portfolio. Generates a printable PDF with hero stats, services, project track record, and contact card.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-amber">⭐</div>
+          <div>
+            <div class="card-title">Edit Portfolio Content</div>
+            <div class="card-desc">All fields below are editable. Click "Generate Portfolio PDF" to produce the client-facing document.</div>
+          </div>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>Brand — Primary (Future Parent Co.)</label>
+            <input type="text" id="pf-brand-core" value="CORE Integrated Engineering">
+          </div>
+          <div class="fg"><label>Brand — Operating Division</label>
+            <input type="text" id="pf-brand-fdg" value="FDG Solar Visayas">
+          </div>
+          <div class="fg"><label>Full Name + Title</label>
+            <input type="text" id="pf-name" value="Engr. Francis Dale C. Guinoo, ME">
+          </div>
+          <div class="fg"><label>Professional Position</label>
+            <input type="text" id="pf-position" value="Registered Mechanical Engineer · Professional ME Aspirant (Sept 2026)">
+          </div>
+          <div class="fg"><label>PRC License No.</label>
+            <input type="text" id="pf-prc" value="84379">
+          </div>
+          <div class="fg"><label>Location of Practice</label>
+            <input type="text" id="pf-location" value="Cebu &amp; Southern Leyte, Philippines">
+          </div>
+          <div class="fg"><label>Years of Experience</label>
+            <input type="number" id="pf-years" value="10" min="0" max="50">
+          </div>
+          <div class="fg"><label>Industrial Solar Managed (kWp)</label>
+            <input type="number" id="pf-kwp" value="800" min="0">
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">Operational management exposure (not built-by-self)</div>
+          </div>
+        </div>
+
+        <div class="fg"><label>🎯 Cover Tagline (Page 1 hero subtitle)</label>
+          <input type="text" id="pf-tagline" value="Your  Investments. deserves engineering, not guesswork.">
+        </div>
+
+        <div class="fg"><label>⭐ Hero Statement (Page 1 big quote — what makes us different)</label>
+          <textarea id="pf-quote" rows="2">We don't just install Solar panels. We engineer energy assets based on true demand to guarantee your highest Return on Investments.</textarea>
+        </div>
+
+        <div class="fg"><label>📜 About Us / Honest Origins (Page 2)</label>
+          <textarea id="pf-about" rows="3">Our company may be new in the market, but the engineering experience behind it was built from years of industrial operations, construction management, and utility-scale systems.</textarea>
+        </div>
+
+        <div class="fg"><label>Track Record — Major Engagements (one per line)</label>
+          <textarea id="pf-track" rows="6">NUSTAR Resort &amp; Casino — Operational support for 1,200-ton centrifugal chiller plant + utility infrastructure
+Shangri-La Mactan Resort &amp; Spa — HVAC reliability, energy optimization, utility performance
+Aboitiz Construction — Industrial construction execution, field coordination, mechanical installation supervision
+Megaworld Corporation — MEPF coordination, site execution, high-rise residential &amp; township developments
+800 kWp 3-Phase 400V Grid-Tied Industrial Solar — Operational management &amp; oversight (not built)</textarea>
+        </div>
+
+        <div class="fg"><label>Services Offered (one per line)</label>
+          <textarea id="pf-services" rows="7">Solar Consultation &amp; System Planning (Residential / Commercial / Industrial)
+HVAC &amp; Mechanical Engineering Support
+Preventive Maintenance — Fire Pumps, HVAC, Fans, Blowers, Pumps
+Energy Efficiency Assessment &amp; Audit
+Site Supervision &amp; QA/QC
+Utility System Evaluation
+Engineering Consultancy &amp; Permitting</textarea>
+        </div>
+
+        <div class="g2">
+          <div class="fg"><label>Phone</label>
+            <input type="text" id="pf-phone" value="0915 198 3899">
+          </div>
+          <div class="fg"><label>Email</label>
+            <input type="text" id="pf-email" value="fmguinoo@gmail.com">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+          <button class="btn btn-amber" onclick="generatePortfolio()" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;font-weight:800;padding:12px 20px;">⭐ Generate Portfolio PDF (A4)</button>
+          <button class="btn btn-blue" onclick="generatePortfolio(true)" style="padding:12px 20px;">📷 Download as PNG (for social/Messenger)</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;">
+          The PDF/PNG opens in a new window. Use Ctrl+P → Save as PDF for the printable version.
+        </div>
       </div>
     </div>
 
@@ -1808,12 +1974,12 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <table class="p-table" id="p-bom-table" style="margin-bottom:0;"><tbody><tr><th>Category</th><th>Item / Specification</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr><tr><td><strong>PV Array</strong></td><td>650W AIKO Isc 15.12 Voc 54.40</td><td>19</td><td></td><td></td></tr><tr><td><strong>Inverter</strong></td><td>LuxPower 12kW (GEN2-LB-EU)</td><td>1</td><td></td><td></td></tr><tr><td><strong>Storage</strong></td><td>Elite 48V 300Ah</td><td>2</td><td></td><td></td></tr><tr><td><strong>Accessories</strong></td><td>WiFi Monitoring Dongle</td><td>1</td><td></td><td></td></tr><tr><td><strong>Mounting</strong></td><td>Aluminum Rails (2.4m)</td><td>20</td><td></td><td></td></tr><tr><td><strong>Mounting</strong></td><td>L-Feet / Roof Hooks w/ EPDM</td><td>60</td><td></td><td></td></tr><tr><td><strong>Mounting</strong></td><td>Mid Clamps</td><td>36</td><td></td><td></td></tr><tr><td><strong>Mounting</strong></td><td>End Clamps</td><td>4</td><td></td><td></td></tr><tr><td><strong>Mounting</strong></td><td>Splice Kits</td><td>18</td><td></td><td></td></tr><tr><td><strong>Mounting</strong></td><td>Grounding Lugs</td><td>2</td><td></td><td></td></tr><tr><td><strong>Grounding</strong></td><td>Copper Grounding Rod 2.5M (5/8")</td><td>1</td><td></td><td></td></tr><tr><td><strong>Grounding</strong></td><td>Ground Clamp (for Cu rod)</td><td>1</td><td></td><td></td></tr><tr><td><strong>Grounding</strong></td><td>Bare Copper Wire #6 AWG (16mm²) — bonding</td><td>10</td><td></td><td></td></tr><tr><td><strong>Grounding</strong></td><td>Exothermic / Mechanical Connector</td><td>2</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>PV Wire 6mm² (R/B)</td><td>40</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>MC4 Connector Pair (Male+Female) — 14A · 1000V</td><td>25</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>DC Terminal Block — 400V · 20A · 3 pole</td><td>1</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>AC Terminal Block — 230V · 75A · 2P-pole</td><td>1</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>Battery Terminal Block — 48V · 400A · 2-pole</td><td>1</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>Cable Lug Crimps (assorted: 6mm², 16mm², 35mm², 70mm²)</td><td>54</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>Heat Shrink Tubing (assorted, per project)</td><td>1</td><td></td><td></td></tr><tr><td><strong>Connectors</strong></td><td>PG Cable Glands (M16/M20/M25, assorted)</td><td>8</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>Panel Box</td><td>1</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>AC Breakers 230V 2P — 75A (Main/Line/Load/Gen) [calc 58.0A × 1.25]</td><td>4</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>DC Breakers 400V — 20A (PV Array, per string) [Isc 14A × 1.25]</td><td>4</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>DC Surge Protectors 400V (SPD)</td><td>4</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>AC Surge Protector 230V (SPD)</td><td>1</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>ATS System 230V 2P</td><td>1</td><td></td><td></td></tr><tr><td><strong>Battery DC</strong></td><td>Per-String DC Breaker 48V — 200A [calc 125.0A × 1.25]</td><td>2</td><td></td><td></td></tr><tr><td><strong>Battery DC</strong></td><td>Main Battery DC Breaker 48V — 400A [calc 250.0A × 1.25]</td><td>1</td><td></td><td></td></tr><tr><td><strong>Electrical</strong></td><td>Battery Cable &amp; Lug Sets</td><td>4</td><td></td><td></td></tr><tr><td><strong>Services</strong></td><td>Labor dynamically bound to highest kW</td><td>1</td><td></td><td></td></tr></tbody></table>
   </div>
 
-  <div class="p-section-title p-client">Investment Summary</div>
+  <div class="p-section-title p-client">Investments Summary</div>
   <div class="p-table-outline p-client">
     <table class="p-table" style="margin-bottom:0;">
       <tbody>
         <tr class="p-subtotal-row">
-          <td style="width:70%;">Calculated Turnkey Investment</td>
+          <td style="width:70%;">Calculated Turnkey  Investments.</td>
           <td style="text-align:right;font-family:monospace;" id="p-sys-anchor">₱648,000.00</td>
         </tr>
         <tr>
@@ -1821,7 +1987,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <td style="text-align:right;color:#dc2626;font-family:monospace;" id="p-sys-discount-val-print">(₱5,000) Waived</td>
         </tr>
         <tr class="p-total-row">
-          <td><strong>⭐ FINAL INVESTMENT (VAT Exclusive — Acknowledge Receipt Only)</strong></td>
+          <td><strong>⭐ FINAL  Investments. (<span id="p-vat-label">VAT Exclusive — Acknowledgement Receipt Only</span>)</strong></td>
           <td style="text-align:right;font-family:monospace;" id="p-sys-grandtotal">₱643,000.00</td>
         </tr>
       </tbody>
@@ -1834,7 +2000,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <tbody><tr>
         <td>Est. Monthly Savings<strong id="p-roi-monthly">₱12,000</strong></td>
         <td>Est. Yearly Savings<strong id="p-roi-yearly">₱144,000</strong></td>
-        <td>Investment Payback<strong id="p-roi-payback">4.5 Years</strong></td>
+        <td>Investments Payback<strong id="p-roi-payback">4.5 Years</strong></td>
         <td>10-Year Net Savings<strong id="p-roi-10yr">₱1,440,000</strong></td>
       </tr>
     </tbody></table>
@@ -2036,6 +2202,7 @@ function saveDB() {
   } catch(e) { console.error('[DB] Save error:', e); }
   populateBOMDropdowns();
   calcBOM();
+  if (typeof maybeAutoSyncInventory === 'function') maybeAutoSyncInventory();
 }
 
 function autoBackup() {
@@ -2114,11 +2281,9 @@ function importDB() {
       saveDB(); // backup current first
       hwDB = parsed;
       Object.keys(defaultDB).forEach(cat => { if (!hwDB[cat]) hwDB[cat] = []; });
-      localStorage.setItem(DB_KEY, JSON.stringify(hwDB));
-      populateBOMDropdowns();
-      calcBOM();
+      saveDB();  // saves NEW data + triggers maybeAutoSyncInventory()
       renderDBTable('panels');
-      toast('✓ Inventory imported successfully', 'success');
+      toast('✓ Inventory imported successfully — ' + Object.keys(parsed).map(k => parsed[k].length + ' ' + k).join(', '), 'success');
     } catch(err) { toast('Import failed: '+err.message, 'error'); }
   };
   inp.click();
@@ -2506,9 +2671,9 @@ function getLivePrice(itemName) {
 // ================================================================
 function selBtn(activeId) {
   var groups = {
-    's1-1ph':    ['s1-1ph','s1-3ph220','s1-3ph380'],
-    's1-3ph220': ['s1-1ph','s1-3ph220','s1-3ph380'],
-    's1-3ph380': ['s1-1ph','s1-3ph220','s1-3ph380'],
+    's1-1ph':    ['s1-1ph','s1-3ph220','s1-3ph400'],
+    's1-3ph220': ['s1-1ph','s1-3ph220','s1-3ph400'],
+    's1-3ph400': ['s1-1ph','s1-3ph220','s1-3ph400'],
     's2-hybrid': ['s2-hybrid','s2-offgrid','s2-gti'],
     's2-offgrid':['s2-hybrid','s2-offgrid','s2-gti'],
     's2-gti':    ['s2-hybrid','s2-offgrid','s2-gti'],
@@ -2760,7 +2925,10 @@ function runAutoSizerSilent() {
     const hours = parseFloat(document.getElementById('flowAmpsHours').value) || 4;
     if(!amps) return false;
     let peakKw = (sysPhase === 3 ? 1.732 : 1) * sysVolts * amps * 0.8 / 1000;
-    dailyKwh = peakKw * hours; 
+    dailyKwh = peakKw * hours;
+    // If user entered rate in amps mode, use it for ROI/savings calc
+    const ampsR = parseFloat(document.getElementById('flowAmpsRate')?.value);
+    if (ampsR > 0) autoRate = ampsR;
   }
 
   const SUN_HOURS = 4.5;
@@ -3082,13 +3250,19 @@ function calcBOM() {
     const sInvKw=kw/iQty;
     const pbox=sInvKw<=8?getLivePrice("Panel Box (Small)"):getLivePrice("Panel Box (Large)");
     // DC protections: 1 breaker + 1 SPD per PV array (mpptCount)
-    const autoDcProt = p <= 7 ? 1 : Math.ceil(p / 7);
+    const kwForDc = parseFloat(document.getElementById('sys-size')?.value) || 0;
+    const autoDcProt = Math.max(1, Math.ceil(kwForDc / 4));
     const manualMpptB = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
     const dcProt = (manualMpptB > 0 && manualMpptB <= p) ? manualMpptB : autoDcProt;
     const batCables=b===0?0:b>1?b+2:2;
     const batBreakers=b===0?0:b>1?b+1:1;
     const acBrk=phase===3?getLivePrice("AC Breaker (3P/4P)"):getLivePrice("AC Breaker (1P/2P)");
-    const rawBOS=(40*getLivePrice("PV Wire 6mm² (m)"))+(pbox*iQty)+(4*iQty*acBrk)+(dcProt*getLivePrice("DC Breaker"))+
+    // MAIN OUT BR cost (only when iQty > 1)
+    const mainOutBrCost = iQty > 1 ? acBrk : 0;
+    // Electrical conduit + fittings: ₱2,500 per kW of system size
+    const conduitCost = Math.ceil(kw) * 2500;
+    const rawBOS=(40*getLivePrice("PV Wire 6mm² (m)"))+(pbox*iQty)+(4*iQty*acBrk)+ mainOutBrCost + conduitCost +
+      (dcProt*getLivePrice("DC Breaker"))+
       (dcProt*getLivePrice("DC SPD"))+(iQty*getLivePrice("AC SPD"))+getLivePrice("ATS System")+getLivePrice("Islanding Relay")+
       (batBreakers*getLivePrice("DC Breaker"))+(batCables*getLivePrice("Battery Cable Set"));
     document.getElementById('price-electrical').value=applyCeiling(rawBOS);
@@ -3117,13 +3291,49 @@ function calcBOM() {
 }
 
 function calcGrandTotal() {
-  rawGrandTotal=bomTotal+(parseFloat(document.getElementById('sys-mob').value)||0)+(parseFloat(document.getElementById('sys-delivery').value)||0);
+  const blueprintOn = document.getElementById('add-blueprint')?.checked;
+  const blueprintCost = blueprintOn ? (parseFloat(document.getElementById('sys-blueprint')?.value) || 0) : 0;
+  rawGrandTotal=bomTotal+(parseFloat(document.getElementById('sys-mob').value)||0)+(parseFloat(document.getElementById('sys-delivery').value)||0)+blueprintCost;
   const anchor=rawGrandTotal===0?0:Math.ceil(rawGrandTotal/1000)*1000;
   const disc=5000;
-  const final=anchor===0?0:anchor-disc;
+  const baseFinal=anchor===0?0:anchor-disc;
+
+  // VAT treatment
+  const vatMode = document.getElementById('vat-mode')?.value || 'ex';
+  let finalAmount = baseFinal;
+  const bdRow = document.getElementById('vat-breakdown-row');
+  const bdEl = document.getElementById('vat-breakdown');
+  if (vatMode === 'in' && baseFinal > 0) {
+    const vat12 = baseFinal * 0.12;
+    const profFee = baseFinal * 0.10;
+    finalAmount = baseFinal + vat12 + profFee;
+    if (bdEl) {
+      bdEl.innerHTML = `
+        Base (VAT-Ex): <strong>₱${baseFinal.toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br/>
+        + 12% VAT:    <strong style="color:var(--accent);">₱${vat12.toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br/>
+        + 10% Prof. Fee: <strong style="color:var(--accent);">₱${profFee.toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br/>
+        = VAT-Inclusive: <strong style="color:var(--green);">₱${finalAmount.toLocaleString(undefined,{minimumFractionDigits:2})}</strong>
+      `;
+    }
+    if (bdRow) bdRow.style.display = '';
+  } else {
+    if (bdRow) bdRow.style.display = 'none';
+  }
+
   document.getElementById('sys-anchor').value='₱'+anchor.toLocaleString(undefined,{minimumFractionDigits:2});
   document.getElementById('sys-discount-val').value=`-₱${disc.toLocaleString()} (Waived)`;
-  document.getElementById('sys-grandtotal').value='₱'+final.toLocaleString(undefined,{minimumFractionDigits:2});
+  document.getElementById('sys-grandtotal').value='₱'+finalAmount.toLocaleString(undefined,{minimumFractionDigits:2});
+  // Update VAT indicator + Final  Investments. color
+  const indicator = document.getElementById('vat-mode-indicator');
+  if (indicator) {
+    indicator.textContent = vatMode === 'in' ? 'VAT-IN +22%' : 'VAT-EX';
+    indicator.style.color = vatMode === 'in' ? '#10b981' : 'var(--text3)';
+  }
+  // Live-sync the Client Proposal Final  Investments. display so PDF Quote captures it
+  const pGT = document.getElementById('p-sys-grandtotal');
+  if (pGT) pGT.textContent = '₱' + finalAmount.toLocaleString(undefined,{minimumFractionDigits:2});
+  const pVatLbl = document.getElementById('p-vat-label');
+  if (pVatLbl) pVatLbl.textContent = vatMode === 'in' ? 'VAT Inclusive — Official Receipt · +12% VAT + 10% Prof Fee' : 'VAT Exclusive — Acknowledgement Receipt Only';
 }
 
 // ================================================================
@@ -3164,6 +3374,85 @@ function calcBreaker(){
     showRes('res-breaker',`Recommended Breaker: <strong>${Math.ceil(a)}A</strong><br><small style="opacity:0.7">125% continuous load rule applied</small>`);
   }
 }
+
+// ===== Battery Lifecycle Estimator =====
+// Real-world (not lab) cycle life with aging multiplier + oversize bonus.
+// Industry-typical end-of-life = 70-80% capacity retention.
+const BAT_TIERS = {
+  'lead':     {name:'Lead Acid (VRLA/Gel)',    cycles: 800,   ratedDoD: 0.50, maxYears: 6,  costMult:1.0},
+  'li-std':   {name:'Lithium Standard (LiFePO4)', cycles: 3500, ratedDoD: 0.80, maxYears: 8,  costMult:2.5},
+  'li-elite': {name:'Lithium Elite (Premium LFP+BMS)', cycles: 6000, ratedDoD: 0.90, maxYears: 10, costMult:3.5}
+};
+
+function calcBatteryLife(){
+  const tier = document.getElementById('bl-tier')?.value || 'li-std';
+  const capKwh = parseFloat(document.getElementById('bl-cap')?.value) || 0;
+  const demandKwh = parseFloat(document.getElementById('bl-demand')?.value) || 0;
+  if (capKwh <= 0 || demandKwh <= 0) {
+    showRes('res-batlife', '<span style="color:#dc2626;">Enter capacity and daily demand.</span>');
+    return;
+  }
+  const spec = BAT_TIERS[tier];
+
+  // Actual daily DoD = demand / capacity (capped at 100%)
+  const actualDoD = Math.min(1.0, demandKwh / capKwh);
+  const dodVsRated = actualDoD / spec.ratedDoD;
+
+  // Cycle aging multiplier: faster wear if DoD > rated, slower if under
+  // Cycle aging multiplier
+  let agingMult = 1.0;
+  if (dodVsRated > 1.0)      agingMult = 1.0 + (dodVsRated - 1.0) * 1.5;
+  else if (dodVsRated < 0.3) agingMult = 0.55;
+  else if (dodVsRated < 0.5) agingMult = 0.7;
+  else if (dodVsRated < 0.7) agingMult = 0.85;
+
+  // Oversize bonus — continuous so every capacity step differentiates
+  let oversizeBonus = 1.0;
+  if (dodVsRated < 1.0) {
+    oversizeBonus = 1.0 + (1.0 - dodVsRated) * 0.8;
+    if (dodVsRated < 0.3) oversizeBonus += (0.3 - dodVsRated) * 0.6;
+  }
+
+  // Raw years, then soft-cap blend (so oversize still differentiates past max)
+  const rawYears = spec.cycles / (365 * agingMult) * oversizeBonus;
+  let years;
+  if (rawYears <= spec.maxYears) years = rawYears;
+  else                          years = spec.maxYears + (rawYears - spec.maxYears) * 0.10;
+  years = Math.min(years, spec.maxYears * 1.4);  // absolute ceiling = calendar aging
+
+  // Recommendation: ideal bank size for 8-yr life
+  const idealCapForRated = demandKwh / spec.ratedDoD;
+  const idealCapFor8Yr = demandKwh / (spec.ratedDoD * 0.85);  // 15% derate for 8-yr target
+
+  const dodColor = dodVsRated > 1.0 ? '#dc2626' : (dodVsRated < 0.5 ? '#059669' : '#f59e0b');
+  const yearsColor = years >= 8 ? '#059669' : (years >= 5 ? '#f59e0b' : '#dc2626');
+
+  showRes('res-batlife', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+      <div style="background:rgba(245,158,11,0.1);padding:10px;border-radius:6px;border-left:3px solid #f59e0b;">
+        <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;">Estimated Real-World Life</div>
+        <div style="font-size:28px;font-weight:900;color:${yearsColor};line-height:1.1;margin-top:4px;">${years.toFixed(1)} years</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${Math.round(years * 365 / agingMult / agingMult * agingMult)} cycles before 70-80% capacity</div>
+      </div>
+      <div style="background:rgba(220,38,38,0.08);padding:10px;border-radius:6px;border-left:3px solid ${dodColor};">
+        <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;">Daily DoD (Actual vs Rated)</div>
+        <div style="font-size:28px;font-weight:900;color:${dodColor};line-height:1.1;margin-top:4px;">${(actualDoD*100).toFixed(0)}%</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">Rated for: ${(spec.ratedDoD*100).toFixed(0)}% · You're at ${(dodVsRated*100).toFixed(0)}% of rated</div>
+      </div>
+    </div>
+    <div style="font-size:11px;line-height:1.7;color:var(--text2);">
+      <strong style="color:var(--accent);">${spec.name}</strong> · Rated cycles: ${spec.cycles.toLocaleString()} @ ${(spec.ratedDoD*100).toFixed(0)}% DoD<br/>
+      <strong>Aging multiplier:</strong> ${agingMult.toFixed(2)}× ${agingMult > 1.2 ? '(over-stressed — faster wear)' : agingMult < 0.9 ? '(light cycling — slower wear)' : '(normal)'}<br/>
+      <strong>Oversize bonus:</strong> ${oversizeBonus.toFixed(2)}× ${oversizeBonus > 1.0 ? '(under-utilized capacity extends life)' : '(no bonus — DoD ≥ 70% of rated)'}<br/>
+      <strong>Recommendation:</strong> For 8-year target life, ideal bank ≥ <strong>${idealCapFor8Yr.toFixed(1)} kWh</strong> at this demand.
+      ${actualDoD >= 0.95 ? '<br/><span style="color:#dc2626;font-weight:700;">⚠ DoD ≥ 95% — battery will fail prematurely.</span>' : ''}
+      ${capKwh > idealCapFor8Yr * 1.5 ? '<br/><span style="color:#059669;font-weight:700;">✓ Oversized bank — lifecycle extended beyond standard.</span>' : ''}
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;font-style:italic;">
+      Note: Real-world life is lower than lab-rated cycles due to PH ambient temperature (28-32°C average), partial charging, and BMS quirks. Max practical life capped at ${spec.maxYears} years even for ideal usage.
+    </div>
+  `);
+}
 async function generateDoc(type) {
   // Password gate
   if (!(await requirePassword('print ' + (type === 'client' ? 'Client Proposal' : 'Internal Job Order')))) return;
@@ -3193,7 +3482,7 @@ async function generateDoc(type) {
   p('p-system-size', sysKw + ' kW (' + phaseTxt.split(' ')[0] + ')');
   p('p-sys-type',    document.getElementById('sys-type')?.value?.replace(/[⚡🔌🔋]/g,'').trim() || '');
 
-  // Investment
+  //  Investments.
   p('p-sys-anchor',         document.getElementById('sys-anchor')?.value       || '');
   p('p-sys-discount-label', document.getElementById('sys-discount-label')?.value || 'Engineering System Design');
   p('p-sys-discount-val-print', '(₱5,000) Waived');
@@ -3254,7 +3543,7 @@ async function generateDoc(type) {
     const pitches = {
       Elite: `<h4>🌟 PREMIUM ENGINEERING. MAXIMUM YIELD.</h4>
         <p>Your ${sysKw}kW FDG Solar Visayas system is engineered at the highest level — precision-designed for maximum energy output, zero compromise. Elite-grade inverter with real-time MPPT optimization, 24/7 cloud monitoring, and 6,000+ cycle battery storage.${isHyb?' Complete blackout protection with seamless automatic switchover — your home stays powered, always.':''}${isOG?' Fully autonomous — complete independence from the utility grid.':''}${isGT?' Maximum daytime offset with intelligent export management — zero-waste solar generation every day.':''} Built to last for years. This is a long-term energy asset.</p>`,
-      Advanced: `<h4>⚖️ PROVEN RELIABILITY. SMART INVESTMENT.</h4>
+      Advanced: `<h4>⚖️ PROVEN RELIABILITY. SMART  Investments..</h4>
         <p>Your ${sysKw}kW FDG Solar Visayas system delivers the ideal balance of performance, reliability, and financial return. Industry-standard components trusted by thousands of Philippine installations.${isHyb?' Hybrid architecture saves on every sunny day AND protects during brownouts and outages.':''}${isOG?' Off-grid independence — no more monthly bills, no more outage anxiety. Your power, your rules.':''}${isGT?' Smart grid-tied savings with proven technology — consistent daily bill reduction, year after year.':''}</p>`,
       Essential: `<h4>🔋 CORE ENERGY SECURITY. EVERY PESO COUNTS.</h4>
         <p>Your ${sysKw}kW FDG Solar Visayas system — your first step toward genuine energy freedom. Purpose-built for households and small businesses.${isHyb?' Backup power when needed most — keeps essentials running through grid interruptions.':''}${isOG?' Stable, dependable power fully independent from utility pricing.':''}${isGT?' Reduce your monthly electricity bill from Day 1.':''} Every FDG Solar Visayas installation follows the same professional Engineering.Procurement.Construction standard.</p>`
@@ -3279,7 +3568,8 @@ async function generateDoc(type) {
 
     const sInvKw = parseFloat(sysKw) / iQty;
     // DC protections per ARRAY (matches mpptCount — 1 breaker + 1 SPD per MPPT string)
-    const autoDcProtJO = panels <= 7 ? 1 : Math.ceil(panels / 7);
+    const kwForDcJO = parseFloat(document.getElementById('sys-size')?.value) || 0;
+    const autoDcProtJO = Math.max(1, Math.ceil(kwForDcJO / 4));
     const manualMpptJO = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
     const dcProt = (manualMpptJO > 0 && manualMpptJO <= panels) ? manualMpptJO : autoDcProtJO;
     const rails  = Math.ceil(panels/2)*2;
@@ -3287,8 +3577,11 @@ async function generateDoc(type) {
     const batBr  = batQtyV===0?0 : batQtyV>1?batQtyV+1:1;
 
     // === Breaker Amperage Calculations (per system voltage, NEC 125% continuous rule) ===
-    const sysPhaseVal = parseInt(document.getElementById('sys-phase')?.value) || 1;
-    const V_AC = sysPhaseVal === 3 ? 400 : 220;          // PH grid: 230V 1ph / 400V 3ph
+    // Parse phase + voltage from hidden auto-phase ("1|220", "3|220", "3|380")
+    const bomPhaseStr = document.getElementById('auto-phase')?.value || '1|220';
+    const bomPhaseParts = bomPhaseStr.split('|');
+    const sysPhaseVal = parseInt(bomPhaseParts[0]) || 1;
+    const V_AC = parseInt(bomPhaseParts[1]) || 220;
     const V_DC_BAT = invVolts || 48;                      // battery bus voltage
     const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;          // typical MPPT string voltage
     const PF = 0.9;                                       // assumed power factor
@@ -3337,11 +3630,13 @@ async function generateDoc(type) {
       ['Connectors', 'PG Cable Glands (M16/M20/M25, assorted)', iQty * 4 + 4],
       ['Electrical', 'Panel Box', iQty],
       ['Electrical', `AC Breakers ${V_AC}V ${phaseLbl} — ${acBr}A (Main/Line/Load/Gen) [calc ${acA_inv.toFixed(1)}A × 1.25]`, 4*iQty],
+      ['Electrical', iQty > 1 ? `MAIN AC OUT Breaker ${V_AC}V ${phaseLbl} — ${next(acA_inv * iQty * 1.25)}A (parallel combined output)` : '', iQty > 1 ? 1 : 0],
       ['Electrical', `DC Breakers ${V_DC_PV}V — ${dcPvBr}A (PV Array, per string) [Isc ${dcA_pv}A × 1.25]`, dcProt],
       ['Electrical', `DC Surge Protectors ${V_DC_PV}V (SPD)`, dcProt],
       ['Electrical', `AC Surge Protector ${V_AC}V (SPD)`, iQty],
       ['Electrical', `ATS System ${V_AC}V ${phaseLbl}`, 1],
       ['Electrical', `Islanding / Anti-Islanding Relay ${V_AC}V ${phaseLbl} (V/f monitoring, IEEE 1547 / PEC compliance)`, 1],
+      ['Electrical', `Electrical Conduit & Fittings (1 lot — PVC/EMT, junction boxes, supports) — ${Math.ceil(parseFloat(sysKw)||0)} kW × ₱2,500/kW`, 1],
       // Battery DC protection — separate rows for per-string vs main (clarity for installer)
       ['Battery DC', batQtyV > 1 ? `Per-String DC Breaker ${V_DC_BAT}V — ${perStringBr}A [calc ${perStringA.toFixed(1)}A × 1.25]` : '', batQtyV > 1 ? batQtyV : 0],
       ['Battery DC', batQtyV > 0 ? `Main Battery DC Breaker ${V_DC_BAT}V — ${dcBatMainBr}A [calc ${dcA_bat.toFixed(1)}A × 1.25]` : '', batQtyV > 0 ? 1 : 0],
@@ -3382,11 +3677,17 @@ function readSLDConfig() {
   const invQ   = parseInt(document.getElementById('qty-inverter')?.value) || 1;
   const batQ   = parseInt(document.getElementById('qty-battery')?.value) || 0;
   const invDesc = (document.getElementById('desc-inverter')?.value || '').toLowerCase();
-  const phase  = parseInt(document.getElementById('sys-phase')?.value) || 1;
+  // Phase + voltage: parse from auto-phase hidden input ("1|220", "3|220", "3|380")
+  // This distinguishes 3Ph 220V (delta) vs 3Ph 380V (wye/Y line-to-line)
+  const phaseStr = document.getElementById('auto-phase')?.value || '1|220';
+  const phaseParts = phaseStr.split('|');
+  const phaseFromHidden = parseInt(phaseParts[0]) || 1;
+  const voltsFromHidden = parseInt(phaseParts[1]) || 220;
+  const phase = phaseFromHidden;
+  const V_AC = voltsFromHidden;
   const sysKw  = parseFloat(document.getElementById('out-system')?.textContent) || (invQ * (invSize||5));
   const panelW = panels > 0 ? Math.round(sysKw * 1000 / panels) : 0;
   const V_DC_BAT = invVolts || 48;
-  const V_AC = phase === 3 ? 400 : 220;
 
   // === Inverter type classification (generic, no brand) ===
   let invType;
@@ -3398,16 +3699,18 @@ function readSLDConfig() {
   const isGridTie = invType === 'Grid-Tie Inverter';
 
   // === MPPT distribution rule (per user spec) ===
-  // ≤7 panels → 1 MPPT × 1 string
-  // >7 panels → add another MPPT for each chunk of 7
-  // Distribute equally; remainder goes to LAST MPPT
-  // Manual override if user set sys-mppt-override; else auto-compute
-  const autoMppt = panels <= 7 ? 1 : Math.ceil(panels / 7);
+  // 1 MPPT per 4kW of inverter capacity (rounded up):
+  //   ≤4kW   → 1 MPPT
+  //   5-8kW  → 2 MPPT
+  //   9-12kW → 3 MPPT
+  //   13-16kW → 4 MPPT etc.
+  // Manual override available via sys-mppt-override
+  const invKwForMppt = parseFloat(document.getElementById('sys-size')?.value) || 0;
+  const autoMppt = Math.max(1, Math.ceil(invKwForMppt / 4));
   const manualMppt = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
-  const mpptCount = (manualMppt > 0 && manualMppt <= panels) ? manualMppt : autoMppt;
+  const mpptCount = (manualMppt > 0 && manualMppt <= Math.max(panels, 1)) ? manualMppt : Math.min(autoMppt, panels);
   const basePerMppt = mpptCount > 0 ? Math.floor(panels / mpptCount) : 0;
   const remainder   = panels - basePerMppt * mpptCount;
-  // Each MPPT gets basePerMppt; the LAST MPPT absorbs the remainder
   const panelsByMppt = [];
   for (let i = 0; i < mpptCount; i++) {
     panelsByMppt.push(i === mpptCount - 1 ? basePerMppt + remainder : basePerMppt);
@@ -3431,7 +3734,7 @@ function readSLDConfig() {
 
   return {
     panels, panelW, panelsByMppt, mpptCount,
-    invQ, invType, isHybrid, isOffGrid, isGridTie,
+    invQ, iQty: invQ, invType, isHybrid, isOffGrid, isGridTie,
     batQ, batSizeAh, V_DC_BAT, V_AC, phase,
     sysKw: sysKw.toFixed(2), sInvKw: sInvKw.toFixed(2),
     acA_inv: acA_inv.toFixed(1), acBr, gridIso,
@@ -4185,7 +4488,7 @@ function buildSLDPage(c) {
 
   const PV_ROW_H = 56;
   const BAT_ROW_H = 56;
-  const INV_ROW_H = 96;
+  const INV_ROW_H = 110;
   const F_W = 1100;
   const TOP = 80;
 
@@ -4393,11 +4696,31 @@ function buildSLDPage(c) {
     path: `M ${chainCx} ${lastChainY} L ${chainCx} ${acInMid} L ${ACIN_BUS_X} ${acInMid}`,
     sw: 2.4
   });
-  // ISLAND relay sits between AC IN bus and inverter (horizontal)
+  // === ISLANDING RELAY — Open-Space Callout ===
+  // Per user spec: not on the main wire path. Render as informational box in open space
+  // (top-left of inverter zone) showing the relay symbol + label, with a dashed annotation
+  // line indicating it monitors the AC IN bus. Function is automatic anti-islanding
+  // (built into the inverter firmware/external relay); this is symbolic representation.
   if (showIsland) {
-    const islandX = (ACIN_BUS_X + INV_X + nodeW) / 2 - pw/2 + 20;
-    const islandY = acInMid - ph/2;
-    acChainSvg += protDevice(islandX, islandY, pw, ph, 'ISLAND', 'relay', '#db2777');
+    const calloutX = INV_X - 90;
+    const calloutY = invBlockYStart - 70;
+    const calloutW = 130;
+    const calloutH = 50;
+    // Callout box
+    acChainSvg += `
+      <g>
+        <rect x="${calloutX}" y="${calloutY}" width="${calloutW}" height="${calloutH}" rx="6" fill="#fce7f3" stroke="#db2777" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text x="${calloutX + calloutW/2}" y="${calloutY + 14}" text-anchor="middle" font="bold 9px sans-serif" fill="#831843">⚠ ANTI-ISLANDING</text>
+        <text x="${calloutX + calloutW/2}" y="${calloutY + 28}" text-anchor="middle" font="8px sans-serif" fill="#831843">Auto-trip on grid loss</text>
+        <text x="${calloutX + calloutW/2}" y="${calloutY + 42}" text-anchor="middle" font="7px sans-serif" fill="#9d174d">IEC 62116 / PEC compliant</text>
+      </g>`;
+    // Tiny relay icon inside callout (top-right corner)
+    acChainSvg += protDevice(calloutX + calloutW - 28, calloutY + 4, 24, 24, '', 'relay', '#db2777');
+    // Dashed annotation line: callout → AC IN bus (monitoring relationship, NOT power flow)
+    const annotateBusX = ACIN_BUS_X;
+    const annotateBusY = acInMid;
+    acChainSvg += `<path d="M ${calloutX + calloutW} ${calloutY + calloutH/2} L ${calloutX + calloutW + 20} ${calloutY + calloutH/2} L ${calloutX + calloutW + 20} ${annotateBusY} L ${annotateBusX - 4} ${annotateBusY}" fill="none" stroke="#db2777" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.7"/>`;
+    acChainSvg += `<text x="${calloutX + calloutW + 22}" y="${(calloutY + calloutH/2 + annotateBusY)/2}" font="7px sans-serif" fill="#db2777" font-style="italic">monitors</text>`;
   }
 
   // === Bottom layout per user spec:
@@ -4420,20 +4743,35 @@ function buildSLDPage(c) {
 
   // Utility → ATS Reserve (route from AC MAIN around right side down to ATS right edge)
   // Utility Reserve to ATS: branch from AFTER LV/HV (between LV/HV and CT)
-  // chainYs[0]=AC MAIN, [1]=LV/HV, [2]=CT, [3]=ISLAND. Tap right side at LV/HV bottom edge.
-  const tapY = chainYs[1] + ph;  // bottom of LV/HV
+  // Utility Reserve to ATS: tap from BELOW LV/HV (clear of other boxes)
+  const tapY = chainYs[1] + ph + 4;  // 4px below LV/HV
   const utilReserveSvg = flowArrow(0,0,0,0, '#2563eb', 'Utility → ATS (Reserve)', {
-    path: `M ${chainCx + pw/2} ${tapY - ph/2} L ${F_W - 30} ${tapY - ph/2} L ${F_W - 30} ${ATS_Y + halfH} L ${ATS_X + nodeW} ${ATS_Y + halfH}`,
+    path: `M ${chainCx + pw/2} ${tapY} L ${chainCx + pw/2 + 30} ${tapY} L ${chainCx + pw/2 + 30} ${ATS_Y + halfH} L ${ATS_X + nodeW} ${ATS_Y + halfH}`,
     dash: '6,4', sw: 2,
-    labelX: F_W - 130, labelY: ATS_Y - 6
+    labelX: chainCx + pw/2 + 80, labelY: ATS_Y - 6
   });
 
-  // Inverter AC OUT bus → ATS (Solar Normal feed) — vertical drop from inverter section to ATS top
+  // Inverter AC OUT bus → MAIN AC OUT BR (if numInv > 1) → ATS (Solar Normal feed)
   const lastAcOutY = acOutBottomYs[acOutBottomYs.length-1];
-  const acOutToAtsSvg = flowArrow(0,0,0,0, '#059669', 'Solar AC (Normal)', {
-    path: `M ${acOutBusX} ${lastAcOutY} L ${acOutBusX} ${ATS_Y}`,
-    sw: 2.4, labelX: acOutBusX + 60, labelY: (lastAcOutY + ATS_Y)/2
-  });
+  let acOutToAtsSvg = '';
+  if (numInv > 1) {
+    // Parallel inverters → add MAIN AC OUT BR on combined bus before going to ATS
+    const mainBrY = lastAcOutY + 14;
+    const mainBrX = acOutBusX - pw/2;
+    acOutToAtsSvg += protDevice(mainBrX, mainBrY, pw, ph, 'MAIN OUT BR', 'breaker', '#059669');
+    // Inverter bus bottom → MAIN OUT BR
+    acOutToAtsSvg += flowArrow(acOutBusX, lastAcOutY, acOutBusX, mainBrY, '#059669', '', {});
+    // MAIN OUT BR → ATS
+    acOutToAtsSvg += flowArrow(0,0,0,0, '#059669', 'Solar AC (Normal · Parallel Combined)', {
+      path: `M ${acOutBusX} ${mainBrY + ph} L ${acOutBusX} ${ATS_Y}`,
+      sw: 2.6, labelX: acOutBusX + 80, labelY: (mainBrY + ph + ATS_Y)/2
+    });
+  } else {
+    acOutToAtsSvg = flowArrow(0,0,0,0, '#059669', 'Solar AC (Normal)', {
+      path: `M ${acOutBusX} ${lastAcOutY} L ${acOutBusX} ${ATS_Y}`,
+      sw: 2.4, labelX: acOutBusX + 60, labelY: (lastAcOutY + ATS_Y)/2
+    });
+  }
 
   // Genset bottom-right → GEN bus
   let gensetSvg = flowNode(GENSET_X2, GENSET_Y, nodeW, nodeH, 'Genset', `Backup Generator · ${c.V_AC}V`, 'ats', '#fff1f2', '#e11d48');
@@ -4466,12 +4804,13 @@ function buildSLDPage(c) {
     labelX: INV_X - 100, labelY: LOADS_Y + halfH - 8
   });
 
-  // Non-Essential Loads (N. LOADS) — dashed from LV/HV around right side to N. LOADS top
-  const lvhvBottomY = chainYs[1] + ph;
+  // Non-Essential Loads (N. LOADS) — dashed from LV/HV bottom-right corner around the right side to N. LOADS top
+  // Tap point: bottom-right of LV/HV box (chainYs[1] is LV/HV top, +ph = bottom)
+  const lvhvBottomEdgeY = chainYs[1] + ph + 4;  // 4px below LV/HV box
   bottomSvg += flowArrow(0, 0, 0, 0, '#94a3b8', 'Non-Essential (grid-only)', {
-    path: `M ${chainCx + pw/2 - 2} ${lvhvBottomY - ph/2} L ${F_W - 20} ${lvhvBottomY - ph/2} L ${F_W - 20} ${LOADS_Y - 14} L ${NLOADS_X + halfW} ${LOADS_Y - 14} L ${NLOADS_X + halfW} ${LOADS_Y}`,
+    path: `M ${chainCx + pw/2} ${lvhvBottomEdgeY - 4} L ${chainCx + pw/2 + 18} ${lvhvBottomEdgeY - 4} L ${chainCx + pw/2 + 18} ${LOADS_Y - 14} L ${NLOADS_X + halfW} ${LOADS_Y - 14} L ${NLOADS_X + halfW} ${LOADS_Y}`,
     sw: 1.8, dash: '5,3',
-    labelX: F_W - 140, labelY: LOADS_Y - 20
+    labelX: NLOADS_X + halfW, labelY: LOADS_Y - 20
   });
 
   // Earth bonds for bottom stack + meter + genset + N. LOADS
@@ -4717,7 +5056,7 @@ function buildSLDPage(c) {
            <div class="photo-grid">${photoCards}</div>`
         : photoCards}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.0 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.1 of 2</div>
     </div>
 
     <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
@@ -4761,7 +5100,7 @@ function buildSLDPage(c) {
         </ol>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.0 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.1 of 2</div>
     </div>
   </div>
 </body></html>`;
@@ -4798,6 +5137,7 @@ function loadQuoteHistory() {
 }
 function saveQuoteHistory(arr) {
   localStorage.setItem(QH_KEY, JSON.stringify(arr));
+  if (typeof maybeAutoSyncQuoteHistory === 'function') maybeAutoSyncQuoteHistory();
 }
 
 function exportQuoteHistory() {
@@ -4831,6 +5171,301 @@ async function importQuoteHistory(event) {
   } finally {
     event.target.value = '';
   }
+}
+
+// ============================================================
+// CLOUD SYNC — jsonbin.io (primary) + GitHub Gist (when connected)
+// ============================================================
+// User signs up at jsonbin.io free tier (10k req/month), pastes:
+//   1. API key (Master Key from jsonbin dashboard)
+//   2. Bin ID for Inventory + Bin ID for Quote History (or auto-create on first push)
+// All stored in localStorage so persist between sessions.
+
+const CLOUD_CFG_KEY = 'fdgCloudConfig_v1';
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+
+function loadCloudConfig() {
+  try { return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveCloudConfig(cfg) {
+  localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cfg));
+}
+
+async function openCloudSyncDialog() {
+  const cfg = loadCloudConfig();
+  document.getElementById('cloud-dialog-bg')?.remove();
+  const bg = document.createElement('div');
+  bg.id = 'cloud-dialog-bg';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:99998;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px;overflow-y:auto;';
+  bg.innerHTML = `
+    <div style="background:#0f172a;color:#fff;border:1px solid #fbbf24;border-radius:10px;padding:24px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,0.5);max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 style="margin:0;color:#fbbf24;font-size:18px;">☁️ Cloud Sync Settings</h3>
+        <button onclick="document.getElementById('cloud-dialog-bg').remove()" style="background:transparent;border:0;color:#94a3b8;cursor:pointer;font-size:22px;">✕</button>
+      </div>
+      <p style="font-size:12px;color:#cbd5e1;margin-bottom:14px;line-height:1.5;">
+        Sync your Hardware Database and Quote History across computers via <strong>jsonbin.io</strong> (free 10k req/mo).
+        <a href="https://jsonbin.io/api-reference/v3/getting-started" target="_blank" style="color:#fbbf24;">Get free API key →</a>
+      </p>
+
+      <div style="margin-bottom:10px;">
+        <label style="font-size:11px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">jsonbin Master Key (X-Master-Key)</label>
+        <input id="cs-api-key" type="text" placeholder="$2a$10$..." value="${cfg.apiKey || ''}" style="width:100%;padding:9px 10px;font-size:12px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;margin-top:3px;box-sizing:border-box;font-family:monospace;"/>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:11px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Inventory Bin ID</label>
+          <input id="cs-bin-inv" type="text" placeholder="auto-create" value="${cfg.binInventory || ''}" style="width:100%;padding:9px 10px;font-size:12px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;margin-top:3px;box-sizing:border-box;font-family:monospace;"/>
+        </div>
+        <div>
+          <label style="font-size:11px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Quote History Bin ID</label>
+          <input id="cs-bin-qh" type="text" placeholder="auto-create" value="${cfg.binQuoteHistory || ''}" style="width:100%;padding:9px 10px;font-size:12px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;margin-top:3px;box-sizing:border-box;font-family:monospace;"/>
+        </div>
+      </div>
+
+      <div style="background:rgba(251,191,36,0.08);border-left:3px solid #fbbf24;padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:11px;line-height:1.5;color:#cbd5e1;">
+        💡 Leave Bin IDs blank → tool auto-creates on first upload. Copy them after, paste on other PCs.
+      </div>
+
+      <div style="margin:14px 0 8px;border-top:1px solid #334155;padding-top:14px;">
+        <label style="font-size:11px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Auto-Sync on Save</label>
+        <div style="display:flex;gap:14px;margin-top:6px;font-size:12px;">
+          <label><input type="checkbox" id="cs-auto-inv" ${cfg.autoSyncInv ? 'checked' : ''}/> Hardware DB</label>
+          <label><input type="checkbox" id="cs-auto-qh" ${cfg.autoSyncQH ? 'checked' : ''}/> Quote History</label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button onclick="saveCloudCfgFromDialog()" style="flex:1;padding:10px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;border:0;border-radius:6px;font-weight:800;cursor:pointer;">💾 Save Settings</button>
+        <button onclick="cloudPushAll()" style="padding:10px 16px;background:#059669;color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer;">⬆ Push All to Cloud</button>
+        <button onclick="cloudPullAll()" style="padding:10px 16px;background:#2563eb;color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer;">⬇ Pull All from Cloud</button>
+      </div>
+
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #334155;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <strong style="color:#fbbf24;font-size:13px;">🐙 GitHub Gist Sync</strong>
+          <span style="font-size:10px;background:#059669;color:#fff;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:1px;">SECONDARY</span>
+        </div>
+        <p style="font-size:11px;color:#cbd5e1;line-height:1.5;margin-bottom:8px;">
+          Alternative backend with version history. Get free Personal Access Token at
+          <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=FDG%20Solar%20Sync" target="_blank" style="color:#fbbf24;">github.com/settings/tokens</a>
+          (check <code style="background:#1e293b;padding:1px 4px;border-radius:3px;color:#fbbf24;">gist</code> scope only).
+        </p>
+        <div style="margin-bottom:8px;">
+          <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">GitHub PAT (ghp_...)</label>
+          <input id="cs-gh-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" value="${cfg.ghToken || ''}" style="width:100%;padding:9px 10px;font-size:12px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;margin-top:3px;box-sizing:border-box;font-family:monospace;"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Inventory Gist ID</label>
+            <input id="cs-gh-gist-inv" type="text" placeholder="auto-create" value="${cfg.ghGistInv || ''}" style="width:100%;padding:9px 10px;font-size:12px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;margin-top:3px;box-sizing:border-box;font-family:monospace;"/>
+          </div>
+          <div>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Quote History Gist ID</label>
+            <input id="cs-gh-gist-qh" type="text" placeholder="auto-create" value="${cfg.ghGistQH || ''}" style="width:100%;padding:9px 10px;font-size:12px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;margin-top:3px;box-sizing:border-box;font-family:monospace;"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button onclick="ghPushAll()" style="flex:1;padding:9px;background:#1f2937;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;font-weight:700;cursor:pointer;font-size:12px;">⬆ Push to GitHub</button>
+          <button onclick="ghPullAll()" style="flex:1;padding:9px;background:#1f2937;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;font-weight:700;cursor:pointer;font-size:12px;">⬇ Pull from GitHub</button>
+        </div>
+        <p style="font-size:10px;color:#64748b;margin-top:6px;font-style:italic;">PAT path works without MCP install. If you also install GitHub MCP connector, AI assistance becomes available next session.</p>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click', e => { if (e.target === bg) bg.remove(); });
+}
+
+function saveCloudCfgFromDialog() {
+  const cfg = {
+    apiKey: document.getElementById('cs-api-key').value.trim(),
+    binInventory: document.getElementById('cs-bin-inv').value.trim(),
+    binQuoteHistory: document.getElementById('cs-bin-qh').value.trim(),
+    autoSyncInv: document.getElementById('cs-auto-inv').checked,
+    autoSyncQH: document.getElementById('cs-auto-qh').checked,
+    ghToken: document.getElementById('cs-gh-token')?.value.trim() || '',
+    ghGistInv: document.getElementById('cs-gh-gist-inv')?.value.trim() || '',
+    ghGistQH: document.getElementById('cs-gh-gist-qh')?.value.trim() || '',
+  };
+  saveCloudConfig(cfg);
+  toast('✓ Cloud settings saved', 'success');
+}
+
+// ===== GitHub Gist sync (PAT-based, no MCP needed) =====
+async function ghPushGist(gistId, filename, content, token, description) {
+  const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
+  const method = gistId ? 'PATCH' : 'POST';
+  const body = {
+    description,
+    public: false,
+    files: { [filename]: { content } }
+  };
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`GitHub ${method} failed: HTTP ${res.status} — ${res.statusText}`);
+  const j = await res.json();
+  return j.id;
+}
+
+async function ghPullGist(gistId, filename, token) {
+  if (!gistId) throw new Error('No Gist ID set');
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+  });
+  if (!res.ok) throw new Error(`GitHub pull failed: HTTP ${res.status}`);
+  const j = await res.json();
+  const file = j.files[filename] || Object.values(j.files)[0];
+  return file?.content;
+}
+
+async function ghPushAll() {
+  const cfg = loadCloudConfig();
+  if (!cfg.ghToken) return toast('Set GitHub PAT first', 'error');
+  try {
+    toast('🐙 Pushing to GitHub...', 'info');
+    const inv = JSON.parse(localStorage.getItem('fdgSolarDB_v5') || 'null') || {};
+    const qh  = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1') || '[]') || [];
+    const newInvGist = await ghPushGist(cfg.ghGistInv, 'fdg-inventory.json', JSON.stringify(inv, null, 2), cfg.ghToken, 'FDG Solar Hardware Inventory');
+    const newQhGist  = await ghPushGist(cfg.ghGistQH,  'fdg-quote-history.json', JSON.stringify(qh, null, 2), cfg.ghToken, 'FDG Solar Quote History');
+    cfg.ghGistInv = newInvGist;
+    cfg.ghGistQH  = newQhGist;
+    cfg.lastGhPush = new Date().toISOString();
+    saveCloudConfig(cfg);
+    toast(`✓ Pushed to GitHub · Inv: ${newInvGist.slice(-8)} · QH: ${newQhGist.slice(-8)}`, 'success');
+    if (document.getElementById('cloud-dialog-bg')) {
+      document.getElementById('cloud-dialog-bg').remove();
+      openCloudSyncDialog();
+    }
+  } catch(e) {
+    toast('GitHub push failed: ' + e.message, 'error');
+  }
+}
+
+async function ghPullAll() {
+  const cfg = loadCloudConfig();
+  if (!cfg.ghToken) return toast('Set GitHub PAT first', 'error');
+  if (!cfg.ghGistInv && !cfg.ghGistQH) return toast('No Gist IDs — push first or paste IDs', 'error');
+  const ok = await showConfirm('Pull from GitHub', 'This will <strong>OVERWRITE</strong> local Hardware DB and Quote History with cloud copies.<br/><br/>Backup first if unsure.');
+  if (!ok) return;
+  try {
+    toast('🐙 Pulling from GitHub...', 'info');
+    if (cfg.ghGistInv) {
+      const c = await ghPullGist(cfg.ghGistInv, 'fdg-inventory.json', cfg.ghToken);
+      if (c) localStorage.setItem('fdgSolarDB_v5', c);
+    }
+    if (cfg.ghGistQH) {
+      const c = await ghPullGist(cfg.ghGistQH, 'fdg-quote-history.json', cfg.ghToken);
+      if (c) localStorage.setItem('fdgQuoteHistory_v1', c);
+    }
+    cfg.lastGhPull = new Date().toISOString();
+    saveCloudConfig(cfg);
+    toast('✓ Pulled from GitHub — reload to see changes', 'success');
+    if (typeof renderQuoteHistory === 'function') renderQuoteHistory();
+  } catch(e) {
+    toast('GitHub pull failed: ' + e.message, 'error');
+  }
+}
+
+// Push: create-or-update a bin. Returns bin id (new or existing).
+async function cloudPushBin(binId, payload, apiKey, label) {
+  const headers = {'Content-Type':'application/json','X-Master-Key':apiKey,'X-Bin-Name':label,'X-Bin-Private':'true'};
+  let url, method;
+  if (binId) { url = `${JSONBIN_BASE}/${binId}`; method = 'PUT'; }
+  else       { url = JSONBIN_BASE;            method = 'POST'; }
+  const res = await fetch(url, {method, headers, body: JSON.stringify(payload)});
+  if (!res.ok) throw new Error(`${label} push failed: HTTP ${res.status}`);
+  const j = await res.json();
+  return j.metadata?.id || binId;
+}
+
+async function cloudPullBin(binId, apiKey) {
+  if (!binId) throw new Error('No bin ID set');
+  const res = await fetch(`${JSONBIN_BASE}/${binId}/latest`, {headers:{'X-Master-Key':apiKey}});
+  if (!res.ok) throw new Error(`Pull failed: HTTP ${res.status}`);
+  const j = await res.json();
+  return j.record;
+}
+
+async function cloudPushAll() {
+  const cfg = loadCloudConfig();
+  if (!cfg.apiKey) return toast('Set jsonbin API key first', 'error');
+  try {
+    toast('☁️ Pushing to cloud...', 'info');
+    // Inventory
+    const inv = JSON.parse(localStorage.getItem('fdgSolarDB_v5') || 'null') || {};
+    const newInvBin = await cloudPushBin(cfg.binInventory, inv, cfg.apiKey, 'FDG-Inventory');
+    // Quote history
+    const qh = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1') || '[]') || [];
+    const newQhBin = await cloudPushBin(cfg.binQuoteHistory, qh, cfg.apiKey, 'FDG-QuoteHistory');
+    // Update cfg with new bin IDs (if auto-created)
+    cfg.binInventory = newInvBin;
+    cfg.binQuoteHistory = newQhBin;
+    cfg.lastPush = new Date().toISOString();
+    saveCloudConfig(cfg);
+    toast(`✓ Pushed · Inv bin: ${newInvBin.slice(-8)} · QH bin: ${newQhBin.slice(-8)}`, 'success');
+    // Refresh dialog if open
+    if (document.getElementById('cloud-dialog-bg')) {
+      document.getElementById('cloud-dialog-bg').remove();
+      openCloudSyncDialog();
+    }
+  } catch(e) {
+    toast('Push failed: ' + e.message, 'error');
+  }
+}
+
+async function cloudPullAll() {
+  const cfg = loadCloudConfig();
+  if (!cfg.apiKey) return toast('Set jsonbin API key first', 'error');
+  if (!cfg.binInventory && !cfg.binQuoteHistory) return toast('No bin IDs configured — push first or paste IDs', 'error');
+  const ok = await showConfirm('Pull from Cloud', 'This will <strong>OVERWRITE</strong> local Hardware DB and Quote History with cloud copies.<br/><br/>Backup first if unsure.');
+  if (!ok) return;
+  try {
+    toast('☁️ Pulling from cloud...', 'info');
+    if (cfg.binInventory) {
+      const inv = await cloudPullBin(cfg.binInventory, cfg.apiKey);
+      localStorage.setItem('fdgSolarDB_v5', JSON.stringify(inv));
+    }
+    if (cfg.binQuoteHistory) {
+      const qh = await cloudPullBin(cfg.binQuoteHistory, cfg.apiKey);
+      localStorage.setItem('fdgQuoteHistory_v1', JSON.stringify(qh));
+    }
+    cfg.lastPull = new Date().toISOString();
+    saveCloudConfig(cfg);
+    toast('✓ Pulled — reload page to see changes', 'success');
+    if (typeof renderQuoteHistory === 'function') renderQuoteHistory();
+    if (typeof renderInventory === 'function') renderInventory();
+  } catch(e) {
+    toast('Pull failed: ' + e.message, 'error');
+  }
+}
+
+// Auto-sync hooks: call these from existing save fns when checkbox enabled
+async function maybeAutoSyncInventory() {
+  const cfg = loadCloudConfig();
+  if (!cfg.autoSyncInv || !cfg.apiKey) return;
+  try {
+    const inv = JSON.parse(localStorage.getItem('fdgSolarDB_v5') || 'null') || {};
+    const newId = await cloudPushBin(cfg.binInventory, inv, cfg.apiKey, 'FDG-Inventory');
+    if (!cfg.binInventory) { cfg.binInventory = newId; saveCloudConfig(cfg); }
+  } catch(e) { console.warn('Auto-sync inv failed:', e.message); }
+}
+async function maybeAutoSyncQuoteHistory() {
+  const cfg = loadCloudConfig();
+  if (!cfg.autoSyncQH || !cfg.apiKey) return;
+  try {
+    const qh = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1') || '[]') || [];
+    const newId = await cloudPushBin(cfg.binQuoteHistory, qh, cfg.apiKey, 'FDG-QuoteHistory');
+    if (!cfg.binQuoteHistory) { cfg.binQuoteHistory = newId; saveCloudConfig(cfg); }
+  } catch(e) { console.warn('Auto-sync QH failed:', e.message); }
 }
 
 function saveQuote() {
@@ -4946,6 +5581,14 @@ async function generatePDFQuote() {
   const cfg = readSLDConfig();
   const clientName = document.getElementById('cli-name')?.value || 'Valued Client';
   const clientAddress = document.getElementById('cli-address')?.value || '';
+
+  // VAT mode awareness — drives all "Total/Final  Investments." labels in PDF
+  const vatModePDF = document.getElementById('vat-mode')?.value || 'ex';
+  const isVatIn = vatModePDF === 'in';
+  const vatLabelShort = isVatIn ? 'VAT INCLUSIVE / OFFICIAL RECEIPT' : 'VAT EXCLUSIVE / ACKNOWLEDGEMENT RECEIPT';
+  const vatLabelLong  = isVatIn ? 'VAT Inclusive · Official Receipt · includes 12% VAT + 10% Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt Only';
+  const vatNoteHTML   = isVatIn ? '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">Final  Investments. includes 12% VAT + 10% Professional Fee. Official Receipt issued upon full payment.</div>' : '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">VAT Exclusive — Acknowledgement Receipt only. Switch to VAT Inclusive for Official Receipt + 22% additional.</div>';
+
   const sysSize = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
   const rate = (typeof autoRate !== 'undefined' ? autoRate : null) || 12.56;
@@ -4959,9 +5602,9 @@ async function generatePDFQuote() {
   const yearlyKwh = dailyKwh * 365;
   const monthlySav = monthlyKwh * rate;
   const yearlySav = monthlySav * 12;
-  // === GRAND TOTAL = FINAL INVESTMENT shown to client (from Print Client Proposal data) ===
+  // === GRAND TOTAL = FINAL  Investments. shown to client (from Print Client Proposal data) ===
   // Read from the rendered Client Proposal grand-total element so it matches exactly what client sees.
-  // This is post-discount, VAT-exclusive — the actual investment amount.
+  // This reflects current VAT mode (Ex or In) — calcGrandTotal pushes the right number here.
   let grandTotal = 0;
   const finalInvEl = document.getElementById('p-sys-grandtotal');
   if (finalInvEl) {
@@ -4982,13 +5625,29 @@ async function generatePDFQuote() {
   const finalInvestmentDisplay = (finalInvEl?.textContent || '').trim();
 
   // === PAYBACK FORMULA (per user spec) ===
-  // payback = Total Investment ÷ Consumption per Month (in pesos)
-  // "Consumption per month in pesos" = flowBill (the user's actual monthly electric bill before solar)
+  // payback = Total  Investments. ÷ Consumption per Month (in pesos)
+  // Live-sync: derive from getFlowConsumption() × flowRate so 3Ph / Ampere modes also work
+  const flowMode = document.getElementById('auto-basis')?.value || 'bill';  // 'bill' | 'amps' | 'kwh'
+  const isAmpsMode = (flowMode === 'amps');
+  // AMPS MODE: if user entered a rate, use it for peso calc; otherwise show kWh-only
+  const ampsRate = parseFloat(document.getElementById('flowAmpsRate')?.value) || 0;
+  const flowRateVal = isAmpsMode
+    ? (ampsRate > 0 ? ampsRate : 0)
+    : (parseFloat(document.getElementById('flowRate')?.value) || 12.56);
+  let consumptionKwhPerMonth = 0;
+  try {
+    if (typeof getFlowConsumption === 'function') consumptionKwhPerMonth = getFlowConsumption();
+  } catch(e) {}
+  // Fallback to clientMonthlyKwh (from autosizer) if no calc done yet
+  if (!consumptionKwhPerMonth && typeof clientMonthlyKwh !== 'undefined') consumptionKwhPerMonth = clientMonthlyKwh;
+  const derivedMonthlyPesos = consumptionKwhPerMonth * flowRateVal;
+  // Use derived (live, mode-aware) ÷ fallback to flowBill input ÷ fallback to monthlySav
   const monthlyBillPesos = parseFloat(document.getElementById('flowBill')?.value) || 0;
-  // Use bill if available; fall back to computed monthlySav
-  const consumptionPesosPerMonth = monthlyBillPesos > 0 ? monthlyBillPesos : monthlySav;
-  const paybackMonths = (grandTotal > 0 && consumptionPesosPerMonth > 0) ? (grandTotal / consumptionPesosPerMonth).toFixed(0) : '—';
-  const paybackYears  = (grandTotal > 0 && consumptionPesosPerMonth > 0) ? (grandTotal / (consumptionPesosPerMonth * 12)).toFixed(1) : '—';
+  // Show kWh-only ONLY when amps mode AND user didn't enter rate
+  const showKwhOnly = isAmpsMode && ampsRate <= 0;
+  const consumptionPesosPerMonth = derivedMonthlyPesos > 0 ? derivedMonthlyPesos : (monthlyBillPesos > 0 ? monthlyBillPesos : monthlySav);
+  const paybackMonths = (grandTotal > 0 && consumptionPesosPerMonth > 0 && !showKwhOnly) ? (grandTotal / consumptionPesosPerMonth).toFixed(0) : '—';
+  const paybackYears  = (grandTotal > 0 && consumptionPesosPerMonth > 0 && !showKwhOnly) ? (grandTotal / (consumptionPesosPerMonth * 12)).toFixed(1) : '—';
 
   const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
   const validUntil = new Date(Date.now() + 30*86400000).toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
@@ -5000,8 +5659,12 @@ async function generatePDFQuote() {
     if (match && match.ref) refNo = match.ref;
   } catch(e) {}
   if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
-  const slotsBooked = (typeof loadPipeline === 'function' ? loadPipeline().filter(l => PL_ACTIVE_STAGES.includes(l.stage)).length : 0);
-  const slotsTotal = 2;
+  const slotsBookedAuto = (typeof loadPipeline === 'function' ? loadPipeline().filter(l => PL_ACTIVE_STAGES.includes(l.stage)).length : 0);
+  const blueprintOn = !!document.getElementById('add-blueprint')?.checked;
+  const slotsBookedManual = parseInt(document.getElementById('slots-booked')?.value);
+  const slotsBooked = isNaN(slotsBookedManual) ? slotsBookedAuto : slotsBookedManual;
+  const slotsTotalManual = parseInt(document.getElementById('slots-total')?.value);
+  const slotsTotal = isNaN(slotsTotalManual) || slotsTotalManual < 1 ? 2 : slotsTotalManual;
   const slotsLeft = Math.max(0, slotsTotal - slotsBooked);
 
   // 10-year cashflow (4% annual rate increase) — based on consumption pesos saved
@@ -5019,7 +5682,7 @@ async function generatePDFQuote() {
     </tr>`;
   }
 
-  // Sensitivity: Total Investment ÷ Monthly Savings (months) — base = bill
+  // Sensitivity: Total  Investments. ÷ Monthly Savings (months) — base = bill
   const scenarios = [
     {name:'Best Case',    rateMod:1.10, genMod:1.10, cls:'#059669'},
     {name:'Base Case',    rateMod:1.00, genMod:1.00, cls:'#0891b2'},
@@ -5228,7 +5891,7 @@ async function generatePDFQuote() {
   .cover-foot-val{font-size:11pt;font-weight:700;color:#fff;margin-top:2pt;font-family:monospace;}
   .cover-contact-line{font-size:9pt;color:#cbd5e1;text-align:center;letter-spacing:0.8pt;margin-top:8pt;}
 
-  /* Hero Investment block (Page 2) */
+  /* Hero  Investments. block (Page 2) */
   .hero-investment{
     background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
     color:#fff;
@@ -5273,8 +5936,11 @@ async function generatePDFQuote() {
         </div>
 
         <div class="cover-mid">
-          <div class="cover-title-big">Solar Power<br/>Investment<br/>Proposal</div>
+          <div class="cover-title-big">Renewable Solar Power<br/>Investment Proposal</div>
           <div class="cover-divider"></div>
+          <div style="font-size:14pt;font-style:italic;color:#fbbf24;text-align:center;line-height:1.5;margin:10pt 0 14pt;max-width:480pt;font-weight:600;letter-spacing:0.3pt;">
+            "We don't just install Solar panels. We engineer energy assets based on true demand to guarantee your highest Return on Investments."
+          </div>
           <div class="cover-prepared">PREPARED EXCLUSIVELY FOR</div>
           <div class="cover-client-name">${escapeHtml(clientName)}</div>
           ${clientAddress ? `<div class="cover-client-addr">${escapeHtml(clientAddress)}</div>` : ''}
@@ -5306,7 +5972,7 @@ async function generatePDFQuote() {
       </div>
     </div>
 
-    <!-- ━━━ PAGE 2: HERO FINANCIALS (Final Investment + Specs + Savings) ━━━ -->
+    <!-- ━━━ PAGE 2: HERO FINANCIALS (Final  Investments. + Specs + Savings) ━━━ -->
     <div class="pg">
       <div class="pg-header">
         <div>
@@ -5321,11 +5987,18 @@ async function generatePDFQuote() {
         </div>
       </div>
 
-      <!-- ⭐ HERO: FINAL INVESTMENT (biggest number, top of page) -->
+      <!-- ⭐ HERO: FINAL  Investments. (biggest number, top of page) -->
       <div class="hero-investment">
-        <div class="hero-inv-label">⭐ TOTAL INVESTMENT (VAT EXCLUSIVE / ACKNOWLEDGEMENT RECEIPT)</div>
+        <div class="hero-inv-label">⭐ TOTAL  Investments. (${vatLabelShort})</div>
         <div class="hero-inv-val">₱${grandTotal.toLocaleString()}</div>
         <div class="hero-inv-sub">${sysSize} kWp ${escapeHtml(sysType)} · Turnkey EPC Solution · 80% downpayment, balance after commissioning</div>
+        ${vatNoteHTML}
+      </div>
+
+      <!-- 📜 Honest Origins — reassurance just below the  Investments. number -->
+      <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:4pt solid #f59e0b;padding:10pt 14pt;border-radius:6pt;margin:10pt 0 14pt;">
+        <div style="font-size:8pt;font-weight:800;color:#92400e;letter-spacing:2pt;text-transform:uppercase;margin-bottom:4pt;">📜 Honest Origins</div>
+        <div style="font-size:9.5pt;color:#0f172a;line-height:1.5;font-style:italic;">"Our company may be new in the market, but the engineering experience behind it was built from years of industrial operations, construction management, and utility-scale systems."</div>
       </div>
 
       <h2>System Specifications</h2>
@@ -5338,25 +6011,30 @@ async function generatePDFQuote() {
 
       <!-- ⭐ HERO: ESTIMATED MONTHLY SAVINGS -->
       <div class="savings-box">
-        <div class="savings-box-label">⭐ Estimated Monthly Savings</div>
-        <div class="savings-box-val">₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
-        <div class="savings-box-sub">Replaces your current monthly electric bill · 25-year warranty on panels</div>
-        <div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>
+        <div class="savings-box-label">⭐ Estimated Monthly ${showKwhOnly ? 'Generation Offset' : 'Savings'}</div>
+        <div class="savings-box-val">${showKwhOnly ? consumptionKwhPerMonth.toFixed(0) + ' kWh' : '₱' + consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        <div class="savings-box-sub">${showKwhOnly ? 'Energy offset against your monthly consumption · enter ₱/kWh in Eng. Calc for peso payback' : 'Replaces your current monthly electric bill · 25-year warranty on panels'}</div>
+        ${showKwhOnly ? '' : `<div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>`}
       </div>
 
       <h3>How This Was Computed</h3>
       <table style="font-size:8pt;">
         <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor)</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
         ${discountDisplay ? `<tr><td style="background:#f1f5f9;">Engineering Design Discount</td><td style="font-family:monospace;color:#dc2626;">${escapeHtml(discountDisplay)}</td></tr>` : ''}
-        <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL INVESTMENT (VAT exclusive)</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
+        <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL  Investments. (${isVatIn ? 'VAT Inclusive · with Professional Fee' : 'VAT exclusive'})</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
         <tr><td style="background:#f1f5f9;">Daily Generation (from Eng. Calc)</td><td style="font-family:monospace;">${dailyKwh.toFixed(2)} kWh/day · ${monthlyKwh.toFixed(0)} kWh/month</td></tr>
-        <tr><td style="background:#f1f5f9;">Current Monthly Bill</td><td style="font-family:monospace;"><strong>₱${monthlyBillPesos.toLocaleString(undefined,{maximumFractionDigits:0})}</strong> ${monthlyBillPesos > 0 ? '' : '<em style="color:#94a3b8;">(no bill entered — using rate × generation)</em>'}</td></tr>
-        <tr><td style="background:#fef3c7;font-weight:700;">Monthly Savings (= Current Bill)</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
-        <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
-        <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>
+        ${showKwhOnly
+          ? `<tr><td style="background:#f1f5f9;">Current Monthly Consumption</td><td style="font-family:monospace;"><strong>${consumptionKwhPerMonth.toFixed(0)} kWh</strong> <em style="color:#94a3b8;">(amperage-based — no rate known for 3Ph)</em></td></tr>
+             <tr><td style="background:#fef3c7;font-weight:700;">Monthly Energy Offset</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">${Math.min(monthlyKwh, consumptionKwhPerMonth).toFixed(0)} kWh</td></tr>
+             <tr><td style="background:#f1f5f9;">Payback</td><td style="font-family:monospace;"><em style="color:#94a3b8;">Cannot compute in peso — enter ₱/kWh rate in Eng. Calc for industrial/commercial clients</em></td></tr>`
+          : `<tr><td style="background:#f1f5f9;">Current Monthly Bill</td><td style="font-family:monospace;"><strong>₱${monthlyBillPesos.toLocaleString(undefined,{maximumFractionDigits:0})}</strong> ${monthlyBillPesos > 0 ? '' : '<em style="color:#94a3b8;">(no bill entered — using rate × generation)</em>'}</td></tr>
+             <tr><td style="background:#fef3c7;font-weight:700;">Monthly Savings (= Current Bill)</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
+             <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
+             <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>`
+        }
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · REV 3.0 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.0</div>
+      <div class="footer-line">© FDG Solar Visayas · REV 3.5.1 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.1</div>
     </div>
 
     <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
@@ -5400,13 +6078,88 @@ async function generatePDFQuote() {
       </div>
 
       <h2>Sensitivity Analysis</h2>
-      <p style="font-size:8.5pt;color:#64748b;">How savings change under different rate &amp; generation scenarios. Payback = <strong>Total Investment ÷ Monthly Savings</strong> (months).</p>
+      <p style="font-size:8.5pt;color:#64748b;">How savings change under different rate &amp; generation scenarios. Payback = <strong>Total  Investments. ÷ Monthly Savings</strong> (months).</p>
       <table>
         <thead><tr><th>Scenario</th><th style="text-align:center;">Rate</th><th style="text-align:center;">Generation</th><th style="text-align:right;">Monthly Sav.</th><th style="text-align:right;">Yearly Sav.</th><th style="text-align:center;">Payback</th></tr></thead>
         <tbody>${sens}</tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.0</div>
+      ${cfg.batQ > 0 ? (() => {
+        const installedKwh = cfg.batQ * cfg.V_DC_BAT * cfg.batSizeAh / 1000;
+        const dailyDemand = Math.min(engDailyKwh, installedKwh * 0.95);
+        // Tier specs — practical caps based on calendar aging (electrolyte/electrode degradation
+        // independent of cycle count). Higher caps for Elite reflect premium BMS + thermal mgmt.
+        const tiers = [
+          {name:'Lead Acid',        cycles: 800,  ratedDoD: 0.50, max: 6,  cost:'Lowest'},
+          {name:'Lithium Standard', cycles: 3500, ratedDoD: 0.80, max: 8,  cost:'Mid'},
+          {name:'Lithium Elite',    cycles: 6000, ratedDoD: 0.90, max: 10, cost:'Premium'},
+        ];
+        const calcYears = (capKwh, demand, spec) => {
+          if (capKwh <= 0 || demand <= 0) return '—';
+          const actualDoD = Math.min(1.0, demand / capKwh);
+          const dodVsRated = actualDoD / spec.ratedDoD;
+          // Cycle aging multiplier
+          let agingMult = 1.0;
+          if (dodVsRated > 1.0)      agingMult = 1.0 + (dodVsRated - 1.0) * 1.5;
+          else if (dodVsRated < 0.3) agingMult = 0.55;  // very light cycling
+          else if (dodVsRated < 0.5) agingMult = 0.7;
+          else if (dodVsRated < 0.7) agingMult = 0.85;
+          // Oversize bonus — continuous to differentiate every capacity step
+          let oversizeBonus = 1.0;
+          if (dodVsRated < 1.0) {
+            oversizeBonus = 1.0 + (1.0 - dodVsRated) * 0.8;
+            if (dodVsRated < 0.3) oversizeBonus += (0.3 - dodVsRated) * 0.6;
+          }
+          // Raw years from cycle life
+          const rawYears = spec.cycles / (365 * agingMult) * oversizeBonus;
+          // Soft cap — don't hard-clip; blend so oversize STILL shows differentiation
+          // years = min(rawYears, max + bonus_overflow * 0.3)
+          let yrs;
+          if (rawYears <= spec.max) {
+            yrs = rawYears;
+          } else {
+            const overflow = rawYears - spec.max;
+            yrs = spec.max + overflow * 0.10;  // 90% diminishing returns past cap
+          }
+          // Absolute ceiling = calendar aging (electrolyte breakdown regardless of cycling)
+          yrs = Math.min(yrs, spec.max * 1.4);
+          return yrs.toFixed(1);
+        };
+        // Show across 3 capacity scenarios: installed, 1.5×, 2×
+        const sizes = [
+          {label: `Quoted Bank · ${installedKwh.toFixed(1)} kWh`, kwh: installedKwh},
+          {label: `+50% Oversize · ${(installedKwh*1.5).toFixed(1)} kWh`, kwh: installedKwh*1.5},
+          {label: `2× Oversize · ${(installedKwh*2).toFixed(1)} kWh`, kwh: installedKwh*2},
+        ];
+        let rows = '';
+        sizes.forEach(s => {
+          rows += `<tr>
+            <td style="font-weight:700;background:#f1f5f9;">${s.label}</td>
+            ${tiers.map(t => {
+              const yrs = calcYears(s.kwh, dailyDemand, t);
+              const dod = Math.min(100, dailyDemand / s.kwh * 100).toFixed(0);
+              const color = parseFloat(yrs) >= 8 ? '#059669' : (parseFloat(yrs) >= 5 ? '#f59e0b' : '#dc2626');
+              return `<td style="text-align:center;font-family:monospace;"><strong style="color:${color};">${yrs} yrs</strong><br/><span style="font-size:7.5pt;color:#94a3b8;">${dod}% DoD</span></td>`;
+            }).join('')}
+          </tr>`;
+        });
+        return `
+        <h2>Battery Lifecycle Comparison</h2>
+        <p style="font-size:8.5pt;color:#64748b;">Real-world years-to-replacement (PH heat-adjusted). Daily energy demand assumed: <strong>${dailyDemand.toFixed(1)} kWh</strong>. Higher capacity = lower daily DoD = longer life. Use this to plan replacement budget.</p>
+        <table>
+          <thead><tr>
+            <th>Battery Bank Capacity</th>
+            <th style="text-align:center;">Lead Acid<br/><span style="font-weight:400;font-size:7pt;">800 cyc @ 50% DoD</span></th>
+            <th style="text-align:center;">Lithium Standard<br/><span style="font-weight:400;font-size:7pt;">3,500 cyc @ 80% DoD</span></th>
+            <th style="text-align:center;">Lithium Elite<br/><span style="font-weight:400;font-size:7pt;">6,000 cyc @ 90% DoD</span></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p style="font-size:7.5pt;color:#94a3b8;font-style:italic;margin-top:4pt;">Numbers represent expected service life until 70-80% capacity retention. Tropical heat (28-32°C) and partial charging reduce lab-rated cycles. Replacement planning helps avoid unexpected downtime.</p>
+        `;
+      })() : ''}
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.1</div>
     </div>
 
     <!-- ━━━ PAGE 3: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
@@ -5430,6 +6183,10 @@ async function generatePDFQuote() {
           <tr><td style="font-weight:700;">Workmanship Warranty</td><td>12 months from energization (installation defects). <strong>Exclusions:</strong> warranty does not cover (a) modifications by third parties, (b) physical damage from external causes (typhoon, flood, lightning beyond SPD rating, vandalism), (c) consumable items (fuses, AC contactor wear), (d) fading/weathering of cosmetic finishes.</td></tr>
           <tr><td style="font-weight:700;">Turnover &amp; Acceptance</td><td>Formal handover document with system schematics &amp; commissioning report</td></tr>
           <tr><td style="font-weight:700;">Free Support</td><td>FDG Solar Visayas assists with warranty matters at no charge for the first 5 years. This excludes drafting RMA <em>(Return Merchandise Authorization)</em> correspondence, packing/shipping coordination, and re-installation labor (these may incur material/courier costs).</td></tr>
+          ${blueprintOn
+            ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ Blueprint Sign &amp; Seal</td><td><strong style="color:#059669;">INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||5000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Blueprint Sign &amp; Seal</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal available as separate add-on (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||5000).toLocaleString()})</td></tr>`
+          }
         </tbody>
       </table>
 
@@ -5462,6 +6219,14 @@ async function generatePDFQuote() {
 
       <h2>Acceptance &amp; Authorization</h2>
       <p style="font-size:8.5pt;">By signing below, the Client confirms acceptance of this proposal and agrees to the terms (80% downpayment upon contract signing, balance after commissioning).</p>
+
+      <!-- Proposal Closing Tagline — emotional anchor before signature -->
+      <div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fbbf24;padding:14pt 18pt;border-radius:6pt;margin:10pt 0 14pt;text-align:center;border:1.5pt solid #fbbf24;">
+        <div style="font-size:13pt;font-weight:900;font-style:italic;letter-spacing:0.5pt;line-height:1.4;">
+          "Because your  Investments. deserves engineering, not guesswork."
+        </div>
+      </div>
+
       <div class="signature-v2">
         <div class="sig-title col1">VALUED CLIENT</div>
         <div class="sig-title col2">FDG Solar Visayas</div>
@@ -5473,7 +6238,7 @@ async function generatePDFQuote() {
         <div class="sig-role col2">Lead Engineer · Signature &amp; Date</div>
       </div>
 
-      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · VAT Exclusive — Acknowledge Receipt Only · Page 4 of 4</div>
+      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · ${vatLabelLong} · Page 4 of 4</div>
     </div>
   </div>
 </body></html>`;
@@ -5501,7 +6266,7 @@ async function generateMessengerCard() {
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
   const rate = (typeof autoRate !== 'undefined' ? autoRate : null) || 12.56;
 
-  // Pull final investment from rendered client proposal
+  // Pull final  Investments. from rendered client proposal
   let grandTotal = 0;
   const finalInvEl = document.getElementById('p-sys-grandtotal');
   if (finalInvEl) {
@@ -5516,6 +6281,11 @@ async function generateMessengerCard() {
   const paybackMonths = (grandTotal > 0 && monthlySav > 0) ? (grandTotal / monthlySav).toFixed(0) : '—';
   const paybackYears  = (grandTotal > 0 && monthlySav > 0) ? (grandTotal / monthlySav / 12).toFixed(1) : '—';
   const yearlySav = monthlySav * 12;
+
+  // VAT mode (local to messenger card fn)
+  const vatModeMC = document.getElementById('vat-mode')?.value || 'ex';
+  const isVatInMC = vatModeMC === 'in';
+  const vatLabelLong = isVatInMC ? 'VAT Inclusive · Official Receipt · w/ Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt';
 
   let refNo = '';
   try {
@@ -5536,16 +6306,16 @@ async function generateMessengerCard() {
       </div>
       <div style="font-size:18px;color:#94a3b8;letter-spacing:3px;text-transform:uppercase;margin-top:6px;">Engineering · Procurement · Construction</div>
       <div style="width:80px;height:5px;background:#fbbf24;margin:32px 0;"></div>
-      <div style="font-size:26px;color:#fbbf24;letter-spacing:4px;text-transform:uppercase;font-weight:700;">Solar Investment Summary</div>
+      <div style="font-size:26px;color:#fbbf24;letter-spacing:4px;text-transform:uppercase;font-weight:700;">Solar  Investments. Summary</div>
       <div style="font-size:48px;font-weight:900;margin-top:14px;line-height:1.1;">${escapeHtml(clientName)}</div>
       <div style="font-size:24px;color:#cbd5e1;margin-top:8px;">${sysSize} kWp · ${escapeHtml(sysType)} System</div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px 0;">
       <div style="background:rgba(0,0,0,0.35);border-left:6px solid #fbbf24;padding:20px 24px;border-radius:6px;">
-        <div style="font-size:14px;letter-spacing:2px;color:#fbbf24;text-transform:uppercase;font-weight:700;">⭐ Total Investment</div>
+        <div style="font-size:14px;letter-spacing:2px;color:#fbbf24;text-transform:uppercase;font-weight:700;">⭐ Total  Investments.</div>
         <div style="font-size:46px;font-weight:900;margin-top:6px;line-height:1;">₱${grandTotal.toLocaleString()}</div>
-        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">VAT Exclusive — Acknowledge Receipt Only · Turnkey</div>
+        <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">${vatLabelLong} · Turnkey</div>
       </div>
       <div style="background:rgba(251,191,36,0.95);color:#0f172a;padding:20px 24px;border-radius:6px;">
         <div style="font-size:14px;letter-spacing:2px;text-transform:uppercase;font-weight:700;">💰 Monthly Savings</div>
@@ -5566,12 +6336,13 @@ async function generateMessengerCard() {
 
     <div>
       <div style="background:rgba(0,0,0,0.55);padding:22px 28px;border-radius:8px;border:2px solid #fbbf24;">
-        <div style="font-size:16px;letter-spacing:3px;color:#fbbf24;text-transform:uppercase;font-weight:800;margin-bottom:6px;">Reserve Your Free Site Assessment</div>
+        <div style="font-size:16px;letter-spacing:3px;color:#fbbf24;text-transform:uppercase;font-weight:800;margin-bottom:6px;">Reserve Your Free Online Assessment</div>
         <div style="display:flex;gap:30px;font-size:19px;font-weight:600;">
           <div>📱 0915 1983 899</div>
           <div>✉ fmguinoo@gmail.com</div>
         </div>
-        <div style="font-size:14px;color:#cbd5e1;margin-top:6px;">Engr. Francis Dale Guinoo · Lead Engineer · Cebu, Philippines</div>
+        <div style="font-size:18px;color:#fff;margin-top:8px;font-weight:800;letter-spacing:1px;">Engr. Francis Dale Guinoo</div>
+        <div style="font-size:13px;color:#cbd5e1;margin-top:2px;">Lead Engineer · FDG Solar Visayas · Cebu, Philippines</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-size:13px;color:#94a3b8;letter-spacing:1.5px;">
         <div>REF: <strong style="color:#fff;font-family:monospace;">${refNo}</strong></div>
@@ -5582,19 +6353,453 @@ async function generateMessengerCard() {
   document.body.appendChild(card);
 
   try {
-    toast('Generating share card...', 'info');
+    toast('Generating share card preview...', 'info');
     const canvas = await html2canvas(card, {scale: 1, backgroundColor: null, useCORS: true, logging: false, width: 1080, height: 1080});
-    const link = document.createElement('a');
+    const dataUrl = canvas.toDataURL('image/png');
     const safeName = clientName.replace(/[^a-zA-Z0-9]/g, '_');
-    link.download = `FDG-Quote-${safeName}-${refNo}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    toast('✓ Card downloaded — ready to share on Messenger/Viber', 'success');
+    const filename = `FDG-Quote-${safeName}-${refNo}.png`;
+
+    // Open preview window with PNG/Print buttons
+    const w = window.open('', '_blank', 'width=900,height=1000');
+    if (!w) {
+      // Popup blocked → fallback to direct download
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+      toast('Popup blocked — card downloaded directly', 'info');
+    } else {
+      const html = `<!DOCTYPE html>
+<html><head>
+<title>📱 Share Card Preview — ${escapeHtml(clientName)}</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#1e293b; color:#fff; padding:20px; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+.toolbar { position:sticky; top:0; background:#0f172a; padding:10px 16px; display:flex; align-items:center; gap:10px; z-index:100; width:100%; max-width:1100px; border-radius:8px; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
+.toolbar h1 { font-size:14px; font-weight:700; }
+.toolbar .spacer { flex:1; }
+.toolbar button { background:#fbbf24; color:#0f172a; border:0; padding:9px 16px; font-weight:800; border-radius:5px; cursor:pointer; font-size:12px; letter-spacing:0.5px; }
+.toolbar button.secondary { background:#475569; color:#fff; }
+.toolbar button.print-btn { background:#2563eb; color:#fff; }
+.preview-wrap { background:#fff; padding:20px; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+img { display:block; width:100%; max-width:1040px; height:auto; }
+.tip { font-size:12px; color:#94a3b8; margin-top:14px; text-align:center; max-width:600px; line-height:1.5; }
+
+@media print {
+  body { background:#fff; padding:0; }
+  .toolbar, .tip { display:none; }
+  .preview-wrap { box-shadow:none; padding:0; }
+  img { width:100%; max-width:100%; }
+  @page { size: 1080px 1080px; margin:0; }
+}
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1>📱 Share Card Preview · ${escapeHtml(clientName)} · 1080×1080px</h1>
+    <div class="spacer"></div>
+    <button onclick="downloadPng()">⬇ Download PNG</button>
+    <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+    <button class="secondary" onclick="window.close()">✕ Close</button>
+  </div>
+  <div class="preview-wrap">
+    <img id="card-img" src="${dataUrl}" alt="Share Card"/>
+  </div>
+  <div class="tip">
+    📌 <strong>Download PNG</strong> for Messenger, Viber, Instagram, Facebook posts.<br/>
+    🖨 <strong>Print / Save PDF</strong> for emails or printed handouts.<br/>
+    Card dimensions: 1080×1080px (square, social-media optimized).
+  </div>
+<script>
+function downloadPng() {
+  const link = document.createElement('a');
+  link.download = '${filename}';
+  link.href = document.getElementById('card-img').src;
+  link.click();
+}
+<\/script>
+</body>
+</html>`;
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      toast('✓ Share Card preview opened — choose PNG or PDF', 'success');
+    }
   } catch(e) {
     toast('Share card failed: ' + e.message, 'error');
   } finally {
     document.body.removeChild(card);
   }
+}
+
+// ===== PORTFOLIO GENERATOR — A4 PDF + 1080×1350 PNG =====
+async function generatePortfolio(pngMode) {
+  // Pull editable fields
+  const brandCore = document.getElementById('pf-brand-core')?.value || 'CORE Integrated Engineering';
+  const brandFdg = document.getElementById('pf-brand-fdg')?.value || 'FDG Solar Visayas';
+  const name = document.getElementById('pf-name')?.value || 'Engr. Francis Dale C. Guinoo, ME';
+  const position = document.getElementById('pf-position')?.value || 'Registered Mechanical Engineer';
+  const prc = document.getElementById('pf-prc')?.value || '84379';
+  const location = document.getElementById('pf-location')?.value || 'Cebu & Southern Leyte, Philippines';
+  const years = parseInt(document.getElementById('pf-years')?.value) || 10;
+  const kwp = parseInt(document.getElementById('pf-kwp')?.value) || 800;
+  const tagline = document.getElementById('pf-tagline')?.value || 'Your  Investments. deserves engineering, not guesswork.';
+  const quote = document.getElementById('pf-quote')?.value || '';
+  const about = document.getElementById('pf-about')?.value || '';
+  const trackLines = (document.getElementById('pf-track')?.value || '').split('\n').filter(x => x.trim());
+  const serviceLines = (document.getElementById('pf-services')?.value || '').split('\n').filter(x => x.trim());
+  const phone = document.getElementById('pf-phone')?.value || '0915 198 3899';
+  const email = document.getElementById('pf-email')?.value || 'fmguinoo@gmail.com';
+
+  // PNG mode = single tall card sized for social/messenger
+  if (pngMode) {
+    if (typeof html2canvas === 'undefined') {
+      toast('Image library not loaded yet — wait a sec and retry', 'error');
+      return;
+    }
+    const card = document.createElement('div');
+    card.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;background:linear-gradient(160deg,#0f172a 0%,#1e293b 55%,#dc2626 100%);color:#fff;font-family:Arial,sans-serif;padding:50px;box-sizing:border-box;';
+    card.innerHTML = `
+      <div style="text-align:center;padding-bottom:24px;border-bottom:3px solid #fbbf24;">
+        <div style="font-size:13px;color:#fbbf24;letter-spacing:6px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">${escapeHtml(brandCore)}</div>
+        <div style="font-size:54px;font-weight:900;letter-spacing:6px;line-height:1;">FDG<span style="color:#fbbf24;">SOLAR</span></div>
+        <div style="font-size:20px;color:#fbbf24;letter-spacing:8px;margin-top:4px;font-weight:700;">VISAYAS</div>
+        <div style="font-size:13px;color:#cbd5e1;letter-spacing:4px;margin-top:6px;text-transform:uppercase;">Professional Portfolio</div>
+        <div style="font-size:15px;color:#fbbf24;margin-top:14px;font-style:italic;font-weight:700;line-height:1.4;max-width:900px;margin-left:auto;margin-right:auto;">"${escapeHtml(tagline)}"</div>
+      </div>
+      <div style="margin-top:30px;">
+        <div style="font-size:34px;font-weight:900;line-height:1.15;">${escapeHtml(name)}</div>
+        <div style="font-size:16px;color:#cbd5e1;margin-top:6px;line-height:1.4;">${escapeHtml(position)}</div>
+        <div style="font-size:14px;color:#94a3b8;margin-top:4px;">PRC License No. ${escapeHtml(prc)} · ${escapeHtml(location)}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:28px 0;">
+        <div style="background:rgba(0,0,0,0.35);border-left:5px solid #fbbf24;padding:18px;border-radius:6px;text-align:center;">
+          <div style="font-size:42px;font-weight:900;color:#fbbf24;line-height:1;">${years}+</div>
+          <div style="font-size:11px;color:#cbd5e1;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Years Experience</div>
+        </div>
+        <div style="background:rgba(251,191,36,0.95);color:#0f172a;padding:18px;border-radius:6px;text-align:center;">
+          <div style="font-size:42px;font-weight:900;line-height:1;">${kwp}</div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;font-weight:800;">kWp Industrial</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.35);border-left:5px solid #10b981;padding:18px;border-radius:6px;text-align:center;">
+          <div style="font-size:42px;font-weight:900;color:#10b981;line-height:1;">3Φ</div>
+          <div style="font-size:11px;color:#cbd5e1;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Grid-Tied 400V</div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;color:#94a3b8;text-align:center;font-style:italic;border-top:1px solid #475569;border-bottom:1px solid #475569;padding:14px 0;margin:14px 0;line-height:1.6;">
+        "${escapeHtml(quote)}"
+      </div>
+
+      <div style="margin-top:18px;">
+        <div style="font-size:13px;color:#fbbf24;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">⭐ Track Record</div>
+        ${trackLines.slice(0, 4).map(line => {
+          const parts = line.split('—');
+          const company = parts[0]?.trim() || line;
+          const detail = parts[1]?.trim() || '';
+          return `<div style="background:rgba(0,0,0,0.25);padding:10px 14px;border-radius:5px;margin-bottom:6px;border-left:3px solid #2563eb;">
+            <div style="font-size:14px;font-weight:800;color:#fff;">${escapeHtml(company)}</div>
+            ${detail ? `<div style="font-size:11px;color:#cbd5e1;margin-top:2px;line-height:1.4;">${escapeHtml(detail)}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div style="margin-top:20px;">
+        <div style="font-size:13px;color:#fbbf24;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">🔧 Services Offered</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          ${serviceLines.slice(0, 8).map(s => `<div style="background:rgba(0,0,0,0.2);padding:8px 10px;border-radius:4px;font-size:11px;color:#cbd5e1;border-left:2px solid #fbbf24;">✓ ${escapeHtml(s)}</div>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-top:24px;background:rgba(0,0,0,0.55);padding:18px;border-radius:8px;border:2px solid #fbbf24;text-align:center;">
+        <div style="font-size:13px;letter-spacing:3px;color:#fbbf24;text-transform:uppercase;font-weight:800;">Let's Build Something Reliable</div>
+        <div style="display:flex;justify-content:center;gap:30px;font-size:16px;font-weight:700;margin-top:8px;">
+          <div>📱 ${escapeHtml(phone)}</div>
+          <div>✉ ${escapeHtml(email)}</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(card);
+    try {
+      toast('Rendering portfolio card...', 'info');
+      const canvas = await html2canvas(card, {scale: 1.5, backgroundColor: null, useCORS: true, logging: false});
+      const link = document.createElement('a');
+      const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+      link.download = `FDG-Portfolio-${safeName}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast('✓ Portfolio PNG downloaded', 'success');
+    } catch(e) {
+      toast('Portfolio PNG failed: ' + e.message, 'error');
+    } finally {
+      document.body.removeChild(card);
+    }
+    return;
+  }
+
+  // PDF mode = open A4 popup window
+  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const w = window.open('', '_blank', 'width=900,height=1200');
+  if (!w) { alert('Popup blocked — allow popups to view portfolio'); return; }
+  const html = `<!DOCTYPE html>
+<html><head>
+<title>FDG Solar Visayas Portfolio — ${escapeHtml(name)}</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; color:#0f172a; padding:20px; }
+.toolbar { position:sticky; top:0; background:#0f172a; color:#fff; padding:10px 16px; display:flex; align-items:center; gap:10px; z-index:100; margin:-20px -20px 20px; }
+.toolbar h1 { font-size:14px; font-weight:700; }
+.toolbar .spacer { flex:1; }
+.toolbar button { background:#fbbf24; color:#0f172a; border:0; padding:8px 14px; font-weight:700; border-radius:5px; cursor:pointer; font-size:12px; }
+.toolbar button.secondary { background:#475569; color:#fff; }
+
+@media print {
+  body { background:#fff; padding:0; }
+  .toolbar { display:none; }
+  .pg { margin:0 !important; page-break-after: always; }
+  .pg:last-child { page-break-after: auto; }
+}
+
+.pg {
+  width:210mm; min-height:297mm; padding:0; margin:0 auto 18px;
+  background:#fff; position:relative; overflow:hidden;
+  box-shadow:0 6px 24px rgba(0,0,0,0.18);
+}
+
+/* PAGE 1: hero */
+.hero {
+  position:relative; height:297mm; padding:18mm;
+  background:linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #7c1d1d 100%);
+  color:#fff;
+}
+.hero::before {
+  content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px;
+  border-radius:50%; background:radial-gradient(circle, rgba(251,191,36,0.18), transparent 70%);
+}
+.hero-logo {
+  display:flex; align-items:baseline; gap:8px; padding-bottom:14px; border-bottom:3px solid #fbbf24;
+}
+.hero-logo .fdg { font-size:38pt; font-weight:900; letter-spacing:3pt; line-height:1; }
+.hero-logo .fdg .red { color:#fbbf24; }
+.hero-logo .vis { font-size:14pt; font-weight:700; letter-spacing:5pt; color:#fbbf24; }
+.hero-tag {
+  font-size:9pt; letter-spacing:5pt; color:#cbd5e1; margin-top:8pt; text-transform:uppercase;
+}
+.hero-name {
+  font-size:32pt; font-weight:900; margin-top:26pt; line-height:1.1; max-width:170mm;
+}
+.hero-position {
+  font-size:13pt; color:#cbd5e1; margin-top:6pt; line-height:1.5;
+}
+.hero-prc {
+  font-size:10pt; color:#94a3b8; margin-top:4pt; letter-spacing:1px;
+}
+.hero-stats {
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:10pt; margin-top:22pt;
+}
+.hs-card {
+  background:rgba(0,0,0,0.40); padding:14pt; border-radius:6pt;
+  border-left:4pt solid #fbbf24;
+}
+.hs-card.alt { background:rgba(251,191,36,0.95); color:#0f172a; border-left-color:#dc2626; }
+.hs-num { font-size:36pt; font-weight:900; line-height:1; }
+.hs-card.alt .hs-num { color:#0f172a; }
+.hs-card:not(.alt) .hs-num { color:#fbbf24; }
+.hs-label {
+  font-size:8pt; letter-spacing:1.5pt; text-transform:uppercase;
+  margin-top:6pt; opacity:0.85; font-weight:700;
+}
+.hero-quote {
+  margin-top:28pt; padding:18pt 20pt;
+  background:rgba(0,0,0,0.35); border-left:4pt solid #fbbf24; border-radius:4pt;
+  font-style:italic; font-size:11pt; line-height:1.6; color:#fff;
+}
+.hero-quote::before { content:'"'; font-size:36pt; color:#fbbf24; line-height:0; vertical-align:-12pt; margin-right:4pt; }
+.hero-cta {
+  position:absolute; bottom:18mm; left:18mm; right:18mm;
+  background:rgba(0,0,0,0.65); padding:14pt 18pt; border-radius:8pt;
+  border:1.5pt solid #fbbf24;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.cta-left { font-size:11pt; font-weight:700; letter-spacing:1.5pt; text-transform:uppercase; color:#fbbf24; }
+.cta-right { display:flex; gap:18pt; font-size:11pt; font-weight:600; }
+
+/* PAGE 2 - Services + Track Record */
+.pg-content {
+  padding:18mm; min-height:297mm;
+}
+.pg-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-bottom:8pt; border-bottom:2pt solid #fbbf24; margin-bottom:14pt;
+}
+.pg-header-logo { font-size:14pt; font-weight:900; letter-spacing:1.5pt; }
+.pg-header-logo .red { color:#dc2626; }
+.pg-header-logo .vis { font-size:8pt; font-weight:700; letter-spacing:2pt; color:#dc2626; margin-left:4pt; }
+.pg-header-tag { font-size:9pt; color:#64748b; letter-spacing:2pt; text-transform:uppercase; }
+
+h2.section {
+  font-size:14pt; font-weight:900; color:#0f172a; letter-spacing:1pt;
+  text-transform:uppercase; margin-top:14pt; margin-bottom:8pt;
+  padding-left:8pt; border-left:4pt solid #fbbf24;
+}
+
+.track-card {
+  background:#f8fafc; border:1pt solid #e2e8f0; border-left:4pt solid #2563eb;
+  padding:10pt 14pt; margin-bottom:7pt; border-radius:4pt;
+}
+.track-company { font-size:11pt; font-weight:800; color:#0f172a; }
+.track-detail { font-size:9pt; color:#475569; margin-top:2pt; line-height:1.5; }
+
+.svc-grid { display:grid; grid-template-columns:1fr 1fr; gap:7pt; }
+.svc-item {
+  background:#fef3c7; border:1pt solid #fde68a; padding:7pt 10pt; border-radius:4pt;
+  font-size:9.5pt; color:#92400e; font-weight:600; display:flex; align-items:center; gap:6pt;
+}
+.svc-item .check { color:#dc2626; font-weight:900; font-size:11pt; }
+
+.diff-box {
+  background:linear-gradient(135deg, #0f172a, #1e293b); color:#fff; padding:14pt 18pt;
+  border-radius:6pt; margin-top:14pt;
+}
+.diff-box h3 { font-size:11pt; color:#fbbf24; letter-spacing:2pt; text-transform:uppercase; margin-bottom:8pt; }
+.diff-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8pt; }
+.diff-item {
+  background:rgba(255,255,255,0.06); padding:8pt 10pt; border-radius:4pt; font-size:9pt;
+  border-top:2pt solid #fbbf24;
+}
+.diff-item strong { display:block; color:#fbbf24; font-size:10pt; margin-bottom:2pt; }
+
+.contact-final {
+  margin-top:20pt; padding:14pt;
+  background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a;
+  border-radius:6pt; display:grid; grid-template-columns:1fr auto; align-items:center; gap:14pt;
+}
+.contact-final h3 { font-size:14pt; font-weight:900; letter-spacing:1pt; }
+.contact-final .info { font-size:11pt; font-weight:700; }
+
+.pg-footer {
+  position:absolute; bottom:10mm; left:18mm; right:18mm;
+  text-align:center; font-size:8pt; color:#94a3b8; letter-spacing:1.5pt;
+  border-top:1pt solid #e2e8f0; padding-top:6pt;
+}
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1>⭐ Portfolio — ${escapeHtml(name)}</h1>
+    <div class="spacer"></div>
+    <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
+    <button class="secondary" onclick="window.close()">✕ Close</button>
+  </div>
+
+  <!-- ━━━ PAGE 1: HERO ━━━ -->
+  <div class="pg">
+    <div class="hero">
+      <!-- Dual brand hierarchy: CORE Integrated (parent) over FDG Solar Visayas (division) -->
+      <div style="font-size:11pt;letter-spacing:5pt;color:#fbbf24;font-weight:700;text-transform:uppercase;margin-bottom:6pt;">${escapeHtml(brandCore)}</div>
+      <div class="hero-logo">
+        <div class="fdg">FDG<span class="red">SOLAR</span></div>
+        <div class="vis">VISAYAS</div>
+      </div>
+      <div class="hero-tag">Renewable Energy Division · A Practice of ${escapeHtml(brandCore)}</div>
+
+      <!-- Bold tagline (page-1 hook) -->
+      <div style="margin-top:18pt;font-size:18pt;font-weight:900;color:#fbbf24;line-height:1.25;letter-spacing:0.5px;font-style:italic;">
+        "${escapeHtml(tagline)}"
+      </div>
+
+      <div class="hero-name" style="margin-top:18pt;">${escapeHtml(name)}</div>
+      <div class="hero-position">${escapeHtml(position)}</div>
+      <div class="hero-prc">PRC License No. ${escapeHtml(prc)} · ${escapeHtml(location)}</div>
+
+      <div class="hero-stats">
+        <div class="hs-card">
+          <div class="hs-num">${years}+</div>
+          <div class="hs-label">Years of Industrial Experience</div>
+        </div>
+        <div class="hs-card alt">
+          <div class="hs-num">${kwp}</div>
+          <div class="hs-label">kWp Industrial · Managed</div>
+        </div>
+        <div class="hs-card">
+          <div class="hs-num">3Φ</div>
+          <div class="hs-label">Grid-Tied 400V Experience</div>
+        </div>
+      </div>
+
+      <div class="hero-quote">${escapeHtml(quote)}</div>
+
+      <div class="hero-cta">
+        <div class="cta-left">Let's Build Something Reliable</div>
+        <div class="cta-right">
+          <div>📱 ${escapeHtml(phone)}</div>
+          <div>✉ ${escapeHtml(email)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━━ PAGE 2: TRACK RECORD + SERVICES + DIFFERENTIATORS ━━━ -->
+  <div class="pg">
+    <div class="pg-content">
+      <div class="pg-header">
+        <div class="pg-header-logo">${escapeHtml(brandCore).split(' ')[0]} · FDG<span class="red">SOLAR</span><span class="vis">VISAYAS</span></div>
+        <div class="pg-header-tag">Track Record &amp; Capabilities</div>
+      </div>
+
+      ${about ? `<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:5pt solid #f59e0b;padding:14pt 18pt;border-radius:6pt;margin-bottom:14pt;">
+        <div style="font-size:9pt;font-weight:800;color:#92400e;letter-spacing:2pt;text-transform:uppercase;margin-bottom:6pt;">📜 Honest Origins</div>
+        <div style="font-size:11pt;color:#0f172a;line-height:1.5;font-style:italic;">"${escapeHtml(about)}"</div>
+      </div>` : ''}
+
+      <h2 class="section">⭐ Major Engagements &amp; Industrial Track Record</h2>
+      ${trackLines.map(line => {
+        const parts = line.split('—');
+        const company = parts[0]?.trim() || line;
+        const detail = parts.slice(1).join('—').trim();
+        return `<div class="track-card">
+          <div class="track-company">${escapeHtml(company)}</div>
+          ${detail ? `<div class="track-detail">${escapeHtml(detail)}</div>` : ''}
+        </div>`;
+      }).join('')}
+
+      <h2 class="section">🔧 Engineering &amp; Technical Services</h2>
+      <div class="svc-grid">
+        ${serviceLines.map(s => `<div class="svc-item"><span class="check">✓</span><span>${escapeHtml(s)}</span></div>`).join('')}
+      </div>
+
+      <div class="diff-box">
+        <h3>Why FDG Solar Visayas</h3>
+        <div class="diff-grid">
+          <div class="diff-item"><strong>Industrial-grade scale</strong>Operational exposure equivalent to 80–250 residential systems</div>
+          <div class="diff-item"><strong>PRC-Licensed</strong>Designed &amp; Engineered by registered ME — not just installed</div>
+          <div class="diff-item"><strong>Full lifecycle support</strong>From planning to commissioning to 5-yr warranty assistance</div>
+        </div>
+      </div>
+
+      <div class="contact-final">
+        <div>
+          <h3>Reserve Your Free Online Assessment</h3>
+          <div style="font-size:10pt;margin-top:2pt;color:#0f172a;">A 30-minute call to scope your project — no obligation.</div>
+        </div>
+        <div class="info">
+          📱 ${escapeHtml(phone)}<br/>
+          ✉ ${escapeHtml(email)}
+        </div>
+      </div>
+
+      <div class="pg-footer">
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.1
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  toast('✓ Portfolio opened in new window', 'success');
 }
 
 async function openTurnoverForm() {
@@ -5836,66 +7041,26 @@ async function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.0</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.1</div>
     </div>
 
-    <!-- ━━━ PAGE 2: SERIAL NUMBER PHOTOS + APP CREDENTIAL IMAGES ━━━ -->
-    <div class="pg">
-      <div class="pg-header">
-        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Equipment Documentation</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
-      </div>
 
-      <h2>3. Serial Number Documentation</h2>
-      <p style="font-size:8.5pt;">Photographs of equipment serial-number plates for service identification. Each photo is auto-tagged by category.</p>
 
-      <div class="attach-zone" id="serial-zone">
-        <div id="serial-empty">
-          <div style="font-size:24pt;">📷</div>
-          <div style="margin:4pt 0;"><strong>No serial photos attached yet.</strong></div>
-          <div style="font-size:8pt;color:#94a3b8;">Click below to attach images of PV modules, inverter, and battery serial-number plates.</div>
-          <label class="attach-btn" for="serial-input" style="margin-top:6pt;">+ Attach Serial Photos</label>
-          <input type="file" id="serial-input" multiple accept="image/*" onchange="handleAttach(event,'serial')"/>
-        </div>
-        <div id="serial-grid" class="attach-grid" style="display:none;"></div>
-        <label class="attach-btn" for="serial-input-2" id="serial-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
-        <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
-      </div>
-
-      <h2>4. Monitoring App Credentials</h2>
-      <p style="font-size:8.5pt;">Screenshots showing app installation, login credentials, and dashboard view. Tagged for owner reference.</p>
-
-      <div class="attach-zone" id="app-zone">
-        <div id="app-empty">
-          <div style="font-size:24pt;">📱</div>
-          <div style="margin:4pt 0;"><strong>No credential screenshots attached yet.</strong></div>
-          <div style="font-size:8pt;color:#94a3b8;">Click below to attach app screenshots (login screen, dashboard, etc.).</div>
-          <label class="attach-btn" for="app-input" style="margin-top:6pt;">+ Attach App Screenshots</label>
-          <input type="file" id="app-input" multiple accept="image/*" onchange="handleAttach(event,'app')"/>
-        </div>
-        <div id="app-grid" class="attach-grid" style="display:none;"></div>
-        <label class="attach-btn" for="app-input-2" id="app-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
-        <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
-      </div>
-
-      <div class="info-block amber">
-        <strong>📋 TURNOVER DOCUMENTS provided to Owner:</strong>
-        <ul class="checklist" style="margin-top:4pt;">
-          <li>Serial-number registry of every PV module, inverter, and battery (photos above)</li>
-          <li>Inverter user manual + monitoring app credentials (screenshots above)</li>
-          <li>System single-line diagram</li>
-          <li>Commissioning test report (string I-V)</li>
-        </ul>
-      </div>
-
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.0</div>
-    </div>
-
-    <!-- ━━━ PAGE 3: WARRANTY + ACCEPTANCE + SIGNATURE ━━━ -->
+    <!-- ━━━ PAGE 2: WARRANTY + ACCEPTANCE + SIGNATURE ━━━ -->
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Warranty & Acceptance Terms</div></div>
         <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+      </div>
+
+      <h2>3. Serial Number Documentation</h2>
+      <div class="clause">
+        <p><span class="clause-num">3.1</span><strong>Photo Record.</strong> Photographs of all equipment serial-number plates (PV modules, inverter, battery) are attached as <strong>Appendix A</strong> at the end of this document. The Owner is advised to keep these photos accessible for future warranty claims.</p>
+      </div>
+
+      <h2>4. Monitoring App Credentials</h2>
+      <div class="clause">
+        <p><span class="clause-num">4.1</span><strong>App Setup.</strong> The Owner has been provided with login credentials for the inverter monitoring app. Screenshots of the credentials, dashboard view, and login screen are attached as <strong>Appendix B</strong>. The Owner is responsible for keeping credentials confidential and changing the default password upon first login.</p>
       </div>
 
       <h2>5. Warranty Claim Procedure</h2>
@@ -5923,7 +7088,13 @@ async function openTurnoverForm() {
       <h3>Exclusions</h3>
       <p style="font-size:8.5pt;">Workmanship warranty does not cover: (a) modifications by third parties, (b) physical damage from external causes (typhoon, flood, lightning beyond SPD rating, vandalism), (c) consumable items (fuses, AC contactor wear), (d) fading/weathering of cosmetic finishes.</p>
 
-      <h2>7. System Acceptance</h2>
+      <h2>7. Commissioning Test Photographs</h2>
+      <div class="clause">
+        <p><span class="clause-num">7.1</span><strong>Test Records.</strong> Photographs of commissioning measurements — string I-V test readings and energization verification — are attached as <strong>Appendix C</strong>. These serve as baseline performance records for future fault diagnostics.</p>
+        <p style="font-size:8.5pt;margin-top:4pt;">Typical commissioning checklist: Open-circuit voltage (Voc) per string · Short-circuit current (Isc) per string · Inverter parameters configured + protections tested · Successful energization &amp; first kWh recorded</p>
+      </div>
+
+      <h2>8. System Acceptance</h2>
       <p style="font-size:8.5pt;">The Owner has inspected the installed system, witnessed the commissioning tests, and received the turnover documents. The Owner accepts the system as installed, complete, and operational as of the date below. Energization marks the start of all warranty periods.</p>
 
       <table class="info-table" style="margin-top:6pt;">
@@ -5945,13 +7116,108 @@ async function openTurnoverForm() {
         <div class="sig-role col2">Lead Engineer · Signature &amp; Date</div>
       </div>
 
-      <div class="footer-line">Project Reference: <strong>${refNo}</strong> · Issued ${today} · Page 3 of 3</div>
+      <div class="footer-line">Project Reference: <strong>${refNo}</strong> · Issued ${today} · Page 2 of 2 (Photo Appendices Follow)</div>
     </div>
+
+    <!-- ━━━ APPENDIX A: SERIAL NUMBER PHOTOS ━━━ -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Appendix A · Equipment Documentation Photos</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+      </div>
+
+      <div class="info-block amber" style="margin-bottom:8pt;">
+        <strong>📋 PHOTO ATTACHMENTS — APPENDIX</strong><br/>
+        These photographs are part of the turnover record and are filed separately from the main turnover document for easier reference. Each photo is auto-tagged by category.
+      </div>
+
+      <h2>A.1 Serial Number Documentation</h2>
+      <p style="font-size:8.5pt;">Photographs of equipment serial-number plates for service identification.</p>
+
+      <div class="attach-zone" id="serial-zone">
+        <div id="serial-empty">
+          <div style="font-size:24pt;">📷</div>
+          <div style="margin:4pt 0;"><strong>No serial photos attached yet.</strong></div>
+          <div style="font-size:8pt;color:#94a3b8;">Click below to attach images of PV modules, inverter, and battery serial-number plates.</div>
+          <label class="attach-btn" for="serial-input" style="margin-top:6pt;">+ Attach Serial Photos</label>
+          <input type="file" id="serial-input" multiple accept="image/*" onchange="handleAttach(event,'serial')"/>
+        </div>
+        <div id="serial-grid" class="attach-grid" style="display:none;"></div>
+        <label class="attach-btn" for="serial-input-2" id="serial-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
+        <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
+      </div>
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.1</div>
+    </div>
+
+    <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Appendix B · Monitoring App Credentials</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+      </div>
+
+      <h2>B.1 Monitoring App Credentials</h2>
+      <p style="font-size:8.5pt;">Screenshots showing app installation, login credentials, and dashboard view.</p>
+
+      <div class="attach-zone" id="app-zone">
+        <div id="app-empty">
+          <div style="font-size:24pt;">📱</div>
+          <div style="margin:4pt 0;"><strong>No credential screenshots attached yet.</strong></div>
+          <div style="font-size:8pt;color:#94a3b8;">Click below to attach app screenshots (login screen, dashboard, etc.).</div>
+          <label class="attach-btn" for="app-input" style="margin-top:6pt;">+ Attach App Screenshots</label>
+          <input type="file" id="app-input" multiple accept="image/*" onchange="handleAttach(event,'app')"/>
+        </div>
+        <div id="app-grid" class="attach-grid" style="display:none;"></div>
+        <label class="attach-btn" for="app-input-2" id="app-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
+        <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
+      </div>
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.1</div>
+    </div>
+
+    <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Appendix C · Commissioning Test Report</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+      </div>
+
+      <h2>C.1 Commissioning Test Photographs</h2>
+      <p style="font-size:8.5pt;">Photographs of commissioning measurements — string I-V test readings, isolation resistance values, earth resistance (Ω), and energization verification.</p>
+
+      <div class="attach-zone" id="commission-zone">
+        <div id="commission-empty">
+          <div style="font-size:24pt;">📊</div>
+          <div style="margin:4pt 0;"><strong>No commissioning photos attached yet.</strong></div>
+          <div style="font-size:8pt;color:#94a3b8;">Click below to attach photos of string I-V test results, megger/isolation readings, earth-Ω measurements, and energization sequence verification.</div>
+          <label class="attach-btn" for="commission-input" style="margin-top:6pt;">+ Attach Commissioning Photos</label>
+          <input type="file" id="commission-input" multiple accept="image/*" onchange="handleAttach(event,'commission')"/>
+        </div>
+        <div id="commission-grid" class="attach-grid" style="display:none;"></div>
+        <label class="attach-btn" for="commission-input-2" id="commission-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
+        <input type="file" id="commission-input-2" multiple accept="image/*" onchange="handleAttach(event,'commission')" style="display:none;"/>
+      </div>
+
+      <div class="info-block" style="background:#fef3c7;border:1px solid #fbbf24;padding:6pt 8pt;border-radius:4pt;margin-top:6pt;font-size:8pt;">
+        <strong>📋 TYPICAL COMMISSIONING CHECKLIST:</strong>
+        <ul class="checklist" style="margin:3pt 0 0 12pt;line-height:1.5;">
+          <li>Open-circuit voltage (Voc) per string</li>
+          <li>Short-circuit current (Isc) per string</li>
+          <li>Inverter parameters configured + protections tested</li>
+          <li>Anti-islanding verification (grid-tie systems)</li>
+          <li>Successful energization &amp; first kWh recorded</li>
+        </ul>
+      </div>
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.1</div>
+    </div>
+
   </div>
 
 <` + `script>
 // === Attachment handling (in-document only — files become part of printed PDF) ===
-const attachData = { serial: [], app: [] };
+const attachData = { serial: [], app: [], commission: [] };
 
 function handleAttach(event, kind) {
   const files = Array.from(event.target.files || []);
@@ -5959,7 +7225,8 @@ function handleAttach(event, kind) {
   files.forEach(f => {
     const reader = new FileReader();
     reader.onload = e => {
-      const tag = (kind === 'serial' ? 'Serial Photo' : 'App Credential') + ' #' + (attachData[kind].length + 1);
+      const tagMap = { serial: 'Serial Photo', app: 'App Credential', commission: 'Commissioning Photo' };
+      const tag = (tagMap[kind] || 'Attachment') + ' #' + (attachData[kind].length + 1);
       attachData[kind].push({ src: e.target.result, tag, filename: f.name });
       renderAttachments(kind);
     };
