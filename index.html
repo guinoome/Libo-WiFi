@@ -273,6 +273,40 @@ html, body {
   .pl-grid2 { grid-template-columns: 1fr; }
   /* Toast */
   .toast-container { left: 10px !important; right: 10px !important; max-width: none !important; }
+  /* iOS safe-area (notch / home indicator) */
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  .mobile-menu-toggle { top: calc(12px + env(safe-area-inset-top)); }
+  /* Better touch targets: every button/input ≥44px tall */
+  .btn, button { min-height: 44px; }
+  .nav-item { padding-top: 12px; padding-bottom: 12px; }
+}
+
+/* === LANDSCAPE PHONES (wider than tall, short height) === */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .sidebar { width: 240px; left: -260px; }
+  .main { padding: 10px 12px 60px; }
+  .page-title { font-size: 18px !important; }
+  .stats-row { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .btn-group { flex-direction: row; flex-wrap: wrap; }
+  .btn-group .btn { width: auto !important; flex: 1 1 calc(50% - 8px); min-width: 140px; }
+  .mobile-menu-toggle { top: 6px; right: 6px; width: 38px; height: 38px; font-size: 18px; }
+}
+
+/* === SMALL TABLETS (769-1024px) === */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar { width: 220px; }
+  .main { padding: 18px 16px; }
+  .btn-group .btn { font-size: 12px; }
+  .stats-row { grid-template-columns: 1fr 1fr 1fr; }
+  .g3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* === TOUCH DEVICES (any size) — extra padding for fat-finger tolerance === */
+@media (hover: none) and (pointer: coarse) {
+  select, input[type="text"], input[type="number"], textarea { padding: 12px 10px !important; }
+  .data-table td, .data-table th { padding: 10px 8px !important; }
+  /* Remove hover effects that don't make sense on touch */
+  .btn:hover { transform: none !important; }
 }
 .mobile-menu-toggle { display: none; }
 
@@ -918,7 +952,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.3</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.4</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -1876,7 +1910,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
 
         <div class="fg"><label>Track Record — Major Engagements (one per line, format: Company — Role, dates · scope)</label>
-          <textarea id="pf-track" rows="8">NUSTAR Cebu — Universal Hotels &amp; Resorts (Feb 2022–Present, Engr Service Manager) Oversee whole-property ops. Plants: 18 gensets, 8 substations,800 kWp GridTie Solar, 3 boilers/calorifiers, 4×500 kVA UPS/STS, STP, 6×1,200 TR chillers, cooling towers, CPS, fire/jockey pumps, etc.
+          <textarea id="pf-track" rows="8">NUSTAR Cebu — Universal Hotels &amp; Resorts (Feb 2022–Present, Engr Service Manager) Oversee whole-property ops. Plants: 18 gensets, 8 substations, 3 boilers/calorifiers, 4×500 kVA UPS/STS, STP, 6×1,200 TR chillers, cooling towers, CPS, fire/jockey pumps, etc.
 Shangri-La Mactan Resort &amp; Spa — Shangri-La Mactan Resort &amp; Spa (Jun 2017–Feb 2022, Mech Engr / Plant Attendant) 4 gensets, 3 substations, 2 boilers/calorifiers, 3-line desalination, STP, 30–550 TR water/air chillers, cooling towers, CPS, fire/jockey pumps, heat pump, jacuzzi, pool chem, etc.
 MEGAWORLD — Oceantown Properties (Jun 2015–Jun 2017, Site Mech Engr) Construction of BPO bldg, STP, Condo. Mechanical, Fire Protection, Elevator, Plumbing, Aux &amp; Electrical, Architectural.
 Aboitiz Construction — Metaphil Div (Apr–Sep 2014, Field Engr) Structural, Electrical, Plumbing, Architectural site works.</textarea>
@@ -1886,7 +1920,7 @@ Aboitiz Construction — Metaphil Div (Apr–Sep 2014, Field Engr) Structural, E
           <textarea id="pf-services" rows="8">Solar (FDG Solar) Residential + commercial PV design &amp; install
 Plant operations &amp; maintenance (genset, boiler, chiller, cooling tower, STP, desal, fire pump)
 HVAC design &amp; troubleshoot
-Mechanical, Plumbing &amp; Fire Protection
+Mechanical, Electrical, Plumbing &amp; Fire Protection
 Construction Management &amp; Site Supervision
 Building O&amp;M consultancy
 Energy audit, Documentation, Technical Reports, Equipment Specifications</textarea>
@@ -3686,7 +3720,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     </div>
   </div>
 
-  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.1</div>
+  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.4</div>
 </div>
 </body></html>`;
 
@@ -4899,14 +4933,10 @@ function buildSLDPage(c) {
     if (numInv > 1) genBusSvg += `<line x1="${GEN_BUS_X2}" y1="${genMidYs[0]}" x2="${GEN_BUS_X2}" y2="${genMidYs[genMidYs.length-1]}" stroke="#0891b2" stroke-width="2.8"/>`;
     genMidYs.forEach(y => genBusSvg += `<line x1="${GEN_X + pw}" y1="${y}" x2="${GEN_BUS_X2}" y2="${y}" stroke="#0891b2" stroke-width="2"/>`);
   }
-  // AC OUT bus (vertical down through all AC OUT BRs to ATS)
+  // AC OUT bus (vertical) — ONLY for single-inverter case (when parallel, we route per-inverter to MAIN OUT BR)
   let acOutBusSvg = '';
   const acOutBusX = INV_X + halfW;
-  if (numInv > 1) {
-    const top = invBlockYStart + 10 + nodeH + 14 + ph;
-    const bot = invBlockYStart + (numInv-1)*INV_ROW_H + 10 + nodeH + 14 + ph;
-    acOutBusSvg += `<line x1="${acOutBusX}" y1="${top}" x2="${acOutBusX}" y2="${bot}" stroke="#059669" stroke-width="2.8"/>`;
-  }
+  // No shared bus for parallel — each inverter AC OUT BR routes individually below.
 
   // === AC PROTECTION CHAIN (right side, vertical, from meter down) ===
   let acChainSvg = '';
@@ -4997,18 +5027,31 @@ function buildSLDPage(c) {
   const lastAcOutY = acOutBottomYs[acOutBottomYs.length-1];
   let acOutToAtsSvg = '';
   if (numInv > 1) {
-    // Parallel inverters → add MAIN AC OUT BR on combined bus before going to ATS
-    const mainBrY = lastAcOutY + 14;
-    const mainBrX = acOutBusX - pw/2;
+    // Parallel inverters → MAIN OUT BR sits BELOW the inverter stack (not on the bus)
+    // Each individual AC OUT BR routes via offset orthogonal lines to MAIN OUT BR (no lines through any inverter box)
+    const mainBrY = lastAcOutY + 60;  // Below last AC OUT BR with clearance
+    const mainBrCx = acOutBusX;       // Centerline (between inverters horizontally)
+    const mainBrX = mainBrCx - pw/2;
+    // Render MAIN OUT BR
     acOutToAtsSvg += protDevice(mainBrX, mainBrY, pw, ph, 'MAIN OUT BR', 'breaker', '#059669');
-    // Inverter bus bottom → MAIN OUT BR
-    acOutToAtsSvg += flowArrow(acOutBusX, lastAcOutY, acOutBusX, mainBrY, '#059669', '', {});
-    // MAIN OUT BR → ATS
-    acOutToAtsSvg += flowArrow(0,0,0,0, '#059669', 'Solar AC (Normal · Parallel Combined)', {
-      path: `M ${acOutBusX} ${mainBrY + ph} L ${acOutBusX} ${ATS_Y}`,
-      sw: 2.6, labelX: acOutBusX + 80, labelY: (mainBrY + ph + ATS_Y)/2
+    // Route each AC OUT BR → MAIN OUT BR via outboard offset (right side of inverter zone, no overlap)
+    const offsetX = ACOUT_X + pw + 30;  // Vertical riser X — to the right of AC OUT BRs, clear of boxes
+    acOutBottomYs.forEach((y, i) => {
+      // From AC OUT BR (right edge) → step right → drop down → enter MAIN OUT BR (top center)
+      const startX = ACOUT_X + pw;
+      const startY = y - ph/2;  // mid-height of AC OUT BR
+      acOutToAtsSvg += flowArrow(0,0,0,0, '#059669', i === 0 ? 'Inv ' + (i+1) + ' AC Out' : '', {
+        path: `M ${startX} ${startY} L ${offsetX} ${startY} L ${offsetX} ${mainBrY - 8} L ${mainBrCx} ${mainBrY - 8} L ${mainBrCx} ${mainBrY}`,
+        sw: 2.0, labelX: offsetX + 6, labelY: startY - 4
+      });
+    });
+    // MAIN OUT BR → ATS (vertical drop along centerline)
+    acOutToAtsSvg += flowArrow(0,0,0,0, '#059669', 'Solar AC (Parallel Combined)', {
+      path: `M ${mainBrCx} ${mainBrY + ph} L ${mainBrCx} ${ATS_Y}`,
+      sw: 2.8, labelX: mainBrCx + 60, labelY: (mainBrY + ph + ATS_Y)/2
     });
   } else {
+    // Single inverter — direct drop from AC OUT BR center to ATS
     acOutToAtsSvg = flowArrow(0,0,0,0, '#059669', 'Solar AC (Normal)', {
       path: `M ${acOutBusX} ${lastAcOutY} L ${acOutBusX} ${ATS_Y}`,
       sw: 2.4, labelX: acOutBusX + 60, labelY: (lastAcOutY + ATS_Y)/2
@@ -5037,14 +5080,8 @@ function buildSLDPage(c) {
   // Panel → Loads (vertical)
   bottomSvg += flowArrow(PANEL_X + halfW, PANEL_Y + nodeH, LOADS_X + halfW, LOADS_Y, '#ca8a04', 'AC Loads', {labelX: LOADS_X + halfW + 60, labelY: PANEL_Y + nodeH + 16});
 
-  // Backup AC Out from Inverter → Loads directly (bypass ATS/Panel — emergency path)
-  // Route from leftmost inverter's left edge, going down-and-around to Loads
-  const invFirstY = invRowYs[0];
-  bottomSvg += flowArrow(0, 0, 0, 0, '#059669', 'Backup AC Out', {
-    path: `M ${INV_X} ${invFirstY} L ${INV_X - 40} ${invFirstY} L ${INV_X - 40} ${LOADS_Y + halfH} L ${LOADS_X} ${LOADS_Y + halfH}`,
-    sw: 1.8, dash: '5,3',
-    labelX: INV_X - 100, labelY: LOADS_Y + halfH - 8
-  });
+  // (Backup AC Out dashed line removed per user request — not needed, declutters diagram)
+
 
   // Non-Essential Loads (N. LOADS) — dashed from LV/HV bottom-right corner around the right side to N. LOADS top
   // Tap point: bottom-right of LV/HV box (chainYs[1] is LV/HV top, +ph = bottom)
@@ -5298,7 +5335,7 @@ function buildSLDPage(c) {
            <div class="photo-grid">${photoCards}</div>`
         : photoCards}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.1 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.4 of 2</div>
     </div>
 
     <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
@@ -5342,7 +5379,7 @@ function buildSLDPage(c) {
         </ol>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.1 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.4 of 2</div>
     </div>
   </div>
 </body></html>`;
@@ -6049,7 +6086,19 @@ async function generatePDFQuote() {
   .savings-box-label{font-size:8.5pt;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;}
   .savings-box-val{font-size:24pt;font-weight:900;margin-top:2pt;line-height:1;}
   .savings-box-sub{font-size:8.5pt;margin-top:3pt;}
-  .savings-box-sub-hero{font-size:13pt;font-weight:800;font-style:italic;color:#fbbf24;margin-top:6pt;letter-spacing:0.3pt;text-shadow:0 1px 2px rgba(0,0,0,0.2);}
+  .savings-box-sub-hero{
+    font-size:15pt;
+    font-weight:900;
+    color:#dc2626;
+    margin-top:8pt;
+    letter-spacing:0.5pt;
+    text-shadow: 0 0 2px #fff, 1px 1px 0 #fff, -1px 1px 0 #fff, 1px -1px 0 #fff, -1px -1px 0 #fff, 2px 2px 4px rgba(0,0,0,0.3);
+    padding: 4pt 10pt;
+    background: rgba(255,255,255,0.18);
+    border-radius: 5pt;
+    display: inline-block;
+    border: 1.5pt solid rgba(220,38,38,0.4);
+  }
   .savings-box-formula{font-size:7.5pt;margin-top:4pt;font-family:monospace;background:rgba(0,0,0,0.08);padding:3pt 6pt;border-radius:3px;display:inline-block;}
 
   .scarcity{background:#fef2f2;border-left:4px solid #dc2626;padding:8pt 12pt;margin:10pt 0;}
@@ -6290,7 +6339,7 @@ async function generatePDFQuote() {
         }
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · REV 3.5.1 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.1</div>
+      <div class="footer-line">© FDG Solar Visayas · REV 3.5.4 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.4</div>
     </div>
 
     <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
@@ -6415,7 +6464,7 @@ async function generatePDFQuote() {
         `;
       })() : ''}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.1</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.4</div>
     </div>
 
     <!-- ━━━ PAGE 3: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
@@ -6581,7 +6630,8 @@ async function generateMessengerCard() {
       <div style="font-size:18px;color:#94a3b8;letter-spacing:3px;text-transform:uppercase;margin-top:6px;">Engineering · Procurement · Construction</div>
       <div style="width:80px;height:5px;background:#fbbf24;margin:32px 0;"></div>
       <div style="font-size:26px;color:#fbbf24;letter-spacing:4px;text-transform:uppercase;font-weight:700;">Solar Investment Summary</div>
-      <div style="font-size:48px;font-weight:900;margin-top:14px;line-height:1.1;">${escapeHtml(clientName)}</div>
+      <div style="font-size:11px;color:#fbbf24;letter-spacing:4px;text-transform:uppercase;font-weight:800;margin-top:14px;">⭐ Prepared Exclusively For</div>
+      <div style="font-size:48px;font-weight:900;margin-top:4px;line-height:1.1;">${escapeHtml(clientName)}</div>
       <div style="font-size:24px;color:#cbd5e1;margin-top:8px;">${sysSize} kWp · ${escapeHtml(sysType)} System</div>
     </div>
 
@@ -7065,7 +7115,7 @@ h2.section {
       </div>
 
       <div class="pg-footer">
-        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.1
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.4
       </div>
     </div>
   </div>
@@ -7316,7 +7366,7 @@ async function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.1</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.4</div>
     </div>
 
 
@@ -7422,7 +7472,7 @@ async function openTurnoverForm() {
         <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.1</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.4</div>
     </div>
 
     <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
@@ -7448,7 +7498,7 @@ async function openTurnoverForm() {
         <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.1</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.4</div>
     </div>
 
     <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
@@ -7485,7 +7535,7 @@ async function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.1</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.4</div>
     </div>
 
   </div>
