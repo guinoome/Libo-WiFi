@@ -918,7 +918,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.2</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.3</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -1875,22 +1875,21 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <textarea id="pf-about" rows="3">Our company may be new in the market, but the engineering experience behind it was built from years of industrial operations, construction management, and utility-scale systems.</textarea>
         </div>
 
-        <div class="fg"><label>Track Record — Major Engagements (one per line)</label>
-          <textarea id="pf-track" rows="6">NUSTAR Resort &amp; Casino — Operational support for 1,200-ton centrifugal chiller plant + utility infrastructure
-Shangri-La Mactan Resort &amp; Spa — HVAC reliability, energy optimization, utility performance
-Aboitiz Construction — Industrial construction execution, field coordination, mechanical installation supervision
-Megaworld Corporation — MEPF coordination, site execution, high-rise residential &amp; township developments
-800 kWp 3-Phase 400V Grid-Tied Industrial Solar — Operational management &amp; oversight (not built)</textarea>
+        <div class="fg"><label>Track Record — Major Engagements (one per line, format: Company — Role, dates · scope)</label>
+          <textarea id="pf-track" rows="8">NUSTAR Cebu — Universal Hotels &amp; Resorts (Feb 2022–Present, Engr Service Manager) Oversee whole-property ops. Plants: 18 gensets, 8 substations,800 kWp GridTie Solar, 3 boilers/calorifiers, 4×500 kVA UPS/STS, STP, 6×1,200 TR chillers, cooling towers, CPS, fire/jockey pumps, etc.
+Shangri-La Mactan Resort &amp; Spa — Shangri-La Mactan Resort &amp; Spa (Jun 2017–Feb 2022, Mech Engr / Plant Attendant) 4 gensets, 3 substations, 2 boilers/calorifiers, 3-line desalination, STP, 30–550 TR water/air chillers, cooling towers, CPS, fire/jockey pumps, heat pump, jacuzzi, pool chem, etc.
+MEGAWORLD — Oceantown Properties (Jun 2015–Jun 2017, Site Mech Engr) Construction of BPO bldg, STP, Condo. Mechanical, Fire Protection, Elevator, Plumbing, Aux &amp; Electrical, Architectural.
+Aboitiz Construction — Metaphil Div (Apr–Sep 2014, Field Engr) Structural, Electrical, Plumbing, Architectural site works.</textarea>
         </div>
 
         <div class="fg"><label>Services Offered (one per line)</label>
-          <textarea id="pf-services" rows="7">Solar Consultation &amp; System Planning (Residential / Commercial / Industrial)
-HVAC &amp; Mechanical Engineering Support
-Preventive Maintenance — Fire Pumps, HVAC, Fans, Blowers, Pumps
-Energy Efficiency Assessment &amp; Audit
-Site Supervision &amp; QA/QC
-Utility System Evaluation
-Engineering Consultancy &amp; Permitting</textarea>
+          <textarea id="pf-services" rows="8">Solar (FDG Solar) Residential + commercial PV design &amp; install
+Plant operations &amp; maintenance (genset, boiler, chiller, cooling tower, STP, desal, fire pump)
+HVAC design &amp; troubleshoot
+Mechanical, Plumbing &amp; Fire Protection
+Construction Management &amp; Site Supervision
+Building O&amp;M consultancy
+Energy audit, Documentation, Technical Reports, Equipment Specifications</textarea>
         </div>
 
         <div class="g2">
@@ -3517,42 +3516,57 @@ async function openJobOrder(withPrices) {
   const blueprintCost = blueprintOn ? (parseFloat(document.getElementById('sys-blueprint')?.value)||0) : 0;
   const grandTotal = document.getElementById('sys-grandtotal')?.value || '';
 
-  // Rows: [category, spec, qty, unitPrice or 0]
+  // Full BOM rows — restored from REV 3.4 (was truncated in REV 3.5.x rebuild)
+  const mpptCnt = (manualMppt > 0 && manualMppt <= panels) ? manualMppt : Math.max(1, Math.ceil((parseFloat(sysKw) || 0) / 4));
   const rows = [
-    ['PV Array',    document.getElementById('desc-panels')?.value, panels, ppPanel],
-    ['Inverter',    document.getElementById('desc-inverter')?.value, iQty, ppInv],
-    ['Storage',     document.getElementById('desc-battery')?.value, batQtyV, ppBat],
-    ['Accessories', document.getElementById('desc-acc')?.value, aQty, ppAcc],
-    ['Mounting',    `Aluminum Rails 2.4m + L-Feet + Mid/End Clamps + Splice + Lugs (lot, sized for ${panels} panels)`, 1, ppMount],
-    ['Electrical',  `AC Breakers ${V_AC}V ${phaseLbl} — ${acBr}A (Main/Line/Load/Gen) [calc ${acA_inv.toFixed(1)}A × 1.25]`, 4*iQty, 0],
-    iQty > 1 ? ['Electrical', `MAIN AC OUT Breaker ${V_AC}V ${phaseLbl} — ${next(acA_inv * iQty * 1.25)}A (parallel combined output)`, 1, 0] : null,
-    ['Electrical',  `DC Breakers ${V_DC_PV}V — ${dcPvBr}A (PV Array, per string) [Isc ${dcA_pv}A × 1.25]`, dcProt, 0],
-    ['Electrical',  `DC Surge Protectors ${V_DC_PV}V (SPD)`, dcProt, 0],
-    ['Electrical',  `AC Surge Protector ${V_AC}V (SPD)`, iQty, 0],
-    ['Electrical',  `ATS System ${V_AC}V ${phaseLbl}`, 1, 0],
-    ['Electrical',  `Islanding / Anti-Islanding Relay ${V_AC}V ${phaseLbl} (V/f monitoring, IEEE 1547 / PEC compliance)`, 1, 0],
-    batQtyV > 1 ? ['Battery DC', `Per-String DC Breaker ${V_DC_BAT}V — ${perStringBr}A [calc ${perStringA.toFixed(1)}A × 1.25]`, batQtyV, 0] : null,
-    batQtyV > 0 ? ['Battery DC', `Main Battery DC Breaker ${V_DC_BAT}V — ${dcBatMainBr}A [calc ${dcA_bat.toFixed(1)}A × 1.25]`, 1, 0] : null,
-    needBusbar ? ['Battery DC', `DC Terminal Busbar Pair (+/−) ${V_DC_BAT}V — ${dcBatMainBr}A rated [for parallel >2 strings]`, 1, 0] : null,
-    ['Electrical',  'Battery Cable & Lot Sets', batC, 0],
-    ['Electrical',  'BOS (rolled into Electrical price above — breakers, SPDs, ATS, relays, conduit)', 0, 0],  // marker
-    ['Services',    document.getElementById('desc-labor')?.value || 'FDG Solar Visayas Labor — Engineering / Installation / Testing / Commissioning', 1, ppLabor],
+    ['PV Array',    document.getElementById('desc-panels')?.value, panels],
+    ['Inverter',    document.getElementById('desc-inverter')?.value, iQty],
+    ['Storage',     document.getElementById('desc-battery')?.value, batQtyV],
+    ['Accessories', document.getElementById('desc-acc')?.value, aQty],
+    ['Mounting',    'Aluminum Rails (2.4m)', rails],
+    ['Mounting',    'L-Feet / Roof Hooks w/ EPDM', rails * 3],
+    ['Mounting',    'Mid Clamps', panels > 1 ? (panels - 1) * 2 : 0],
+    ['Mounting',    'End Clamps', 4],
+    ['Mounting',    'Splice Kits', Math.max(0, rails - 2)],
+    ['Mounting',    'Grounding Lugs', 2],
+    ['Grounding',   'Copper Grounding Rod 2.5M (5/8")', 1],
+    ['Grounding',   'Ground Clamp (for Cu rod)', 1],
+    ['Grounding',   'Bare Copper Wire #6 AWG (16mm²) — bonding', 10],
+    ['Grounding',   'Exothermic / Mechanical Connector', 2],
+    ['Electrical',  'PV Wire 6mm² (R/B)', 40],
+    ['Connectors',  `MC4 Connector Pair (Male+Female) — ${dcA_pv}A · 1000V — 6/array (4 working + 2 spare)`, mpptCnt * 6],
+    ['Connectors',  `DC Terminal Block — ${V_DC_PV}V · ${dcPvBr}A · ${mpptCnt} pole`, 1],
+    ['Connectors',  `AC Terminal Block — ${V_AC}V · ${acBr}A · ${phaseLbl}-pole`, iQty],
+    ['Connectors',  batQtyV > 0 ? `Battery Terminal Block — ${V_DC_BAT}V · ${dcBatMainBr}A · 2-pole` : '', batQtyV > 0 ? 1 : 0],
+    ['Connectors',  'Cable Lug Crimps (assorted: 6mm², 16mm², 35mm², 70mm²)', panels * 2 + iQty * 8 + batQtyV * 4],
+    ['Connectors',  'Heat Shrink Tubing (assorted, per project)', 1],
+    ['Connectors',  'PG Cable Glands (M16/M20/M25, assorted)', iQty * 4 + 4],
+    ['Electrical',  'Panel Box', iQty],
+    ['Electrical',  `AC Breakers ${V_AC}V ${phaseLbl} — ${acBr}A (Main/Line/Load/Gen) [calc ${acA_inv.toFixed(1)}A × 1.25]`, 4 * iQty],
+    iQty > 1 ? ['Electrical', `MAIN AC OUT Breaker ${V_AC}V ${phaseLbl} — ${next(acA_inv * iQty * 1.25)}A (parallel combined output)`, 1] : null,
+    ['Electrical',  `DC Breakers ${V_DC_PV}V — ${dcPvBr}A (PV Array, per string) [Isc ${dcA_pv}A × 1.25]`, dcProt],
+    ['Electrical',  `DC Surge Protectors ${V_DC_PV}V (SPD)`, dcProt],
+    ['Electrical',  `AC Surge Protector ${V_AC}V (SPD)`, iQty],
+    ['Electrical',  `ATS System ${V_AC}V ${phaseLbl}`, 1],
+    ['Electrical',  `Islanding / Anti-Islanding Relay ${V_AC}V ${phaseLbl} (V/f monitoring, IEEE 1547 / PEC compliance)`, 1],
+    batQtyV > 1 ? ['Battery DC', `Per-String DC Breaker ${V_DC_BAT}V — ${perStringBr}A [calc ${perStringA.toFixed(1)}A × 1.25]`, batQtyV] : null,
+    batQtyV > 0 ? ['Battery DC', `Main Battery DC Breaker ${V_DC_BAT}V — ${dcBatMainBr}A [calc ${dcA_bat.toFixed(1)}A × 1.25]`, 1] : null,
+    needBusbar ? ['Battery DC', `DC Terminal Busbar Pair (+/−) ${V_DC_BAT}V — ${dcBatMainBr}A rated [for parallel >2 strings]`, 1] : null,
+    ['Electrical',  'Battery Cable & Lug Sets', batC],
+    ['Services',    document.getElementById('desc-labor')?.value || 'FDG Solar Visayas Labor — Engineering / Installation / Testing / Commissioning', 1],
   ].filter(r => r && r[2] > 0);
 
-  // Mark BOS row hidden in non-priced view (replace with the priced electrical line)
   const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
 
+  // Build table rows — Unit Price + Total columns BLANK (installer fills by hand on printout)
   let bodyRowsHtml = '';
-  rows.forEach(([cat, spec, qty, unit]) => {
-    const isElectricalLot = (cat === 'Electrical' && spec.includes('rolled into'));
-    if (isElectricalLot) return;
-    const total = (unit > 0) ? unit * (cat === 'Electrical' || cat === 'Mounting' || cat === 'Services' ? 1 : qty) : 0;
+  rows.forEach(([cat, spec, qty]) => {
     bodyRowsHtml += `<tr>
       <td><strong>${cat}</strong></td>
       <td>${spec || ''}</td>
       <td style="text-align:center;">${qty}</td>
-      ${withPrices ? `<td style="text-align:right;font-family:monospace;">${unit > 0 ? '₱' + unit.toLocaleString(undefined,{minimumFractionDigits:2}) : '<span style="color:#94a3b8;">incl.</span>'}</td>
-      <td style="text-align:right;font-family:monospace;font-weight:700;">${total > 0 ? '₱' + total.toLocaleString(undefined,{minimumFractionDigits:2}) : '—'}</td>` : ''}
+      <td style="text-align:right;border:1pt solid #94a3b8;background:#fff;">&nbsp;</td>
+      <td style="text-align:right;border:1pt solid #94a3b8;background:#fff;">&nbsp;</td>
     </tr>`;
   });
 
@@ -3564,7 +3578,7 @@ async function openJobOrder(withPrices) {
   if (!w) { toast('Popup blocked — allow popups', 'error'); return; }
 
   const html = `<!DOCTYPE html><html><head>
-<title>Internal Job Order · ${refNo} · ${withPrices ? 'WITH PRICES' : 'No Prices'}</title>
+<title>Internal Job Order · ${refNo}</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 body { font-family:'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; color:#0f172a; padding:20px; }
@@ -3573,7 +3587,7 @@ body { font-family:'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; colo
 .spacer { flex:1; }
 .toolbar button { background:#fbbf24; color:#0f172a; border:0; padding:9px 14px; font-weight:800; border-radius:5px; cursor:pointer; font-size:12px; }
 .toolbar button.secondary { background:#475569; color:#fff; }
-.toolbar .badge { background:${withPrices ? '#dc2626' : '#059669'}; color:#fff; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:800; letter-spacing:1px; }
+.toolbar .badge { background:#059669; color:#fff; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:800; letter-spacing:1px; }
 
 @media print {
   body { background:#fff; padding:0; }
@@ -3614,8 +3628,8 @@ tr:nth-child(even) td { background:#f8fafc; }
 </style>
 </head><body>
 <div class="toolbar">
-  <h1>${withPrices ? '💰 Internal Job Order (WITH PRICES)' : '🔒 Internal Job Order (No Prices)'}</h1>
-  <span class="badge">${withPrices ? 'CONFIDENTIAL' : 'CREW COPY'}</span>
+  <h1>🔒 Internal Job Order</h1>
+  <span class="badge">CREW COPY</span>
   <div class="spacer"></div>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
   <button class="secondary" onclick="window.close()">✕ Close</button>
@@ -3630,8 +3644,8 @@ tr:nth-child(even) td { background:#f8fafc; }
     <div class="ref-badge">${escapeHtml(refNo)}</div>
   </div>
 
-  <h1 class="doc-title">${withPrices ? 'Internal Job Order — Priced' : 'Internal Job Order'}</h1>
-  <div class="subtitle ${withPrices ? 'priced' : ''}">${withPrices ? '⚠ Includes Wholesale Costs — Confidential, Engineering & Management Use Only' : 'For Site Crew Reference — Materials, Quantities, Specifications'}</div>
+  <h1 class="doc-title">Internal Job Order</h1>
+  <div class="subtitle">For Site Crew Reference — Materials, Quantities, Specifications (Unit Price + Total to be filled by Foreman)</div>
 
   <div class="info-grid">
     <div class="info-cell"><div class="label">Client</div><div class="val">${escapeHtml(cliName)}</div></div>
@@ -3644,42 +3658,42 @@ tr:nth-child(even) td { background:#f8fafc; }
   <table>
     <thead>
       <tr>
-        <th style="width:13%;">Category</th>
+        <th style="width:11%;">Category</th>
         <th>Item / Specification</th>
-        <th style="text-align:center;width:8%;">Qty</th>
-        ${withPrices ? '<th style="text-align:right;width:14%;">Unit Cost</th><th style="text-align:right;width:14%;">Total</th>' : ''}
+        <th style="text-align:center;width:7%;">Qty</th>
+        <th style="text-align:right;width:13%;">Unit Price</th>
+        <th style="text-align:right;width:13%;">Total</th>
       </tr>
     </thead>
     <tbody>
       ${bodyRowsHtml}
-      ${withPrices ? `
-      <tr style="background:#f1f5f9;"><td colspan="3" style="text-align:right;font-weight:700;font-style:italic;">Electrical BOS (lot price, breaks down across breakers/SPD/ATS/conduit):</td><td style="text-align:right;font-family:monospace;font-weight:700;">—</td><td style="text-align:right;font-family:monospace;font-weight:700;">₱${ppElec.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      <tr style="background:#f1f5f9;"><td colspan="3" style="text-align:right;font-weight:700;font-style:italic;">Mounting Hardware (lot price):</td><td style="text-align:right;font-family:monospace;font-weight:700;">—</td><td style="text-align:right;font-family:monospace;font-weight:700;">₱${ppMount.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      <tr class="tot-row"><td colspan="4" style="text-align:right;">BOM SUBTOTAL</td><td style="text-align:right;font-family:monospace;">₱${bomTotal.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      ` : ''}
+      <tr class="tot-row"><td colspan="4" style="text-align:right;">BOM SUBTOTAL</td><td style="border:1pt solid #94a3b8;background:#fff;">&nbsp;</td></tr>
     </tbody>
   </table>
 
-  ${withPrices ? `
-  <div class="adjustments">
-    <div class="adj-row"><span>BOM Subtotal</span><span style="font-family:monospace;">₱${bomTotal.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
-    ${mob > 0 ? `<div class="adj-row"><span>+ Mobilization</span><span style="font-family:monospace;">₱${mob.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>` : ''}
-    ${ship > 0 ? `<div class="adj-row"><span>+ Logistics / Delivery</span><span style="font-family:monospace;">₱${ship.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>` : ''}
-    ${blueprintOn ? `<div class="adj-row"><span>+ Blueprint w/ Sign &amp; Seal (5 copies)</span><span style="font-family:monospace;">₱${blueprintCost.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>` : ''}
-    <div class="adj-row total"><span>⭐ FINAL INVESTMENT (matches Client Proposal)</span><span style="font-family:monospace;color:#059669;">${escapeHtml(grandTotal)}</span></div>
+  <!-- 🔒 INTERNAL — INSTALLER & SITE NOTES (restored from REV 3.4) -->
+  <div style="margin-top:14pt;background:#fef3c7;border:2pt solid #f59e0b;padding:10pt 14pt;border-radius:6pt;page-break-inside:avoid;">
+    <h4 style="font-size:11pt;font-weight:900;color:#0f172a;letter-spacing:1pt;text-transform:uppercase;margin-bottom:8pt;">🔒 INTERNAL — INSTALLER &amp; SITE NOTES</h4>
+    <p style="font-size:9pt;margin-bottom:4pt;"><strong>Lead Installer / Foreman:</strong> ${escapeHtml(installer)}</p>
+    <p style="font-size:9pt;margin-bottom:4pt;"><strong>System Sizing Reference:</strong> ${escapeHtml(sysKw)} kW · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V · ${iQty} inverter(s) · ${panels} panel(s) · ${batQtyV} battery bank(s)</p>
+    <p style="font-size:9pt;margin-bottom:4pt;"><strong>MPPT Distribution:</strong> ${mpptCnt} MPPT × strings (1 MPPT per 4kW inverter capacity)</p>
+    ${notes ? `<div style="margin-top:8pt;padding-top:8pt;border-top:1pt dashed #b45309;">
+      <strong style="font-size:9pt;">📝 Site / Project Notes:</strong>
+      <p style="white-space:pre-wrap;font-family:monospace;margin-top:3pt;font-size:8.5pt;line-height:1.5;">${escapeHtml(notes)}</p>
+    </div>` : ''}
+    <div style="margin-top:8pt;padding-top:8pt;border-top:1pt dashed #b45309;font-size:8pt;color:#92400e;font-style:italic;">
+      Unit Price + Total columns left blank — installer/foreman fills by hand from supplier quotes for procurement reconciliation.
+    </div>
   </div>
-  ` : ''}
 
-  ${notes ? `<div class="notes"><strong>📋 Internal Notes:</strong><br/>${escapeHtml(notes).replace(/\n/g,'<br/>')}</div>` : ''}
-
-  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · ${withPrices ? 'PRICED · CONFIDENTIAL' : 'No-Price Crew Copy'} · REV 3.5.1</div>
+  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.1</div>
 </div>
 </body></html>`;
 
   w.document.open();
   w.document.write(html);
   w.document.close();
-  toast(`✓ Job Order opened${withPrices ? ' (priced)' : ''}`, 'success');
+  toast('✓ Job Order opened', 'success');
 }
 
 async function generateDoc(type) {
@@ -6035,6 +6049,7 @@ async function generatePDFQuote() {
   .savings-box-label{font-size:8.5pt;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;}
   .savings-box-val{font-size:24pt;font-weight:900;margin-top:2pt;line-height:1;}
   .savings-box-sub{font-size:8.5pt;margin-top:3pt;}
+  .savings-box-sub-hero{font-size:13pt;font-weight:800;font-style:italic;color:#fbbf24;margin-top:6pt;letter-spacing:0.3pt;text-shadow:0 1px 2px rgba(0,0,0,0.2);}
   .savings-box-formula{font-size:7.5pt;margin-top:4pt;font-family:monospace;background:rgba(0,0,0,0.08);padding:3pt 6pt;border-radius:3px;display:inline-block;}
 
   .scarcity{background:#fef2f2;border-left:4px solid #dc2626;padding:8pt 12pt;margin:10pt 0;}
@@ -6248,7 +6263,7 @@ async function generatePDFQuote() {
       <div class="savings-box">
         <div class="savings-box-label">⭐ Estimated Monthly ${showKwhOnly ? 'Generation Offset' : 'Savings'}</div>
         <div class="savings-box-val">${showKwhOnly ? consumptionKwhPerMonth.toFixed(0) + ' kWh' : '₱' + consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
-        <div class="savings-box-sub">${showKwhOnly ? 'Energy offset against your monthly consumption · enter ₱/kWh in Eng. Calc for peso payback' : 'Turn your monthly electric bill into savings.'}</div>
+        <div class="${showKwhOnly ? 'savings-box-sub' : 'savings-box-sub-hero'}">${showKwhOnly ? 'Energy offset against your monthly consumption · enter ₱/kWh in Eng. Calc for peso payback' : '✨ Turn your monthly electric bill into savings.'}</div>
         ${showKwhOnly ? '' : `<div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>`}
       </div>
 
