@@ -952,7 +952,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.4</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.6</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -1276,7 +1276,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                     <input type="number" id="flowAmps" value="60" min="0" oninput="calculateFlow()">
                   </div>
                   <div>
-                    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Hours / Day</label>
+                    <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px;">Daytime Hours</label>
                     <input type="number" id="flowAmpsHours" value="4" min="0" oninput="calculateFlow()">
                   </div>
                   <div>
@@ -1288,7 +1288,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                   Derived: <span id="flowAmpsDerived" style="color:var(--accent);font-weight:700;">—</span> kWh / month
                 </div>
                 <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;line-height:1.5;">
-                  💡 Enter your ₱/kWh rate (e.g. 12.56 for residential, 9-11 for industrial TOU) so Monthly Savings, ROI, Cashflow Forecast and Payback can compute in pesos. Leave blank for kWh-only display.
+                  💡 "Daytime Hours" = active load hours during the day. The Load Profile (Step 5) grosses this up to full 24h — e.g. 8 hr @ 95% day means night adds the remaining 5%. Enter ₱/kWh rate so savings/ROI/payback compute in pesos.
                 </div>
               </div>
               <div style="background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text2);margin-top:8px;font-family:var(--mono);">
@@ -2372,6 +2372,10 @@ window.onload = function() {
   calcBOM();
   calculateFlow();
   renderHistoryTable();
+  // Auto-pull from cloud if configured (multi-PC sync) — runs in background
+  if (typeof cloudAutoPullOnLoad === 'function') {
+    setTimeout(cloudAutoPullOnLoad, 800);  // slight delay so UI renders first
+  }
 };
 
 // ================================================================
@@ -2769,8 +2773,20 @@ function getFlowConsumption(){
     const sysPhase = parseInt(phaseVal[0]);
     const sysVolts = parseFloat(phaseVal[1]);
     const rawKw = (sysPhase === 3 ? 1.732 : 1) * sysVolts * amps * 0.8 / 1000;
-    const derived = rawKw * hours * 30; // monthly
-    document.getElementById('flowAmpsDerived').textContent = derived.toFixed(1);
+    // The entered hours represent DAYTIME active hours = the day-% portion of the day.
+    // Scale up to full 24h load using the Load Profile day percentage.
+    // e.g. 8 daytime hrs @ 95% day → total daily energy = dayEnergy / 0.95 (night gets the 5%).
+    const profileAmps = (document.getElementById('flowProfile')?.value || '0.95,0.05').split(',');
+    const dayPctAmps = parseFloat(profileAmps[0]) || 0.95;
+    const dayEnergyKwh = rawKw * hours;                        // daytime kWh from amps × day hrs
+    const totalDailyKwh = dayPctAmps > 0 ? dayEnergyKwh / dayPctAmps : dayEnergyKwh;  // gross up to 24h
+    const derived = totalDailyKwh * 30; // monthly
+    const derEl = document.getElementById('flowAmpsDerived');
+    if (derEl) {
+      const nightHrsEquiv = (totalDailyKwh - dayEnergyKwh) / (rawKw || 1);
+      derEl.textContent = derived.toFixed(1);
+      derEl.title = `Day: ${dayEnergyKwh.toFixed(1)} kWh (${hours}hr × ${(dayPctAmps*100).toFixed(0)}%) · Night: ${(totalDailyKwh-dayEnergyKwh).toFixed(1)} kWh (~${nightHrsEquiv.toFixed(1)}hr equiv)`;
+    }
     return derived;
   }
   return parseFloat(document.getElementById('flowConsumption').value) || 0;
@@ -2958,7 +2974,9 @@ function runAutoSizerSilent() {
     const hours = parseFloat(document.getElementById('flowAmpsHours').value) || 4;
     if(!amps) return false;
     let peakKw = (sysPhase === 3 ? 1.732 : 1) * sysVolts * amps * 0.8 / 1000;
-    dailyKwh = peakKw * hours;
+    // Entered hours = DAYTIME active hours (the day-% slice). Gross up to full 24h via load profile.
+    const dayEnergy = peakKw * hours;
+    dailyKwh = dayRatio > 0 ? dayEnergy / dayRatio : dayEnergy;
     // If user entered rate in amps mode, use it for ROI/savings calc
     const ampsR = parseFloat(document.getElementById('flowAmpsRate')?.value);
     if (ampsR > 0) autoRate = ampsR;
@@ -3626,9 +3644,10 @@ body { font-family:'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; colo
 @media print {
   body { background:#fff; padding:0; }
   .toolbar { display:none; }
-  .pg { box-shadow:none !important; margin:0 !important; page-break-after:always; }
+  .pg { box-shadow:none !important; margin:0 !important; width:auto !important; min-height:0 !important; height:auto !important; padding:0 !important; page-break-after:always; }
   .pg:last-child { page-break-after:auto; }
-  @page { size:A4; margin:0; }
+  .footer-line { position:static !important; margin-top:14pt; }
+  @page { size:A4 portrait; margin:10mm; }
 }
 
 .pg { width:210mm; min-height:297mm; padding:14mm; margin:0 auto 18px; background:#fff; box-shadow:0 6px 24px rgba(0,0,0,0.18); position:relative; }
@@ -3720,7 +3739,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     </div>
   </div>
 
-  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.4</div>
+  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.6</div>
 </div>
 </body></html>`;
 
@@ -5234,8 +5253,11 @@ function buildSLDPage(c) {
     body{background:#fff;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;}
-    .pg{box-shadow:none;margin:0;}
-    @page{size:A4 portrait;margin:0;}
+    /* In print, let @page margin define the printable area; .pg fills it (no fixed mm width
+       that overflows the physical sheet). box-sizing border-box keeps padding inside. */
+    .pg{box-shadow:none;margin:0;width:auto;min-height:0;height:auto;padding:0;page-break-after:always;}
+    .pg:last-of-type{page-break-after:auto;}
+    @page{size:A4 portrait;margin:10mm;}
   }
 
   /* Mobile */
@@ -5335,7 +5357,7 @@ function buildSLDPage(c) {
            <div class="photo-grid">${photoCards}</div>`
         : photoCards}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.4 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.6 of 2</div>
     </div>
 
     <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
@@ -5379,7 +5401,7 @@ function buildSLDPage(c) {
         </ol>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.4 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.6 of 2</div>
     </div>
   </div>
 </body></html>`;
@@ -5443,7 +5465,7 @@ async function importQuoteHistory(event) {
     const ok = await showConfirm('Import Quote History', `Found <strong>${incoming.length}</strong> quotes in file. Currently <strong>${cur.length}</strong> on this device.<br/><br/>Replace current data?<br/><span style="font-size:11px;color:#94a3b8;">Tip: Backup first via Export JSON if unsure.</span>`);
     if (!ok) return;
     saveQuoteHistory(incoming);
-    if (typeof renderQuoteHistory === 'function') renderQuoteHistory();
+    if (typeof renderHistoryTable === 'function') renderHistoryTable();
     toast(`✓ Imported ${incoming.length} quote${incoming.length>1?'s':''}`, 'success');
   } catch(e) {
     toast('Import failed: ' + e.message, 'error');
@@ -5469,6 +5491,72 @@ function loadCloudConfig() {
 }
 function saveCloudConfig(cfg) {
   localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cfg));
+}
+
+// ── SYNC CODE: bundle apiKey + bin IDs into ONE shareable string ──
+// Paste this single code on any new browser/PC to instantly connect (no manual JSON upload).
+function exportSyncCode() {
+  const cfg = loadCloudConfig();
+  if (!cfg.apiKey || (!cfg.binInventory && !cfg.binQuoteHistory)) {
+    return toast('Push to cloud first so bin IDs exist, then export code.', 'error');
+  }
+  const bundle = { k: cfg.apiKey, i: cfg.binInventory || '', q: cfg.binQuoteHistory || '' };
+  const code = 'FDGSYNC-' + btoa(JSON.stringify(bundle));
+  // Copy to clipboard
+  navigator.clipboard?.writeText(code).then(
+    () => toast('✓ Sync Code copied — paste it on your other devices', 'success'),
+    () => {}
+  );
+  // Also show in a prompt for manual copy
+  const ta = document.getElementById('cs-sync-code');
+  if (ta) { ta.value = code; ta.select(); }
+  return code;
+}
+
+function importSyncCode() {
+  const raw = (document.getElementById('cs-sync-code')?.value || '').trim();
+  if (!raw.startsWith('FDGSYNC-')) return toast('Paste a valid FDGSYNC- code first', 'error');
+  try {
+    const bundle = JSON.parse(atob(raw.slice(8)));
+    const cfg = loadCloudConfig();
+    cfg.apiKey = bundle.k || cfg.apiKey;
+    cfg.binInventory = bundle.i || cfg.binInventory;
+    cfg.binQuoteHistory = bundle.q || cfg.binQuoteHistory;
+    cfg.autoSyncInv = true;
+    cfg.autoSyncQH = true;
+    cfg.autoPull = true;
+    saveCloudConfig(cfg);
+    toast('✓ Connected! Pulling data now...', 'success');
+    cloudPullAll();
+  } catch(e) {
+    toast('Invalid sync code: ' + e.message, 'error');
+  }
+}
+
+// ── AUTO-PULL ON STARTUP: if configured, refresh from cloud automatically ──
+async function cloudAutoPullOnLoad() {
+  const cfg = loadCloudConfig();
+  if (!cfg.autoPull || !cfg.apiKey) return;
+  if (!cfg.binInventory && !cfg.binQuoteHistory) return;
+  try {
+    let pulled = [];
+    if (cfg.binInventory) {
+      const inv = await cloudPullBin(cfg.binInventory, cfg.apiKey);
+      if (inv && Object.keys(inv).length) { localStorage.setItem('fdgSolarDB_v5', JSON.stringify(inv)); pulled.push('inventory'); }
+    }
+    if (cfg.binQuoteHistory) {
+      const qh = await cloudPullBin(cfg.binQuoteHistory, cfg.apiKey);
+      if (Array.isArray(qh)) { localStorage.setItem('fdgQuoteHistory_v1', JSON.stringify(qh)); pulled.push('quotes'); }
+    }
+    if (pulled.length) {
+      cfg.lastPull = new Date().toISOString();
+      saveCloudConfig(cfg);
+      if (typeof populateBOMDropdowns === 'function') populateBOMDropdowns();
+      if (typeof renderDBTable === 'function') renderDBTable('panels');
+      if (typeof renderHistoryTable === 'function') renderHistoryTable();
+      toast(`☁️ Auto-synced from cloud (${pulled.join(' + ')})`, 'success');
+    }
+  } catch(e) { console.warn('Auto-pull on load failed:', e.message); }
 }
 
 async function openCloudSyncDialog() {
@@ -5522,6 +5610,30 @@ async function openCloudSyncDialog() {
         <button onclick="cloudPullAll()" style="padding:10px 16px;background:#2563eb;color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer;">⬇ Pull All from Cloud</button>
       </div>
 
+      <div style="margin-top:8px;">
+        <label style="font-size:12px;color:#cbd5e1;display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="cs-auto-pull" ${cfg.autoPull ? 'checked' : ''}/>
+          <strong style="color:#22c55e;">🔄 Auto-pull on app open</strong> — automatically refresh from cloud every time you open this tool (best for multi-PC)
+        </label>
+      </div>
+
+      <!-- ── ONE-CODE SYNC SETUP (fixes "upload JSON on every browser") ── -->
+      <div style="margin-top:14px;padding:12px;border:1.5px solid #22c55e;border-radius:8px;background:rgba(34,197,94,0.08);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <strong style="color:#22c55e;font-size:13px;">🔑 One-Code Sync (Easiest)</strong>
+          <span style="font-size:10px;background:#22c55e;color:#0f172a;padding:2px 6px;border-radius:3px;font-weight:800;letter-spacing:1px;">RECOMMENDED</span>
+        </div>
+        <p style="font-size:11px;color:#cbd5e1;line-height:1.5;margin-bottom:8px;">
+          <strong>On your MAIN PC:</strong> set API key → Push to Cloud → click "Copy Sync Code".<br/>
+          <strong>On any OTHER device:</strong> paste that code below → "Connect with Code". Done — no JSON files, ever again. Both devices stay in sync automatically.
+        </p>
+        <textarea id="cs-sync-code" placeholder="FDGSYNC-... (paste here on new devices, or generate on main PC)" style="width:100%;height:54px;padding:8px;font-size:11px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#22c55e;box-sizing:border-box;font-family:monospace;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button onclick="exportSyncCode()" style="flex:1;padding:9px;background:#0f172a;color:#22c55e;border:1px solid #22c55e;border-radius:5px;font-weight:700;cursor:pointer;font-size:12px;">📋 Copy Sync Code (main PC)</button>
+          <button onclick="importSyncCode()" style="flex:1;padding:9px;background:#22c55e;color:#0f172a;border:0;border-radius:5px;font-weight:800;cursor:pointer;font-size:12px;">🔗 Connect with Code (new device)</button>
+        </div>
+      </div>
+
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid #334155;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <strong style="color:#fbbf24;font-size:13px;">🐙 GitHub Gist Sync</strong>
@@ -5564,6 +5676,7 @@ function saveCloudCfgFromDialog() {
     binQuoteHistory: document.getElementById('cs-bin-qh').value.trim(),
     autoSyncInv: document.getElementById('cs-auto-inv').checked,
     autoSyncQH: document.getElementById('cs-auto-qh').checked,
+    autoPull: document.getElementById('cs-auto-pull')?.checked || false,
     ghToken: document.getElementById('cs-gh-token')?.value.trim() || '',
     ghGistInv: document.getElementById('cs-gh-gist-inv')?.value.trim() || '',
     ghGistQH: document.getElementById('cs-gh-gist-qh')?.value.trim() || '',
@@ -5648,7 +5761,7 @@ async function ghPullAll() {
     cfg.lastGhPull = new Date().toISOString();
     saveCloudConfig(cfg);
     toast('✓ Pulled from GitHub — reload to see changes', 'success');
-    if (typeof renderQuoteHistory === 'function') renderQuoteHistory();
+    if (typeof renderHistoryTable === 'function') renderHistoryTable();
   } catch(e) {
     toast('GitHub pull failed: ' + e.message, 'error');
   }
@@ -5689,6 +5802,7 @@ async function cloudPushAll() {
     cfg.binInventory = newInvBin;
     cfg.binQuoteHistory = newQhBin;
     cfg.lastPush = new Date().toISOString();
+    cfg.autoPull = true;  // enable auto-pull so other devices refresh on open
     saveCloudConfig(cfg);
     toast(`✓ Pushed · Inv bin: ${newInvBin.slice(-8)} · QH bin: ${newQhBin.slice(-8)}`, 'success');
     // Refresh dialog if open
@@ -5720,8 +5834,8 @@ async function cloudPullAll() {
     cfg.lastPull = new Date().toISOString();
     saveCloudConfig(cfg);
     toast('✓ Pulled — reload page to see changes', 'success');
-    if (typeof renderQuoteHistory === 'function') renderQuoteHistory();
-    if (typeof renderInventory === 'function') renderInventory();
+    if (typeof renderHistoryTable === 'function') renderHistoryTable();
+    if (typeof renderDBTable === 'function') { populateBOMDropdowns(); renderDBTable('panels'); }
   } catch(e) {
     toast('Pull failed: ' + e.message, 'error');
   }
@@ -5792,7 +5906,7 @@ function renderHistoryTable() {
     const sc = q.status==='won'?'var(--green)':q.status==='lost'?'var(--red)':'var(--accent)';
     return `<tr>
       <td style="font-family:var(--mono);font-size:11px;color:var(--accent);">${q.ref}</td>
-      <td style="font-weight:600;">${q.client}</td>
+      <td style="font-weight:600;">${q.client}${q.notes ? ' <span title="Has follow-up notes" style="font-size:11px;">📝</span>' : ''}</td>
       <td style="color:var(--text2);font-size:12px;">${q.date}</td>
       <td style="font-size:12px;">${q.sysKw}kW ${q.sysType}</td>
       <td style="font-family:var(--mono);font-weight:700;color:var(--green);">${q.amount}</td>
@@ -5803,9 +5917,95 @@ function renderHistoryTable() {
           <option value="lost" ${q.status==='lost'?'selected':''}>❌ Lost</option>
         </select>
       </td>
-      <td><button class="btn btn-sm btn-red" onclick="deleteQuote(${idx})">🗑</button></td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm" style="background:#2563eb;color:#fff;margin-right:3px;" onclick="openEditQuote(${idx})" title="Review / Edit">✏️</button>
+        <button class="btn btn-sm btn-red" onclick="deleteQuote(${idx})" title="Delete">🗑</button>
+      </td>
     </tr>`;
   }).join('');
+}
+
+// ── REVIEW / EDIT a saved quote (summary fields + notes) ──
+function openEditQuote(idx) {
+  const history = loadQuoteHistory();
+  const q = history[idx];
+  if (!q) return;
+  document.getElementById('edit-quote-bg')?.remove();
+  const bg = document.createElement('div');
+  bg.id = 'edit-quote-bg';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:99998;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px;overflow-y:auto;';
+  bg.innerHTML = `
+    <div style="background:#0f172a;color:#fff;border:1px solid #fbbf24;border-radius:10px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <strong style="color:#fbbf24;font-size:16px;">✏️ Review / Edit Quote</strong>
+        <span style="font-family:monospace;font-size:12px;color:#94a3b8;">${q.ref}</span>
+      </div>
+      <div style="display:grid;gap:10px;">
+        <div>
+          <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Client Name</label>
+          <input id="eq-client" type="text" value="${(q.client||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Date</label>
+            <input id="eq-date" type="date" value="${q.date||''}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
+          </div>
+          <div>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Status</label>
+            <select id="eq-status" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;">
+              <option value="pending" ${q.status==='pending'?'selected':''}>⏳ Pending</option>
+              <option value="won" ${q.status==='won'?'selected':''}>✅ Won</option>
+              <option value="lost" ${q.status==='lost'?'selected':''}>❌ Lost</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">System (kW)</label>
+            <input id="eq-syskw" type="text" value="${(q.sysKw||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
+          </div>
+          <div>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Type</label>
+            <input id="eq-systype" type="text" value="${(q.sysType||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Quoted Amount (display)</label>
+          <input id="eq-amount" type="text" value="${(q.amount||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;font-family:monospace;"/>
+        </div>
+        <div>
+          <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Follow-up Notes</label>
+          <textarea id="eq-notes" placeholder="Call back next week, sent revised quote, waiting on client decision..." style="width:100%;height:64px;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;resize:vertical;">${(q.notes||'').replace(/</g,'&lt;')}</textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="saveEditQuote(${idx})" style="flex:1;padding:11px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;border:0;border-radius:6px;font-weight:800;cursor:pointer;">💾 Save Changes</button>
+        <button onclick="document.getElementById('edit-quote-bg').remove()" style="padding:11px 18px;background:#475569;color:#fff;border:0;border-radius:6px;font-weight:700;cursor:pointer;">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click', e => { if (e.target === bg) bg.remove(); });
+}
+
+function saveEditQuote(idx) {
+  const history = loadQuoteHistory();
+  const q = history[idx];
+  if (!q) return;
+  q.client  = document.getElementById('eq-client').value.trim() || q.client;
+  q.date    = document.getElementById('eq-date').value || q.date;
+  q.status  = document.getElementById('eq-status').value;
+  q.sysKw   = document.getElementById('eq-syskw').value.trim();
+  q.sysType = document.getElementById('eq-systype').value.trim();
+  q.amount  = document.getElementById('eq-amount').value.trim();
+  q.notes   = document.getElementById('eq-notes').value;
+  // Re-derive amountRaw from amount string (strip non-numeric)
+  const raw = parseFloat((q.amount||'').replace(/[^0-9.]/g,''));
+  if (!isNaN(raw)) q.amountRaw = raw;
+  q.edited = new Date().toISOString();
+  saveQuoteHistory(history);
+  document.getElementById('edit-quote-bg')?.remove();
+  renderHistoryTable();
+  toast(`✓ Quote ${q.ref} updated`, 'success');
 }
 
 function updateQuoteStatus(idx, status) {
@@ -6211,9 +6411,10 @@ async function generatePDFQuote() {
     body{background:#fff;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;}
-    .pg{box-shadow:none;margin:0;}
+    .pg{box-shadow:none;margin:0;width:auto;min-height:0;height:auto;padding:0;}
     .cover-pg{padding:0;}
-    @page{size:A4 portrait;margin:0;}
+    .footer-line,.pg-footer{position:static !important;margin-top:10pt;}
+    @page{size:A4 portrait;margin:10mm;}
   }
 </style></head>
 <body>
@@ -6339,7 +6540,7 @@ async function generatePDFQuote() {
         }
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · REV 3.5.4 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.4</div>
+      <div class="footer-line">© FDG Solar Visayas · REV 3.5.6 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.6</div>
     </div>
 
     <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
@@ -6401,24 +6602,33 @@ async function generatePDFQuote() {
         ];
         const calcYears = (capKwh, demand, spec) => {
           if (capKwh <= 0 || demand <= 0) return '—';
-          const actualDoD = Math.min(1.0, demand / capKwh);
+          const rawDoD = demand / capKwh;           // can exceed 1.0 when undersized
+          const actualDoD = Math.min(1.0, rawDoD);
           const dodVsRated = actualDoD / spec.ratedDoD;
           // Cycle aging multiplier
           let agingMult = 1.0;
           if (dodVsRated > 1.0)      agingMult = 1.0 + (dodVsRated - 1.0) * 1.5;
           else if (dodVsRated < 0.3) agingMult = 0.55;  // very light cycling
-          else if (dodVsRated < 0.5) agingMult = 0.7;
           else if (dodVsRated < 0.7) agingMult = 0.85;
+          else if (dodVsRated < 0.5) agingMult = 0.7;
           // Oversize bonus — continuous to differentiate every capacity step
           let oversizeBonus = 1.0;
           if (dodVsRated < 1.0) {
             oversizeBonus = 1.0 + (1.0 - dodVsRated) * 0.8;
             if (dodVsRated < 0.3) oversizeBonus += (0.3 - dodVsRated) * 0.6;
           }
+          // UNDERSIZE PENALTY: when demand exceeds capacity (rawDoD > 1.0), the bank is
+          // discharged to 100% daily AND cannot meet load — extreme stress, premature failure.
+          // Each 10% over capacity ~ halves remaining life.
+          let undersizePenalty = 1.0;
+          if (rawDoD > 1.0) {
+            undersizePenalty = 1.0 / (1.0 + (rawDoD - 1.0) * 2.5);
+          } else if (rawDoD > 0.95) {
+            undersizePenalty = 0.6;  // near-full daily discharge still very harsh
+          }
           // Raw years from cycle life
-          const rawYears = spec.cycles / (365 * agingMult) * oversizeBonus;
+          const rawYears = spec.cycles / (365 * agingMult) * oversizeBonus * undersizePenalty;
           // Soft cap — don't hard-clip; blend so oversize STILL shows differentiation
-          // years = min(rawYears, max + bonus_overflow * 0.3)
           let yrs;
           if (rawYears <= spec.max) {
             yrs = rawYears;
@@ -6430,27 +6640,34 @@ async function generatePDFQuote() {
           yrs = Math.min(yrs, spec.max * 1.4);
           return yrs.toFixed(1);
         };
-        // Show across 3 capacity scenarios: installed, 1.5×, 2×
+        // Show 5 capacity scenarios: undersize 50%, undersize 75%, quoted, +50%, 2×
         const sizes = [
-          {label: `Quoted Bank · ${installedKwh.toFixed(1)} kWh`, kwh: installedKwh},
+          {label: `Undersize 50% · ${(installedKwh*0.5).toFixed(1)} kWh`, kwh: installedKwh*0.5, warn: true},
+          {label: `Undersize 75% · ${(installedKwh*0.75).toFixed(1)} kWh`, kwh: installedKwh*0.75, warn: true},
+          {label: `✓ QUOTED BANK · ${installedKwh.toFixed(1)} kWh`, kwh: installedKwh, quoted: true},
           {label: `+50% Oversize · ${(installedKwh*1.5).toFixed(1)} kWh`, kwh: installedKwh*1.5},
           {label: `2× Oversize · ${(installedKwh*2).toFixed(1)} kWh`, kwh: installedKwh*2},
         ];
         let rows = '';
         sizes.forEach(s => {
-          rows += `<tr>
-            <td style="font-weight:700;background:#f1f5f9;">${s.label}</td>
+          const rowBg = s.quoted ? '#fef3c7' : (s.warn ? '#fef2f2' : '#f1f5f9');
+          const labelColor = s.quoted ? '#92400e' : (s.warn ? '#dc2626' : '#0f172a');
+          rows += `<tr ${s.quoted ? 'style="outline:2px solid #f59e0b;"' : ''}>
+            <td style="font-weight:${s.quoted ? '800' : '700'};background:${rowBg};color:${labelColor};">${s.label}</td>
             ${tiers.map(t => {
               const yrs = calcYears(s.kwh, dailyDemand, t);
               const dod = Math.min(100, dailyDemand / s.kwh * 100).toFixed(0);
+              const dodNum = dailyDemand / s.kwh * 100;
               const color = parseFloat(yrs) >= 8 ? '#059669' : (parseFloat(yrs) >= 5 ? '#f59e0b' : '#dc2626');
-              return `<td style="text-align:center;font-family:monospace;"><strong style="color:${color};">${yrs} yrs</strong><br/><span style="font-size:7.5pt;color:#94a3b8;">${dod}% DoD</span></td>`;
+              const dodWarn = dodNum > 100 ? ' ⚠' : '';
+              const cellBg = s.quoted ? 'background:#fffbeb;' : (s.warn ? 'background:#fff5f5;' : '');
+              return `<td style="text-align:center;font-family:monospace;${cellBg}"><strong style="color:${color};">${yrs} yrs</strong><br/><span style="font-size:7.5pt;color:${dodNum > 100 ? '#dc2626' : '#94a3b8'};">${dod}% DoD${dodWarn}</span></td>`;
             }).join('')}
           </tr>`;
         });
         return `
         <h2>Battery Lifecycle Comparison</h2>
-        <p style="font-size:8.5pt;color:#64748b;">Real-world years-to-replacement (PH heat-adjusted). Daily energy demand assumed: <strong>${dailyDemand.toFixed(1)} kWh</strong>. Higher capacity = lower daily DoD = longer life. Use this to plan replacement budget.</p>
+        <p style="font-size:8.5pt;color:#64748b;">Real-world years-to-replacement (PH heat-adjusted). Daily energy demand assumed: <strong>${dailyDemand.toFixed(1)} kWh</strong>. <span style="color:#dc2626;font-weight:700;">Undersizing</span> forces deep daily discharge → battery dies faster. <span style="color:#92400e;font-weight:700;">Quoted bank</span> (highlighted) balances cost vs life. <span style="color:#059669;font-weight:700;">Oversizing</span> extends life but adds upfront cost.</p>
         <table>
           <thead><tr>
             <th>Battery Bank Capacity</th>
@@ -6460,11 +6677,11 @@ async function generatePDFQuote() {
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
-        <p style="font-size:7.5pt;color:#94a3b8;font-style:italic;margin-top:4pt;">Numbers represent expected service life until 70-80% capacity retention. Tropical heat (28-32°C) and partial charging reduce lab-rated cycles. Replacement planning helps avoid unexpected downtime.</p>
+        <p style="font-size:7.5pt;color:#94a3b8;font-style:italic;margin-top:4pt;">⚠ = DoD exceeds 100% (bank cannot meet daily demand — daily blackout risk). Numbers = expected service life until 70-80% capacity retention. Tropical heat (28-32°C) + partial charging reduce lab-rated cycles. <strong>Recommendation: choose Quoted Bank or higher; undersizing voids the savings through early replacement.</strong></p>
         `;
       })() : ''}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.4</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.6</div>
     </div>
 
     <!-- ━━━ PAGE 3: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
@@ -6880,10 +7097,13 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; col
 .toolbar button.secondary { background:#475569; color:#fff; }
 
 @media print {
-  body { background:#fff; padding:0; }
+  body { background:#fff; padding:0; margin:0; }
   .toolbar { display:none; }
-  .pg { margin:0 !important; page-break-after: always; }
+  .pg { margin:0 !important; padding:0 !important; box-shadow:none !important; page-break-after: always; width:210mm; height:296mm; overflow:hidden; }
   .pg:last-child { page-break-after: auto; }
+  .hero { height:296mm; }
+  .pg-content { min-height:0; height:296mm; }
+  @page { size:A4 portrait; margin:0; }
 }
 
 .pg {
@@ -7115,7 +7335,7 @@ h2.section {
       </div>
 
       <div class="pg-footer">
-        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.4
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.6
       </div>
     </div>
   </div>
@@ -7308,11 +7528,12 @@ async function openTurnoverForm() {
     body{background:#fff;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;}
-    .pg{box-shadow:none;margin:0;}
+    .pg{box-shadow:none;margin:0;width:auto;min-height:0;height:auto;padding:0;}
     .attach-zone{background:#fff;border-style:solid;}
     .attach-btn{display:none;}
     .attach-item-edit{display:none;}
-    @page{size:A4 portrait;margin:0;}
+    .footer-line,.pg-footer{position:static !important;margin-top:10pt;}
+    @page{size:A4 portrait;margin:10mm;}
   }
 </style></head>
 <body>
@@ -7366,7 +7587,7 @@ async function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.4</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.6</div>
     </div>
 
 
@@ -7472,7 +7693,7 @@ async function openTurnoverForm() {
         <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.4</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.6</div>
     </div>
 
     <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
@@ -7498,7 +7719,7 @@ async function openTurnoverForm() {
         <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.4</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.6</div>
     </div>
 
     <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
@@ -7535,7 +7756,7 @@ async function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.4</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.6</div>
     </div>
 
   </div>
