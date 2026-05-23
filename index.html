@@ -952,7 +952,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.6</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.7</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -3642,11 +3642,11 @@ body { font-family:'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; colo
 .toolbar .badge { background:#059669; color:#fff; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:800; letter-spacing:1px; }
 
 @media print {
-  body { background:#fff; padding:0; }
+  html,body { background:#fff; padding:0; margin:0; width:auto; height:auto; }
   .toolbar { display:none; }
-  .pg { box-shadow:none !important; margin:0 !important; width:auto !important; min-height:0 !important; height:auto !important; padding:0 !important; page-break-after:always; }
-  .pg:last-child { page-break-after:auto; }
-  .footer-line { position:static !important; margin-top:14pt; }
+  .pg { box-shadow:none !important; margin:0 !important; width:190mm; min-height:0 !important; height:auto !important; padding:0 !important; page-break-after:always; break-after:page; overflow:visible; }
+  .pg:last-child { page-break-after:auto; break-after:auto; }
+  .footer-line { position:static !important; margin-top:14pt; left:auto; right:auto; bottom:auto; }
   @page { size:A4 portrait; margin:10mm; }
 }
 
@@ -3684,6 +3684,7 @@ tr:nth-child(even) td { background:#f8fafc; }
   <h1>🔒 Internal Job Order</h1>
   <span class="badge">CREW COPY</span>
   <div class="spacer"></div>
+  <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: set Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
   <button class="secondary" onclick="window.close()">✕ Close</button>
 </div>
@@ -3739,7 +3740,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     </div>
   </div>
 
-  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.6</div>
+  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.7</div>
 </div>
 </body></html>`;
 
@@ -5250,13 +5251,12 @@ function buildSLDPage(c) {
   .footer-line{margin-top:10pt;padding-top:5pt;border-top:1px solid #cbd5e1;font-size:7.5pt;color:#94a3b8;text-align:center;}
 
   @media print{
-    body{background:#fff;}
+    html,body{background:#fff;width:auto;height:auto;margin:0;padding:0;}
     .toolbar{display:none;}
-    .doc{max-width:none;margin:0;}
-    /* In print, let @page margin define the printable area; .pg fills it (no fixed mm width
-       that overflows the physical sheet). box-sizing border-box keeps padding inside. */
-    .pg{box-shadow:none;margin:0;width:auto;min-height:0;height:auto;padding:0;page-break-after:always;}
-    .pg:last-of-type{page-break-after:auto;}
+    .doc{max-width:none;margin:0;padding:0;}
+    /* Printable area = A4 (210mm) minus @page 10mm each side = 190mm. Match content to it. */
+    .pg{box-shadow:none !important;margin:0 !important;width:190mm;min-height:0;height:auto;padding:0;page-break-after:always;break-after:page;overflow:visible;}
+    .pg:last-of-type{page-break-after:auto;break-after:auto;}
     @page{size:A4 portrait;margin:10mm;}
   }
 
@@ -5277,6 +5277,7 @@ function buildSLDPage(c) {
   <div class="toolbar">
     <h1>⚡ Single-Line Diagram — ${c.clientName}</h1>
     <div class="spacer"></div>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button style="background:#059669;" onclick="downloadSLDAsPNG()">📷 Download PNG</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
@@ -5357,7 +5358,7 @@ function buildSLDPage(c) {
            <div class="photo-grid">${photoCards}</div>`
         : photoCards}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.6 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.7 of 2</div>
     </div>
 
     <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
@@ -5401,7 +5402,7 @@ function buildSLDPage(c) {
         </ol>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.6 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.7 of 2</div>
     </div>
   </div>
 </body></html>`;
@@ -6408,12 +6409,12 @@ async function generatePDFQuote() {
   }
 
   @media print{
-    body{background:#fff;}
+    html,body{background:#fff;margin:0;padding:0;width:auto;height:auto;}
     .toolbar{display:none;}
-    .doc{max-width:none;margin:0;}
-    .pg{box-shadow:none;margin:0;width:auto;min-height:0;height:auto;padding:0;}
+    .doc{max-width:none;margin:0;padding:0;}
+    .pg{box-shadow:none !important;margin:0 !important;width:190mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
     .cover-pg{padding:0;}
-    .footer-line,.pg-footer{position:static !important;margin-top:10pt;}
+    .footer-line,.pg-footer{position:static !important;margin-top:10pt;left:auto;right:auto;bottom:auto;}
     @page{size:A4 portrait;margin:10mm;}
   }
 </style></head>
@@ -6421,6 +6422,7 @@ async function generatePDFQuote() {
   <div class="toolbar">
     <h1>📑 PDF Quote — ${clientName}</h1>
     <div class="spacer"></div>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save as PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -6540,7 +6542,7 @@ async function generatePDFQuote() {
         }
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · REV 3.5.6 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.6</div>
+      <div class="footer-line">© FDG Solar Visayas · REV 3.5.7 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.7</div>
     </div>
 
     <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
@@ -6681,7 +6683,7 @@ async function generatePDFQuote() {
         `;
       })() : ''}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.6</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.7</div>
     </div>
 
     <!-- ━━━ PAGE 3: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
@@ -6941,6 +6943,7 @@ img { display:block; width:100%; max-width:1040px; height:auto; }
     <h1>📱 Share Card Preview · ${escapeHtml(clientName)} · 1080×1080px</h1>
     <div class="spacer"></div>
     <button onclick="downloadPng()">⬇ Download PNG</button>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -7099,10 +7102,16 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; col
 @media print {
   body { background:#fff; padding:0; margin:0; }
   .toolbar { display:none; }
-  .pg { margin:0 !important; padding:0 !important; box-shadow:none !important; page-break-after: always; width:210mm; height:296mm; overflow:hidden; }
-  .pg:last-child { page-break-after: auto; }
-  .hero { height:296mm; }
-  .pg-content { min-height:0; height:296mm; }
+  .pg { margin:0 !important; padding:0 !important; box-shadow:none !important; page-break-after: always; break-after:page; width:210mm; overflow:hidden; }
+  .pg:last-child { page-break-after: auto; break-after:auto; }
+  /* Page 1 hero = fixed full-bleed A4 */
+  .pg.hero-page { height:297mm; }
+  .hero { height:297mm; }
+  /* Page 2 content = flows, with generous bottom padding so it never collides with footer */
+  .pg.content-page { height:auto; min-height:297mm; }
+  .pg-content { min-height:0; height:auto; padding-bottom:26mm; }
+  /* Footer flows at end instead of absolute (prevents overlap) */
+  .pg-footer { position:static !important; left:auto; right:auto; bottom:auto; margin-top:14pt; }
   @page { size:A4 portrait; margin:0; }
 }
 
@@ -7234,12 +7243,13 @@ h2.section {
   <div class="toolbar">
     <h1>⭐ Portfolio — ${escapeHtml(name)}</h1>
     <div class="spacer"></div>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
 
   <!-- ━━━ PAGE 1: HERO ━━━ -->
-  <div class="pg">
+  <div class="pg hero-page">
     <div class="hero">
       <!-- Dual brand hierarchy: CORE Integrated (parent) over FDG Solar Visayas (division) -->
       <div style="font-size:11pt;letter-spacing:5pt;color:#fbbf24;font-weight:700;text-transform:uppercase;margin-bottom:6pt;">${escapeHtml(brandCore)}</div>
@@ -7286,7 +7296,7 @@ h2.section {
   </div>
 
   <!-- ━━━ PAGE 2: TRACK RECORD + SERVICES + DIFFERENTIATORS ━━━ -->
-  <div class="pg">
+  <div class="pg content-page">
     <div class="pg-content">
       <div class="pg-header">
         <div class="pg-header-logo">${escapeHtml(brandCore).split(' ')[0]} · FDG<span class="red">SOLAR</span><span class="vis">VISAYAS</span></div>
@@ -7335,7 +7345,7 @@ h2.section {
       </div>
 
       <div class="pg-footer">
-        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.6
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.7
       </div>
     </div>
   </div>
@@ -7525,14 +7535,16 @@ async function openTurnoverForm() {
   }
 
   @media print{
-    body{background:#fff;}
+    html,body{background:#fff;margin:0;padding:0;width:auto;height:auto;}
     .toolbar{display:none;}
-    .doc{max-width:none;margin:0;}
-    .pg{box-shadow:none;margin:0;width:auto;min-height:0;height:auto;padding:0;}
+    .doc{max-width:none;margin:0;padding:0;}
+    .pg{box-shadow:none !important;margin:0 !important;width:190mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
     .attach-zone{background:#fff;border-style:solid;}
     .attach-btn{display:none;}
     .attach-item-edit{display:none;}
-    .footer-line,.pg-footer{position:static !important;margin-top:10pt;}
+    .footer-line,.pg-footer{position:static !important;margin-top:10pt;left:auto;right:auto;bottom:auto;}
+    @page{size:A4 portrait;margin:10mm;}
+  }
     @page{size:A4 portrait;margin:10mm;}
   }
 </style></head>
@@ -7540,6 +7552,7 @@ async function openTurnoverForm() {
   <div class="toolbar">
     <h1>📋 Turnover &amp; Acceptance — ${clientName}</h1>
     <div class="spacer"></div>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -7587,7 +7600,7 @@ async function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.6</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.7</div>
     </div>
 
 
@@ -7693,7 +7706,7 @@ async function openTurnoverForm() {
         <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.6</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.7</div>
     </div>
 
     <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
@@ -7719,7 +7732,7 @@ async function openTurnoverForm() {
         <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.6</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.7</div>
     </div>
 
     <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
@@ -7756,7 +7769,7 @@ async function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.6</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.7</div>
     </div>
 
   </div>
