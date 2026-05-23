@@ -669,7 +669,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .print-only { display: none; }
 
 @media print {
-  @page { size: A4 portrait; margin: 9mm 11mm; }
+  @page { size: letter portrait; margin: 9mm 11mm; }
 
   html { height: auto !important; overflow: visible !important; }
   body {
@@ -1880,7 +1880,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             <input type="text" id="pf-name" value="Engr. Francis Dale C. Guinoo, ME">
           </div>
           <div class="fg"><label>Professional Position</label>
-            <input type="text" id="pf-position" value="Registered Mechanical Engineer · Professional ME Aspirant (Sept 2026)">
+            <input type="text" id="pf-position" value="Registered Mechanical Engineer">
           </div>
           <div class="fg"><label>PRC License No.</label>
             <input type="text" id="pf-prc" value="84379">
@@ -1889,7 +1889,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             <input type="text" id="pf-location" value="Cebu &amp; Southern Leyte, Philippines">
           </div>
           <div class="fg"><label>Years of Experience</label>
-            <input type="number" id="pf-years" value="10" min="0" max="50">
+            <input type="number" id="pf-years" value="12" min="0" max="50">
           </div>
           <div class="fg"><label>Industrial Solar Managed (kWp)</label>
             <input type="number" id="pf-kwp" value="800" min="0">
@@ -3644,10 +3644,10 @@ body { font-family:'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; colo
 @media print {
   html,body { background:#fff; padding:0; margin:0; width:auto; height:auto; }
   .toolbar { display:none; }
-  .pg { box-shadow:none !important; margin:0 !important; width:190mm; min-height:0 !important; height:auto !important; padding:0 !important; page-break-after:always; break-after:page; overflow:visible; }
+  .pg { box-shadow:none !important; margin:0 !important; width:196mm; min-height:0 !important; height:auto !important; padding:0 !important; page-break-after:always; break-after:page; overflow:visible; }
   .pg:last-child { page-break-after:auto; break-after:auto; }
   .footer-line { position:static !important; margin-top:14pt; left:auto; right:auto; bottom:auto; }
-  @page { size:A4 portrait; margin:10mm; }
+  @page { size:letter portrait; margin:10mm; }
 }
 
 .pg { width:210mm; min-height:297mm; padding:14mm; margin:0 auto 18px; background:#fff; box-shadow:0 6px 24px rgba(0,0,0,0.18); position:relative; }
@@ -3684,7 +3684,7 @@ tr:nth-child(even) td { background:#f8fafc; }
   <h1>🔒 Internal Job Order</h1>
   <span class="badge">CREW COPY</span>
   <div class="spacer"></div>
-  <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: set Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+  <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
   <button class="secondary" onclick="window.close()">✕ Close</button>
 </div>
@@ -5255,9 +5255,9 @@ function buildSLDPage(c) {
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;padding:0;}
     /* Printable area = A4 (210mm) minus @page 10mm each side = 190mm. Match content to it. */
-    .pg{box-shadow:none !important;margin:0 !important;width:190mm;min-height:0;height:auto;padding:0;page-break-after:always;break-after:page;overflow:visible;}
+    .pg{box-shadow:none !important;margin:0 !important;width:196mm;min-height:0;height:auto;padding:0;page-break-after:always;break-after:page;overflow:visible;}
     .pg:last-of-type{page-break-after:auto;break-after:auto;}
-    @page{size:A4 portrait;margin:10mm;}
+    @page{size:letter portrait;margin:10mm;}
   }
 
   /* Mobile */
@@ -5277,7 +5277,7 @@ function buildSLDPage(c) {
   <div class="toolbar">
     <h1>⚡ Single-Line Diagram — ${c.clientName}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button style="background:#059669;" onclick="downloadSLDAsPNG()">📷 Download PNG</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
@@ -6412,17 +6412,17 @@ async function generatePDFQuote() {
     html,body{background:#fff;margin:0;padding:0;width:auto;height:auto;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;padding:0;}
-    .pg{box-shadow:none !important;margin:0 !important;width:190mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
+    .pg{box-shadow:none !important;margin:0 !important;width:196mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
     .cover-pg{padding:0;}
     .footer-line,.pg-footer{position:static !important;margin-top:10pt;left:auto;right:auto;bottom:auto;}
-    @page{size:A4 portrait;margin:10mm;}
+    @page{size:letter portrait;margin:10mm;}
   }
 </style></head>
 <body>
   <div class="toolbar">
     <h1>📑 PDF Quote — ${clientName}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save as PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -6931,10 +6931,10 @@ img { display:block; width:100%; max-width:1040px; height:auto; }
 @media print {
   body { background:#fff; padding:0; margin:0; }
   .toolbar, .tip { display:none; }
-  .preview-wrap { box-shadow:none; padding:0; margin:0; display:flex; align-items:center; justify-content:center; width:210mm; height:297mm; }
+  .preview-wrap { box-shadow:none; padding:0; margin:0; display:flex; align-items:center; justify-content:center; width:215.9mm; height:279mm; }
   /* Square card on portrait A4 — keep aspect ratio, fit by width */
   img { width:210mm; height:auto; max-width:210mm; max-height:210mm; display:block; }
-  @page { size: A4 portrait; margin: 0; }
+  @page { size: letter portrait; margin: 0; }
 }
 </style>
 </head>
@@ -6943,7 +6943,7 @@ img { display:block; width:100%; max-width:1040px; height:auto; }
     <h1>📱 Share Card Preview · ${escapeHtml(clientName)} · 1080×1080px</h1>
     <div class="spacer"></div>
     <button onclick="downloadPng()">⬇ Download PNG</button>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -6986,7 +6986,7 @@ async function generatePortfolio(pngMode) {
   const position = document.getElementById('pf-position')?.value || 'Registered Mechanical Engineer';
   const prc = document.getElementById('pf-prc')?.value || '84379';
   const location = document.getElementById('pf-location')?.value || 'Cebu & Southern Leyte, Philippines';
-  const years = parseInt(document.getElementById('pf-years')?.value) || 10;
+  const years = parseInt(document.getElementById('pf-years')?.value) || 12;
   const kwp = parseInt(document.getElementById('pf-kwp')?.value) || 800;
   const tagline = document.getElementById('pf-tagline')?.value || 'Your investment deserves engineering, not guesswork.';
   const quote = document.getElementById('pf-quote')?.value || '';
@@ -7105,14 +7105,14 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; col
   .pg { margin:0 !important; padding:0 !important; box-shadow:none !important; page-break-after: always; break-after:page; width:210mm; overflow:hidden; }
   .pg:last-child { page-break-after: auto; break-after:auto; }
   /* Page 1 hero = fixed full-bleed A4 */
-  .pg.hero-page { height:297mm; }
-  .hero { height:297mm; }
+  .pg.hero-page { height:279mm; }
+  .hero { height:279mm; }
   /* Page 2 content = flows, with generous bottom padding so it never collides with footer */
-  .pg.content-page { height:auto; min-height:297mm; }
+  .pg.content-page { height:auto; min-height:279mm; }
   .pg-content { min-height:0; height:auto; padding-bottom:26mm; }
   /* Footer flows at end instead of absolute (prevents overlap) */
   .pg-footer { position:static !important; left:auto; right:auto; bottom:auto; margin-top:14pt; }
-  @page { size:A4 portrait; margin:0; }
+  @page { size:letter portrait; margin:0; }
 }
 
 .pg {
@@ -7243,7 +7243,7 @@ h2.section {
   <div class="toolbar">
     <h1>⭐ Portfolio — ${escapeHtml(name)}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -7538,21 +7538,21 @@ async function openTurnoverForm() {
     html,body{background:#fff;margin:0;padding:0;width:auto;height:auto;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;padding:0;}
-    .pg{box-shadow:none !important;margin:0 !important;width:190mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
+    .pg{box-shadow:none !important;margin:0 !important;width:196mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
     .attach-zone{background:#fff;border-style:solid;}
     .attach-btn{display:none;}
     .attach-item-edit{display:none;}
     .footer-line,.pg-footer{position:static !important;margin-top:10pt;left:auto;right:auto;bottom:auto;}
-    @page{size:A4 portrait;margin:10mm;}
+    @page{size:letter portrait;margin:10mm;}
   }
-    @page{size:A4 portrait;margin:10mm;}
+    @page{size:letter portrait;margin:10mm;}
   }
 </style></head>
 <body>
   <div class="toolbar">
     <h1>📋 Turnover &amp; Acceptance — ${clientName}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 In print dialog: Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
