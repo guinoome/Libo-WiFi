@@ -669,7 +669,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .print-only { display: none; }
 
 @media print {
-  @page { size: letter portrait; margin: 9mm 11mm; }
+  @page { size: A4 portrait; margin: 9mm 11mm; }
 
   html { height: auto !important; overflow: visible !important; }
   body {
@@ -1069,7 +1069,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                 </label>
               </div>
               <div class="fg"><label>Blueprint Cost (₱)</label>
-                <input type="number" id="sys-blueprint" value="5000" min="0" oninput="calcGrandTotal()">
+                <input type="number" id="sys-blueprint" value="25000" min="0" oninput="calcGrandTotal()">
               </div>
             </div>
             <div class="fg"><label style="color:var(--accent);">Turnkey Anchor Price (Rounded ↑ to nearest 1,000)</label>
@@ -1351,11 +1351,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                   <div id="flowValBattery" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);">23.89 kWh usable · 29.86 kWh gross</div>
                 </div>
                 <div style="width:100%;height:16px;background:var(--bg);border-radius:20px;overflow:hidden;display:flex;border:1px solid var(--border);">
-                  <div id="flowBarNightLoad" style="height: 100%; transition: width 0.7s; background: var(--text3); width: 100%;"></div>
+                  <div id="flowBarNightLoad" style="height: 100%; transition: width 0.7s; background: linear-gradient(90deg,#dc2626,#ef4444); box-shadow:0 0 8px rgba(220,38,38,0.6); width: 100%;"></div>
                   <div id="flowBarSurge" style="height: 100%; transition: width 0.7s; background: linear-gradient(90deg,var(--accent),var(--orange)); width: 0%;"></div>
                 </div>
                 <div style="display:flex;gap:14px;margin-top:5px;flex-wrap:wrap;">
-                  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:var(--text3);"></div>Night Load</div>
+                  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:#dc2626;box-shadow:0 0 5px rgba(220,38,38,0.8);"></div>Night Load</div>
                   <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);"><div style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></div>Surge Reserve</div>
                 </div>
               </div>
@@ -3629,7 +3629,7 @@ async function openJobOrder(withPrices) {
   const w = window.open('', '_blank', 'width=900,height=1200');
   if (!w) { toast('Popup blocked — allow popups', 'error'); return; }
 
-  const html = `<!DOCTYPE html><html><head>
+  let html = `<!DOCTYPE html><html><head>
 <title>Internal Job Order · ${refNo}</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -3644,10 +3644,12 @@ body { font-family:'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; colo
 @media print {
   html,body { background:#fff; padding:0; margin:0; width:auto; height:auto; }
   .toolbar { display:none; }
-  .pg { box-shadow:none !important; margin:0 !important; width:196mm; min-height:0 !important; height:auto !important; padding:0 !important; page-break-after:always; break-after:page; overflow:visible; }
+  .pg { box-shadow:none !important; margin:0 !important; width:210mm; min-height:297mm; height:auto; padding:14mm; page-break-after:always; break-after:page; overflow:visible; }
   .pg:last-child { page-break-after:auto; break-after:auto; }
-  .footer-line { position:static !important; margin-top:14pt; left:auto; right:auto; bottom:auto; }
-  @page { size:letter portrait; margin:10mm; }
+  h2,h3 { page-break-after:avoid; break-after:avoid; }
+  table { page-break-inside:avoid; break-inside:avoid; }
+  .footer-line { position:static !important; left:auto; right:auto; bottom:auto; margin-top:14pt; }
+  @page { size:A4 portrait; margin:0; }
 }
 
 .pg { width:210mm; min-height:297mm; padding:14mm; margin:0 auto 18px; background:#fff; box-shadow:0 6px 24px rgba(0,0,0,0.18); position:relative; }
@@ -3684,7 +3686,7 @@ tr:nth-child(even) td { background:#f8fafc; }
   <h1>🔒 Internal Job Order</h1>
   <span class="badge">CREW COPY</span>
   <div class="spacer"></div>
-  <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+  <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>A4</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
   <button class="secondary" onclick="window.close()">✕ Close</button>
 </div>
@@ -3960,7 +3962,7 @@ async function generateDoc(type) {
 async function openSLD() {
   if (!(await requirePassword('open Single-Line Diagram'))) return;
   const cfg = readSLDConfig();
-  const html = buildSLDPage(cfg);
+  let html = buildSLDPage(cfg);
   const w = window.open('', '_blank', 'width=1100,height=1500');
   if (!w) { alert('Popup blocked — allow popups to view SLD'); return; }
   w.document.open();
@@ -5254,10 +5256,13 @@ function buildSLDPage(c) {
     html,body{background:#fff;width:auto;height:auto;margin:0;padding:0;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;padding:0;}
-    /* Printable area = A4 (210mm) minus @page 10mm each side = 190mm. Match content to it. */
-    .pg{box-shadow:none !important;margin:0 !important;width:196mm;min-height:0;height:auto;padding:0;page-break-after:always;break-after:page;overflow:visible;}
+    /* SAME canvas as screen (210×297 w/ internal padding) → PDF matches preview exactly.
+       @page margin:0 so the .pg padding IS the page margin (no double-margin reflow). */
+    .pg{box-shadow:none !important;margin:0 !important;width:210mm;min-height:297mm;height:auto;padding:9mm 11mm;page-break-after:always;break-after:page;overflow:visible;}
     .pg:last-of-type{page-break-after:auto;break-after:auto;}
-    @page{size:letter portrait;margin:10mm;}
+    h2,h3{page-break-after:avoid;break-after:avoid;}
+    table,svg{page-break-inside:avoid;break-inside:avoid;}
+    @page{size:A4 portrait;margin:0;}
   }
 
   /* Mobile */
@@ -5277,7 +5282,7 @@ function buildSLDPage(c) {
   <div class="toolbar">
     <h1>⚡ Single-Line Diagram — ${c.clientName}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>A4</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button style="background:#059669;" onclick="downloadSLDAsPNG()">📷 Download PNG</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
@@ -5358,7 +5363,7 @@ function buildSLDPage(c) {
            <div class="photo-grid">${photoCards}</div>`
         : photoCards}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 · REV 3.5.7 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
     </div>
 
     <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
@@ -5402,7 +5407,7 @@ function buildSLDPage(c) {
         </ol>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 2 · REV 3.5.7 of 2</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
     </div>
   </div>
 </body></html>`;
@@ -6218,10 +6223,11 @@ async function generatePDFQuote() {
   });
 
   // === A4 FORMAT (matches Internal JO style: 9mm 11mm margin, header at top, sectional layout) ===
-  const html = `<!DOCTYPE html>
+  let html = `<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
 <title>FDG Solar Visayas Proposal — ${clientName} — ${refNo}</title>
+<` + `script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></` + `script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#e2e8f0;font-size:9.5pt;line-height:1.4;}
@@ -6412,20 +6418,45 @@ async function generatePDFQuote() {
     html,body{background:#fff;margin:0;padding:0;width:auto;height:auto;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;padding:0;}
-    .pg{box-shadow:none !important;margin:0 !important;width:196mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
+    /* PNG-QUALITY METHOD: each .pg is a FIXED A4 frame (210×297mm exact).
+       overflow:hidden means content can never spill to a 2nd page — one .pg = one printed page,
+       exactly like an html2canvas PNG frame. Content is grouped to fit per the page plan. */
+    .pg{box-shadow:none !important;margin:0 !important;width:210mm;height:297mm;min-height:297mm;max-height:297mm;padding:9mm 11mm;page-break-after:always;break-after:page;break-inside:avoid;overflow:hidden;position:relative;}
+    .pg:last-of-type{page-break-after:auto;break-after:auto;}
     .cover-pg{padding:0;}
-    .footer-line,.pg-footer{position:static !important;margin-top:10pt;left:auto;right:auto;bottom:auto;}
-    @page{size:letter portrait;margin:10mm;}
+    .footer-line{position:absolute;left:11mm;right:11mm;bottom:6mm;margin:0;}
+    @page{size:A4 portrait;margin:0;}
   }
 </style></head>
 <body>
   <div class="toolbar">
     <h1>📑 PDF Quote — ${clientName}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>A4</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save as PDF (A4)</button>
+    <button style="background:#059669;" onclick="downloadQuoteAsPNG()">📷 Download PNG</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
+  <` + `script>
+    async function downloadQuoteAsPNG() {
+      if (typeof html2canvas === 'undefined') { alert('Image library still loading — wait a moment and retry.'); return; }
+      const pages = document.querySelectorAll('.doc .pg');
+      if (!pages.length) { alert('No pages found.'); return; }
+      const btn = event.target; const orig = btn.textContent; btn.textContent = '⏳ Rendering...'; btn.disabled = true;
+      try {
+        for (let i = 0; i < pages.length; i++) {
+          const canvas = await html2canvas(pages[i], {scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false});
+          const link = document.createElement('a');
+          link.download = 'FDG-Quote-${refNo}-page' + (i+1) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          await new Promise(r => setTimeout(r, 400));
+        }
+        btn.textContent = '✓ Done (' + pages.length + ' PNGs)';
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1800);
+      } catch(e) { alert('PNG export failed: ' + e.message); btn.textContent = orig; btn.disabled = false; }
+    }
+  </` + `script>
 
   <div class="doc">
     <!-- ━━━ PAGE 1: COVER (dedicated, dramatic) ━━━ -->
@@ -6519,6 +6550,7 @@ async function generatePDFQuote() {
         ${showKwhOnly ? '' : `<div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>`}
       </div>
 
+      <div class="compute-block">
       <h3>How This Was Computed</h3>
       <table style="font-size:8pt;">
         <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor)</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
@@ -6541,8 +6573,9 @@ async function generatePDFQuote() {
                <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>`)
         }
       </table>
+      </div>
 
-      <div class="footer-line">© FDG Solar Visayas · REV 3.5.7 · Engineering | Procurement | Construction · ${refNo} · Page 2 · REV 3.5.7</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
     </div>
 
     <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
@@ -6583,6 +6616,16 @@ async function generatePDFQuote() {
         <strong style="color:#92400e;">Investment recovered in Year ${paybackYears}</strong><br/>
         <span style="font-size:8pt;color:#64748b;font-family:monospace;">Formula: ₱${grandTotal.toLocaleString()} ÷ ₱${(consumptionPesosPerMonth*12).toLocaleString(undefined,{maximumFractionDigits:0})} (yearly bill replaced) = <strong>${paybackYears} years</strong></span><br/>
         <span style="font-size:8pt;color:#64748b;">Every year after = pure profit.</span>
+      </div>
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+    </div>
+
+    <!-- ━━━ PAGE 4: SENSITIVITY + BATTERY LIFECYCLE ━━━ -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Scenario &amp; Storage Analysis</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
       </div>
 
       <h2>Sensitivity Analysis</h2>
@@ -6683,10 +6726,10 @@ async function generatePDFQuote() {
         `;
       })() : ''}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 3 · REV 3.5.7</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
     </div>
 
-    <!-- ━━━ PAGE 3: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
+    <!-- ━━━ PAGE 5: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Tiers, Inclusions & Acceptance</div></div>
@@ -6713,6 +6756,16 @@ async function generatePDFQuote() {
           }
         </tbody>
       </table>
+
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+    </div>
+
+    <!-- ━━━ PAGE 6: SCARCITY + CONTACT + ACCEPTANCE + SIGNATURE ━━━ -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Reservation &amp; Acceptance</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+      </div>
 
       <div class="scarcity">
         <div class="scarcity-title">⚠ LIMITED CAPACITY THIS MONTH</div>
@@ -6762,7 +6815,7 @@ async function generatePDFQuote() {
         <div class="sig-role col2">Lead Engineer · Signature &amp; Date</div>
       </div>
 
-      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · ${vatLabelLong} · Page 4 of 4</div>
+      <div class="footer-line">Quote Reference: <strong>${refNo}</strong> · Issued ${today} · Valid until ${validUntil} · ${vatLabelLong}</div>
     </div>
   </div>
 </body></html>`;
@@ -6931,10 +6984,10 @@ img { display:block; width:100%; max-width:1040px; height:auto; }
 @media print {
   body { background:#fff; padding:0; margin:0; }
   .toolbar, .tip { display:none; }
-  .preview-wrap { box-shadow:none; padding:0; margin:0; display:flex; align-items:center; justify-content:center; width:215.9mm; height:279mm; }
+  .preview-wrap { box-shadow:none; padding:0; margin:0; display:flex; align-items:center; justify-content:center; width:210mm; height:297mm; }
   /* Square card on portrait A4 — keep aspect ratio, fit by width */
   img { width:210mm; height:auto; max-width:210mm; max-height:210mm; display:block; }
-  @page { size: letter portrait; margin: 0; }
+  @page { size: A4 portrait; margin: 0; }
 }
 </style>
 </head>
@@ -6943,7 +6996,7 @@ img { display:block; width:100%; max-width:1040px; height:auto; }
     <h1>📱 Share Card Preview · ${escapeHtml(clientName)} · 1080×1080px</h1>
     <div class="spacer"></div>
     <button onclick="downloadPng()">⬇ Download PNG</button>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>A4</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -7087,7 +7140,7 @@ async function generatePortfolio(pngMode) {
   const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
   const w = window.open('', '_blank', 'width=900,height=1200');
   if (!w) { alert('Popup blocked — allow popups to view portfolio'); return; }
-  const html = `<!DOCTYPE html>
+  let html = `<!DOCTYPE html>
 <html><head>
 <title>FDG Solar Visayas Portfolio — ${escapeHtml(name)}</title>
 <style>
@@ -7102,17 +7155,14 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background:#cbd5e1; col
 @media print {
   body { background:#fff; padding:0; margin:0; }
   .toolbar { display:none; }
-  .pg { margin:0 !important; padding:0 !important; box-shadow:none !important; page-break-after: always; break-after:page; width:210mm; overflow:hidden; }
+  .pg { margin:0 !important; padding:0 !important; box-shadow:none !important; page-break-after: always; break-after:page; break-inside:avoid; width:210mm; height:297mm; min-height:297mm; max-height:297mm; overflow:hidden; position:relative; }
   .pg:last-child { page-break-after: auto; break-after:auto; }
-  /* Page 1 hero = fixed full-bleed A4 */
-  .pg.hero-page { height:279mm; }
-  .hero { height:279mm; }
-  /* Page 2 content = flows, with generous bottom padding so it never collides with footer */
-  .pg.content-page { height:auto; min-height:279mm; }
-  .pg-content { min-height:0; height:auto; padding-bottom:26mm; }
-  /* Footer flows at end instead of absolute (prevents overlap) */
-  .pg-footer { position:static !important; left:auto; right:auto; bottom:auto; margin-top:14pt; }
-  @page { size:letter portrait; margin:0; }
+  .pg.hero-page { height:297mm; overflow:hidden; }
+  .hero { height:297mm; }
+  .pg.content-page { height:297mm; overflow:hidden; }
+  .pg-content { min-height:0; height:100%; padding:18mm 18mm 16mm; box-sizing:border-box; }
+  .pg-footer { position:absolute !important; left:18mm; right:18mm; bottom:8mm; margin:0; }
+  @page { size:A4 portrait; margin:0; }
 }
 
 .pg {
@@ -7243,7 +7293,7 @@ h2.section {
   <div class="toolbar">
     <h1>⭐ Portfolio — ${escapeHtml(name)}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>A4</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -7324,6 +7374,20 @@ h2.section {
         ${serviceLines.map(s => `<div class="svc-item"><span class="check">✓</span><span>${escapeHtml(s)}</span></div>`).join('')}
       </div>
 
+      <div class="pg-footer">
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Engineering | Procurement | Construction
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━━ PAGE 3: WHY FDG SOLAR + RESERVE ━━━ -->
+  <div class="pg content-page">
+    <div class="pg-content">
+      <div class="pg-header">
+        <div class="pg-header-logo">${escapeHtml(brandCore).split(' ')[0]} · FDG<span class="red">SOLAR</span><span class="vis">VISAYAS</span></div>
+        <div class="pg-header-tag">Why Choose Us</div>
+      </div>
+
       <div class="diff-box">
         <h3>Why FDG Solar Visayas</h3>
         <div class="diff-grid">
@@ -7378,7 +7442,7 @@ async function openTurnoverForm() {
   const invDesc = `${cfg.sInvKw}kW ${escapeHtml(cfg.invType)} · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
   const batDesc = cfg.batQ > 0 ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 (${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh)` : 'N/A — Grid-Tied system';
 
-  const html = `<!DOCTYPE html>
+  let html = `<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
 <title>Turnover &amp; Acceptance — ${clientName} — ${refNo}</title>
@@ -7538,21 +7602,22 @@ async function openTurnoverForm() {
     html,body{background:#fff;margin:0;padding:0;width:auto;height:auto;}
     .toolbar{display:none;}
     .doc{max-width:none;margin:0;padding:0;}
-    .pg{box-shadow:none !important;margin:0 !important;width:196mm;min-height:0;height:auto;padding:0;break-after:page;overflow:visible;}
+    .pg{box-shadow:none !important;margin:0 !important;width:210mm;min-height:297mm;height:auto;padding:9mm 11mm;page-break-after:always;break-after:page;overflow:visible;}
+    .pg:last-of-type{page-break-after:auto;break-after:auto;}
     .attach-zone{background:#fff;border-style:solid;}
     .attach-btn{display:none;}
     .attach-item-edit{display:none;}
+    h2,h3{page-break-after:avoid;break-after:avoid;}
+    table,.sec-block,.sig-row,.signature-v2,.attach-grid,.clause{page-break-inside:avoid;break-inside:avoid;}
     .footer-line,.pg-footer{position:static !important;margin-top:10pt;left:auto;right:auto;bottom:auto;}
-    @page{size:letter portrait;margin:10mm;}
-  }
-    @page{size:letter portrait;margin:10mm;}
+    @page{size:A4 portrait;margin:0;}
   }
 </style></head>
 <body>
   <div class="toolbar">
     <h1>📋 Turnover &amp; Acceptance — ${clientName}</h1>
     <div class="spacer"></div>
-    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>Letter</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
+    <span style="font-size:10px;color:#fbbf24;max-width:230px;line-height:1.3;">💡 Print dialog: Paper = <b>A4</b>, Margins = <b>Default</b>, uncheck <b>Headers and footers</b>, enable <b>Background graphics</b></span>
     <button onclick="window.print()">🖨 Print / Save PDF (A4)</button>
     <button class="secondary" onclick="window.close()">✕ Close</button>
   </div>
@@ -7600,7 +7665,7 @@ async function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Page 1 of 2 · REV 3.5.7</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
     </div>
 
 
@@ -7646,6 +7711,16 @@ async function openTurnoverForm() {
 
       <h3>Exclusions</h3>
       <p style="font-size:8.5pt;">Workmanship warranty does not cover: (a) modifications by third parties, (b) physical damage from external causes (typhoon, flood, lightning beyond SPD rating, vandalism), (c) consumable items (fuses, AC contactor wear), (d) fading/weathering of cosmetic finishes.</p>
+
+      <div class="footer-line">Project Reference: <strong>${refNo}</strong> · Issued ${today} · Engineering | Procurement | Construction</div>
+    </div>
+
+    <!-- ━━━ PAGE 3: COMMISSIONING + ACCEPTANCE + SIGNATURE ━━━ -->
+    <div class="pg">
+      <div class="pg-header">
+        <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Commissioning &amp; Acceptance</div></div>
+        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+      </div>
 
       <h2>7. Commissioning Test Photographs</h2>
       <div class="clause">
