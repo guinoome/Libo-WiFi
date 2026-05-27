@@ -2345,10 +2345,11 @@ function syncPricesFromFile() {
 
 // Quote Reference
 function generateQuoteRef() {
-  const d = new Date();
+  // Use the entered Quote Date for the date part (so the ref matches the document date).
+  const v = document.getElementById('cli-date')?.value;
+  const d = v ? new Date(v + 'T00:00:00') : new Date();
   const datePart = String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-  // Sequential serial: count of saved quotes × 12 (so first = 012, second = 024, third = 036)
-  // Looks like established firm with hundreds of past projects
+  // Sequential serial based on saved-quote count — looks like an established firm.
   let count = 0;
   try {
     const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
@@ -2360,11 +2361,32 @@ function generateQuoteRef() {
 
 let currentQuoteRef = generateQuoteRef();
 
+// Returns the user-entered Quote Date (cli-date input), formatted "Month DD, YYYY".
+// Falls back to today only if the field is empty. Used by all generated documents
+// so printed dates ALWAYS match the date the user entered, not the print date.
+function getDocDate() {
+  const v = document.getElementById('cli-date')?.value;
+  const d = v ? new Date(v + 'T00:00:00') : new Date();
+  return d.toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+}
+
 // ================================================================
 // INIT
 // ================================================================
 document.getElementById('cli-date').valueAsDate = new Date();
+// Generate the session ref AFTER the date is set so the ref date-part matches the quote date.
+currentQuoteRef = generateQuoteRef();
 document.getElementById('quoteRefBadge').textContent = 'REF: ' + currentQuoteRef;
+
+// When the user changes the Quote Date, refresh the ref date-part to match (only the
+// current unsaved quote — saved quotes keep their own ref permanently).
+document.getElementById('cli-date').addEventListener('change', function() {
+  currentQuoteRef = generateQuoteRef();
+  const badge = document.getElementById('quoteRefBadge');
+  if (badge) badge.textContent = 'REF: ' + currentQuoteRef;
+  const pRef = document.getElementById('p-quote-ref');
+  if (pRef) pRef.textContent = 'Quote Reference: ' + currentQuoteRef;
+});
 
 window.onload = function() {
   populateBOMDropdowns();
@@ -3608,7 +3630,7 @@ async function openJobOrder(withPrices) {
     ['Services',    document.getElementById('desc-labor')?.value || 'FDG Solar Visayas Labor — Engineering / Installation / Testing / Commissioning', 1],
   ].filter(r => r && r[2] > 0);
 
-  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const today = getDocDate();
 
   // Build table rows — Unit Price + Total columns BLANK (installer fills by hand on printout)
   let bodyRowsHtml = '';
@@ -4679,7 +4701,7 @@ function buildSLDPage(c) {
 
   // === HEADER ===
   const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : 'FDGS-' + Date.now();
-  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const today = getDocDate();
 
   // === BUILD LAYOUT ===
   // Page 1: Photo gallery with callouts (1 photo per slot, numbered)
@@ -6141,16 +6163,13 @@ async function generatePDFQuote() {
   const paybackMonths = (grandTotal > 0 && consumptionPesosPerMonth > 0 && !showKwhOnly) ? (grandTotal / consumptionPesosPerMonth).toFixed(0) : '—';
   const paybackYears  = (grandTotal > 0 && consumptionPesosPerMonth > 0 && !showKwhOnly) ? (grandTotal / (consumptionPesosPerMonth * 12)).toFixed(1) : '—';
 
-  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
-  const validUntil = new Date(Date.now() + 30*86400000).toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
-  // Ref priority: most recent saved quote for this client → currentQuoteRef → freshly generated
-  let refNo = '';
-  try {
-    const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
-    const match = hist.find(q => q.client && q.client.trim().toLowerCase() === clientName.trim().toLowerCase());
-    if (match && match.ref) refNo = match.ref;
-  } catch(e) {}
-  if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
+  const today = getDocDate();
+  const _qd = document.getElementById('cli-date')?.value;
+  const _base = _qd ? new Date(_qd + 'T00:00:00') : new Date();
+  const validUntil = new Date(_base.getTime() + 30*86400000).toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  // Ref = the current session quote reference (matches the badge shown in the app).
+  // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
+  const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
   const slotsBookedAuto = (typeof loadPipeline === 'function' ? loadPipeline().filter(l => PL_ACTIVE_STAGES.includes(l.stage)).length : 0);
   const blueprintOn = !!document.getElementById('add-blueprint')?.checked;
   const slotsBookedManual = parseInt(document.getElementById('slots-booked')?.value);
@@ -6882,13 +6901,9 @@ async function generateMessengerCard() {
   const isVatInMC = vatModeMC === 'in';
   const vatLabelLong = isVatInMC ? 'VAT Inclusive · Official Receipt · w/ Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt';
 
-  let refNo = '';
-  try {
-    const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
-    const match = hist.find(q => q.client && q.client.trim().toLowerCase() === clientName.trim().toLowerCase());
-    if (match && match.ref) refNo = match.ref;
-  } catch(e) {}
-  if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : 'FDGS-' + Date.now();
+  // Ref = the current session quote reference (matches the badge shown in the app).
+  // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
+  const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
 
   // Build hidden 1080×1080 div
   const card = document.createElement('div');
@@ -7137,7 +7152,7 @@ async function generatePortfolio(pngMode) {
   }
 
   // PDF mode = open A4 popup window
-  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const today = getDocDate();
   const w = window.open('', '_blank', 'width=900,height=1200');
   if (!w) { alert('Popup blocked — allow popups to view portfolio'); return; }
   let html = `<!DOCTYPE html>
@@ -7428,15 +7443,10 @@ async function openTurnoverForm() {
   const clientAddress = document.getElementById('cli-address')?.value || '_______________________________________________';
   const sysKw = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
-  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
-  // Ref priority: most recent saved quote for this client → currentQuoteRef → freshly generated
-  let refNo = '';
-  try {
-    const hist = JSON.parse(localStorage.getItem('fdgQuoteHistory_v1')) || [];
-    const match = hist.find(q => q.client && q.client.trim().toLowerCase() === clientName.trim().toLowerCase());
-    if (match && match.ref) refNo = match.ref;
-  } catch(e) {}
-  if (!refNo) refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
+  const today = getDocDate();
+  // Ref = the current session quote reference (matches the badge shown in the app).
+  // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
+  const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
 
   const panelDesc = `${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp Solar Panels (Total)`;
   const invDesc = `${cfg.sInvKw}kW ${escapeHtml(cfg.invType)} · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
