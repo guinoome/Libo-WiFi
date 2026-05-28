@@ -952,7 +952,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.5.8</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.6.0</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -961,7 +961,6 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="nav-item" onclick="switchView(&#39;view-history&#39;, this)"><span class="nav-icon">📋</span>Quote History</div>
       <div class="nav-item admin-only" id="nav-pipeline" onclick="switchView(&#39;view-pipeline&#39;, this)" style="display:none;"><span class="nav-icon">🎯</span>Pipeline <span style="font-size:9px;background:#dc2626;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px;">ADMIN</span></div>
       <div class="nav-item" onclick="switchView(&#39;view-learn&#39;, this)"><span class="nav-icon">📖</span>Costing &amp; Economics</div>
-      <div class="nav-item" onclick="switchView(&#39;view-portfolio&#39;, this)"><span class="nav-icon">⭐</span>Portfolio</div>
       <div class="nav-item" onclick="openCloudSyncDialog()"><span class="nav-icon">☁️</span>Cloud Sync</div>
     </div>
     <div class="sidebar-footer">
@@ -1902,7 +1901,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
 
         <div class="fg"><label>⭐ Hero Statement (Page 1 big quote — what makes us different)</label>
-          <textarea id="pf-quote" rows="2">We don&#39;t just install Solar panels. We engineer energy assets based on true demand to guarantee your highest Return on Investments.</textarea>
+          <textarea id="pf-quote" rows="3">End the worry of rising bills, sudden blackouts, and appliance-damaging voltage drops. We don&#39;t just install solar panels — we engineer peace of mind. By building custom energy assets based on your true demand, we protect your home and guarantee your highest Return on Investment.</textarea>
         </div>
 
         <div class="fg"><label>📜 About Us / Honest Origins (Page 2)</label>
@@ -1910,7 +1909,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
 
         <div class="fg"><label>Track Record — Major Engagements (one per line, format: Company — Role, dates · scope)</label>
-          <textarea id="pf-track" rows="8">NUSTAR Cebu — Universal Hotels &amp; Resorts (Feb 2022–Present, Engr Service Manager) Oversee whole-property ops. Plants: 18 gensets, 8 substations, 3 boilers/calorifiers, 4×500 kVA UPS/STS, STP, 6×1,200 TR chillers, cooling towers, CPS, fire/jockey pumps, etc.
+          <textarea id="pf-track" rows="8">NUSTAR Cebu — Universal Hotels &amp; Resorts (Feb 2022–Present, Engr Service Manager) Oversee whole-property ops. Plants: 18 gensets, 8 substations, 800 kWp 400V 3-Phase Grid-Tie Solar, 3 boilers/calorifiers, 4×500 kVA UPS/STS, STP, 6×1,200 TR chillers, cooling towers, CPS, fire/jockey pumps, etc.
 Shangri-La Mactan Resort &amp; Spa — Shangri-La Mactan Resort &amp; Spa (Jun 2017–Feb 2022, Mech Engr / Plant Attendant) 4 gensets, 3 substations, 2 boilers/calorifiers, 3-line desalination, STP, 30–550 TR water/air chillers, cooling towers, CPS, fire/jockey pumps, heat pump, jacuzzi, pool chem, etc.
 MEGAWORLD — Oceantown Properties (Jun 2015–Jun 2017, Site Mech Engr) Construction of BPO bldg, STP, Condo. Mechanical, Fire Protection, Elevator, Plumbing, Aux &amp; Electrical, Architectural.
 Aboitiz Construction — Metaphil Div (Apr–Sep 2014, Field Engr) Structural, Electrical, Plumbing, Architectural site works.</textarea>
@@ -1918,7 +1917,7 @@ Aboitiz Construction — Metaphil Div (Apr–Sep 2014, Field Engr) Structural, E
 
         <div class="fg"><label>Services Offered (one per line)</label>
           <textarea id="pf-services" rows="8">Solar (FDG Solar) Residential + commercial PV design &amp; install
-Plant operations &amp; maintenance (genset, boiler, chiller, cooling tower, STP, desal, fire pump)
+Plant operations &amp; maintenance (genset, boiler, chiller, Industrial Scale Solar, cooling tower, STP, desalination, fire pump, etc.)
 HVAC design &amp; troubleshoot
 Mechanical, Electrical, Plumbing &amp; Fire Protection
 Construction Management &amp; Site Supervision
@@ -2476,7 +2475,7 @@ async function switchView(viewId, el) {
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(viewId).classList.add('active');
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   // Mobile: close sidebar after selection
   if (window.innerWidth <= 768) {
     document.querySelector('.sidebar')?.classList.remove('open');
@@ -3764,7 +3763,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     </div>
   </div>
 
-  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.5.8</div>
+  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.6.0</div>
 </div>
 </body></html>`;
 
@@ -5364,7 +5363,8 @@ function buildSLDPage(c) {
         <div class="pg-meta">
           <span class="pg-badge">SINGLE-LINE DIAGRAM</span><br/>
           <strong>${refNo}</strong>
-          ${today}
+          ${c.clientName}<br/>
+          Issued: ${today}
         </div>
       </div>
 
@@ -5392,7 +5392,12 @@ function buildSLDPage(c) {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Energy Flow & Equipment Schedule</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${c.clientName}</div>
+        <div class="pg-meta">
+          <span class="pg-badge">SINGLE-LINE DIAGRAM</span><br/>
+          <strong>${refNo}</strong>
+          ${c.clientName}<br/>
+          Issued: ${today}
+        </div>
       </div>
 
       <h2>Energy Flow Diagram</h2>
@@ -5889,6 +5894,46 @@ async function maybeAutoSyncQuoteHistory() {
   } catch(e) { console.warn('Auto-sync QH failed:', e.message); }
 }
 
+function captureQuoteSnapshot() {
+  // Record every form control value/state so a saved quote can be fully reopened later
+  // (enables regenerating Quote, Turnover, SLD, and JO from history).
+  const snap = { inputs:{}, checks:{}, selects:{} };
+  document.querySelectorAll('input, select, textarea').forEach(el => {
+    if (!el.id) return;
+    if (el.type === 'checkbox' || el.type === 'radio') snap.checks[el.id] = el.checked;
+    else snap.inputs[el.id] = el.value;
+  });
+  // Persist BOM + key globals
+  try { snap.bomTotal = (typeof bomTotal !== 'undefined') ? bomTotal : 0; } catch(e){}
+  try { snap.rawGrandTotal = (typeof rawGrandTotal !== 'undefined') ? rawGrandTotal : 0; } catch(e){}
+  return snap;
+}
+
+function loadQuoteSnapshot(idx) {
+  const history = loadQuoteHistory();
+  const q = history[idx];
+  if (!q || !q.snapshot) { toast('This quote has no saved details to reopen (saved before snapshot feature).', 'warn'); return; }
+  const snap = q.snapshot;
+  // Restore values
+  Object.entries(snap.inputs || {}).forEach(([id,val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+  Object.entries(snap.checks || {}).forEach(([id,val]) => { const el = document.getElementById(id); if (el) el.checked = val; });
+  // Restore globals
+  if (typeof snap.bomTotal !== 'undefined') { try { bomTotal = snap.bomTotal; } catch(e){} }
+  if (typeof snap.rawGrandTotal !== 'undefined') { try { rawGrandTotal = snap.rawGrandTotal; } catch(e){} }
+  // Lock the session ref to this saved quote's ref so all generated docs match it
+  currentQuoteRef = q.ref;
+  const badge = document.getElementById('quoteRefBadge'); if (badge) badge.textContent = 'REF: ' + currentQuoteRef;
+  // Re-run all live recalcs so dependent displays + the Client Proposal refresh
+  try { if (typeof calcBOM === 'function') calcBOM(); } catch(e){}
+  try { if (typeof calcGrandTotal === 'function') calcGrandTotal(); } catch(e){}
+  try { if (typeof calculateFlow === 'function') calculateFlow(); } catch(e){}
+  try { if (typeof syncToQuotation === 'function') syncToQuotation(); } catch(e){}
+  // Jump to the Quotation Generator so user can print any document
+  switchView('view-quote', document.querySelector('.nav-item[onclick*=view-quote]'));
+  document.getElementById('edit-quote-bg')?.remove();
+  toast(`📂 Quote ${q.ref} reopened — you can now print Quote, Turnover, SLD or JO`, 'success');
+}
+
 function saveQuote() {
   if(rawGrandTotal === 0) return toast('Build BOM first before saving.', 'error');
   const ref = currentQuoteRef;
@@ -5898,12 +5943,13 @@ function saveQuote() {
   const sysType = document.getElementById('sys-type').value.replace(/[⚡🔌🔋]/g,'').trim();
   const amount = document.getElementById('sys-grandtotal').value;
   const amountRaw = rawGrandTotal;
+  const snapshot = captureQuoteSnapshot();
 
   const history = loadQuoteHistory();
   if(history.find(q => q.ref === ref)) {
     toast('This quote reference is already saved.', 'warn'); return;
   }
-  history.unshift({ ref, client, date, sysKw, sysType, amount, amountRaw, status: 'pending', saved: new Date().toISOString() });
+  history.unshift({ ref, client, date, sysKw, sysType, amount, amountRaw, snapshot, status: 'pending', saved: new Date().toISOString() });
   saveQuoteHistory(history);
   currentQuoteRef = generateQuoteRef();
   document.getElementById('quoteRefBadge').textContent = 'REF: ' + currentQuoteRef;
@@ -5946,7 +5992,8 @@ function renderHistoryTable() {
         </select>
       </td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-sm" style="background:#2563eb;color:#fff;margin-right:3px;" onclick="openEditQuote(${idx})" title="Review / Edit">✏️</button>
+        <button class="btn btn-sm" style="background:#059669;color:#fff;margin-right:3px;" onclick="loadQuoteSnapshot(${idx})" title="Reopen — restore full quote to print Quote/Turnover/SLD/JO">📂 Open</button>
+        <button class="btn btn-sm" style="background:#2563eb;color:#fff;margin-right:3px;" onclick="openEditQuote(${idx})" title="Review / Edit summary">✏️</button>
         <button class="btn btn-sm btn-red" onclick="deleteQuote(${idx})" title="Delete">🗑</button>
       </td>
     </tr>`;
@@ -6105,7 +6152,7 @@ async function generatePDFQuote() {
   const userEnteredRate = (userRateBill > 0 && userRateBill !== 12.56) || (userRateAmps > 0);
   const rateNote = userEnteredRate
     ? `<span style="background:#f0fdf4;color:#059669;padding:2pt 6pt;border-radius:3pt;font-weight:700;">Using your rate: ₱${rate.toFixed(2)}/kWh</span>`
-    : `<span style="background:#fef3c7;color:#92400e;padding:2pt 6pt;border-radius:3pt;font-weight:700;">Using default reference rate: ₱12.56/kWh</span> <span style="color:#94a3b8;font-style:italic;">— enter your actual rate in Eng. Calc for accurate ₱ projection</span>`;
+    : `<span style="background:#fef3c7;color:#92400e;padding:2pt 6pt;border-radius:3pt;font-weight:700;">Using default reference rate: ₱12.56/kWh</span> <span style="color:#94a3b8;font-style:italic;">— your actual rate in Eng. Calc for accurate ₱ projection</span>`;
   const SYS_LOSS = 0.81;
   const PEAK_SUN = 4.5;
 
@@ -6129,6 +6176,18 @@ async function generatePDFQuote() {
     // Fallback to BOM grand-total input
     grandTotal = parseFloat(document.getElementById('grand-total')?.value) || 0;
   }
+
+  // === VAT BREAKDOWN (for "How This Was Computed") ===
+  // baseVatEx = VAT-exclusive base (anchor − discount). Blueprint price is already inside this
+  // base and is itself VAT-exclusive. VAT-In adds 12% VAT + 10% Prof Fee on the whole base.
+  const _anchorTxt = (document.getElementById('sys-anchor')?.value || '').replace(/[₱,\s]/g,'');
+  const _anchorVal = parseFloat(_anchorTxt) || 0;
+  const _discVal = 5000;
+  const baseVatEx = _anchorVal > 0 ? (_anchorVal - _discVal) : (isVatIn ? grandTotal/1.22 : grandTotal);
+  const vat12 = baseVatEx * 0.12;
+  const profFee = baseVatEx * 0.10;
+  const blueprintIncluded = !!document.getElementById('add-blueprint')?.checked;
+  const blueprintVal = blueprintIncluded ? (parseFloat(document.getElementById('sys-blueprint')?.value) || 0) : 0;
 
   // Pull other Client Proposal display data (matches what's already shown in print)
   const subtotalDisplay = document.getElementById('p-sys-anchor')?.textContent?.trim() || '';
@@ -6490,8 +6549,8 @@ async function generatePDFQuote() {
         <div class="cover-mid">
           <div class="cover-title-big">Renewable Solar Power<br/>Investment Proposal</div>
           <div class="cover-divider"></div>
-          <div style="font-size:14pt;font-style:italic;color:#fbbf24;text-align:center;line-height:1.5;margin:10pt 0 14pt;max-width:480pt;font-weight:600;letter-spacing:0.3pt;">
-            "We don&#39;t just install Solar panels. We engineer energy assets based on true demand to guarantee your highest Return on Investments."
+          <div style="font-size:13pt;font-style:italic;color:#fbbf24;text-align:center;line-height:1.55;margin:10pt 0 14pt;max-width:490pt;font-weight:600;letter-spacing:0.3pt;">
+            "End the worry of rising bills, sudden blackouts, and appliance-damaging voltage drops. We don&#39;t just install solar panels — we engineer peace of mind. By building custom energy assets based on your true demand, we protect your home and guarantee your highest Return on Investment."
           </div>
           <div class="cover-prepared">PREPARED EXCLUSIVELY FOR</div>
           <div class="cover-client-name">${escapeHtml(clientName)}</div>
@@ -6534,6 +6593,7 @@ async function generatePDFQuote() {
         <div class="pg-meta">
           <span class="pg-badge">CLIENT PROPOSAL</span><br/>
           <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
           Issued: ${today}<br/>
           Valid Until: ${validUntil}
         </div>
@@ -6572,9 +6632,13 @@ async function generatePDFQuote() {
       <div class="compute-block">
       <h3>How This Was Computed</h3>
       <table style="font-size:8pt;">
-        <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor)</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
+        <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor${blueprintIncluded ? ' + Blueprint' : ''})</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
         ${discountDisplay ? `<tr><td style="background:#f1f5f9;">Engineering Design Discount</td><td style="font-family:monospace;color:#dc2626;">${escapeHtml(discountDisplay)}</td></tr>` : ''}
-        <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL INVESTMENT (${isVatIn ? 'VAT Inclusive · with Professional Fee' : 'VAT exclusive'})</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
+        <tr><td style="background:#f1f5f9;">Base (VAT-Exclusive)</td><td style="font-family:monospace;">₱${baseVatEx.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>
+        <tr><td style="background:#f1f5f9;">+ 12% VAT</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#94a3b8;'}">${isVatIn ? '₱' + vat12.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>excluded</em>'}</td></tr>
+        <tr><td style="background:#f1f5f9;">+ 10% Professional Fee</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#94a3b8;'}">${isVatIn ? '₱' + profFee.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>excluded</em>'}</td></tr>
+        <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL INVESTMENT (${isVatIn ? 'VAT Inclusive · Official Receipt' : 'VAT Exclusive · Acknowledgement Receipt'})</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
+        ${!isVatIn ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: This is a VAT-Exclusive figure (Acknowledgement Receipt). The <strong>12% VAT</strong> and <strong>10% Professional Fee</strong> shown above are <strong>excluded</strong> from this total. ${blueprintIncluded ? 'The Blueprint (Sign &amp; Seal) price of <strong>₱' + blueprintVal.toLocaleString() + '</strong> is also VAT-Exclusive. ' : ''}Switch to VAT Inclusive for an Official Receipt (adds 22%).</td></tr>` : (blueprintIncluded ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: Blueprint (Sign &amp; Seal) input price of <strong>₱${blueprintVal.toLocaleString()}</strong> is entered VAT-Exclusive; the 12% VAT + 10% Professional Fee above are applied on the full base (blueprint included).</td></tr>` : '')}
         <tr><td style="background:#f1f5f9;">Daily Generation (from Eng. Calc)</td><td style="font-family:monospace;">${dailyKwh.toFixed(2)} kWh/day · ${monthlyKwh.toFixed(0)} kWh/month</td></tr>
         ${showKwhOnly
           ? `<tr><td style="background:#f1f5f9;">Current Monthly Consumption</td><td style="font-family:monospace;"><strong>${consumptionKwhPerMonth.toFixed(0)} kWh</strong> <em style="color:#94a3b8;">(amperage-based — no rate known for 3Ph)</em></td></tr>
@@ -6601,7 +6665,13 @@ async function generatePDFQuote() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Generation & Financial Projection</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge">CLIENT PROPOSAL</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}<br/>
+          Valid Until: ${validUntil}
+        </div>
       </div>
 
       <h2>Monthly Generation Forecast</h2>
@@ -6644,7 +6714,13 @@ async function generatePDFQuote() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Scenario &amp; Storage Analysis</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge">CLIENT PROPOSAL</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}<br/>
+          Valid Until: ${validUntil}
+        </div>
       </div>
 
       <h2>Sensitivity Analysis</h2>
@@ -6752,7 +6828,13 @@ async function generatePDFQuote() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Tiers, Inclusions & Acceptance</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge">CLIENT PROPOSAL</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}<br/>
+          Valid Until: ${validUntil}
+        </div>
       </div>
 
       <h2>Hardware Tier Options</h2>
@@ -6783,7 +6865,13 @@ async function generatePDFQuote() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Reservation &amp; Acceptance</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge">CLIENT PROPOSAL</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}<br/>
+          Valid Until: ${validUntil}
+        </div>
       </div>
 
       <div class="scarcity">
@@ -6904,6 +6992,7 @@ async function generateMessengerCard() {
   // Ref = the current session quote reference (matches the badge shown in the app).
   // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
   const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
+  const today = getDocDate();
 
   // Build hidden 1080×1080 div
   const card = document.createElement('div');
@@ -6920,6 +7009,7 @@ async function generateMessengerCard() {
       <div style="font-size:11px;color:#fbbf24;letter-spacing:4px;text-transform:uppercase;font-weight:800;margin-top:14px;">⭐ Prepared Exclusively For</div>
       <div style="font-size:48px;font-weight:900;margin-top:4px;line-height:1.1;">${escapeHtml(clientName)}</div>
       <div style="font-size:24px;color:#cbd5e1;margin-top:8px;">${sysSize} kWp · ${escapeHtml(sysType)} System</div>
+      <div style="font-size:15px;color:#94a3b8;margin-top:10px;letter-spacing:1px;">Ref: ${escapeHtml(refNo)} · Issued ${escapeHtml(today)}</div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px 0;">
@@ -6946,6 +7036,9 @@ async function generateMessengerCard() {
     </div>
 
     <div>
+      <div style="font-size:16px;font-style:italic;color:#fbbf24;text-align:center;line-height:1.5;margin-bottom:18px;font-weight:600;">
+        "End the worry of rising bills, sudden blackouts, and appliance-damaging voltage drops. We don't just install solar panels — we engineer peace of mind. By building custom energy assets based on your true demand, we protect your home and guarantee your highest Return on Investment."
+      </div>
       <div style="background:rgba(0,0,0,0.55);padding:22px 28px;border-radius:8px;border:2px solid #fbbf24;">
         <div style="font-size:16px;letter-spacing:3px;color:#fbbf24;text-transform:uppercase;font-weight:800;margin-bottom:6px;">Reserve Your Free Online Assessment</div>
         <div style="display:flex;gap:30px;font-size:19px;font-weight:600;">
@@ -7093,10 +7186,10 @@ async function generatePortfolio(pngMode) {
         </div>
         <div style="background:rgba(251,191,36,0.95);color:#0f172a;padding:18px;border-radius:6px;text-align:center;">
           <div style="font-size:42px;font-weight:900;line-height:1;">${kwp}</div>
-          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;font-weight:800;">kWp Industrial</div>
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;font-weight:800;">kWp Industrial Solar Power · Managed</div>
         </div>
         <div style="background:rgba(0,0,0,0.35);border-left:5px solid #10b981;padding:18px;border-radius:6px;text-align:center;">
-          <div style="font-size:42px;font-weight:900;color:#10b981;line-height:1;">3Φ</div>
+          <div style="font-size:42px;font-weight:900;color:#10b981;line-height:1;">3-Phase</div>
           <div style="font-size:11px;color:#cbd5e1;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Grid-Tied 400V</div>
         </div>
       </div>
@@ -7340,10 +7433,10 @@ h2.section {
         </div>
         <div class="hs-card alt">
           <div class="hs-num">${kwp}</div>
-          <div class="hs-label">kWp Industrial · Managed</div>
+          <div class="hs-label">kWp Industrial Solar Power · Managed</div>
         </div>
         <div class="hs-card">
-          <div class="hs-num">3Φ</div>
+          <div class="hs-num">3-Phase</div>
           <div class="hs-label">Grid-Tied 400V Experience</div>
         </div>
       </div>
@@ -7365,7 +7458,7 @@ h2.section {
     <div class="pg-content">
       <div class="pg-header">
         <div class="pg-header-logo">${escapeHtml(brandCore).split(' ')[0]} · FDG<span class="red">SOLAR</span><span class="vis">VISAYAS</span></div>
-        <div class="pg-header-tag">Track Record &amp; Capabilities</div>
+        <div class="pg-header-tag">Track Record &amp; Capabilities · ${today}</div>
       </div>
 
       ${about ? `<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-left:5pt solid #f59e0b;padding:14pt 18pt;border-radius:6pt;margin-bottom:14pt;">
@@ -7400,7 +7493,7 @@ h2.section {
     <div class="pg-content">
       <div class="pg-header">
         <div class="pg-header-logo">${escapeHtml(brandCore).split(' ')[0]} · FDG<span class="red">SOLAR</span><span class="vis">VISAYAS</span></div>
-        <div class="pg-header-tag">Why Choose Us</div>
+        <div class="pg-header-tag">Why Choose Us · ${today}</div>
       </div>
 
       <div class="diff-box">
@@ -7424,7 +7517,7 @@ h2.section {
       </div>
 
       <div class="pg-footer">
-        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.5.8
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.6.0
       </div>
     </div>
   </div>
@@ -7684,7 +7777,12 @@ async function openTurnoverForm() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Warranty & Acceptance Terms</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge" style="background:#059669;">TURNOVER &amp; ACCEPTANCE</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}
+        </div>
       </div>
 
       <h2>3. Serial Number Documentation</h2>
@@ -7729,7 +7827,12 @@ async function openTurnoverForm() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Commissioning &amp; Acceptance</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge" style="background:#059669;">TURNOVER &amp; ACCEPTANCE</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}
+        </div>
       </div>
 
       <h2>7. Commissioning Test Photographs</h2>
@@ -7767,7 +7870,12 @@ async function openTurnoverForm() {
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Appendix A · Equipment Documentation Photos</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge" style="background:#059669;">TURNOVER &amp; ACCEPTANCE</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}
+        </div>
       </div>
 
       <div class="info-block amber" style="margin-bottom:8pt;">
@@ -7783,22 +7891,27 @@ async function openTurnoverForm() {
           <div style="font-size:24pt;">📷</div>
           <div style="margin:4pt 0;"><strong>No serial photos attached yet.</strong></div>
           <div style="font-size:8pt;color:#94a3b8;">Click below to attach images of PV modules, inverter, and battery serial-number plates.</div>
-          <label class="attach-btn" for="serial-input" style="margin-top:6pt;">+ Attach Serial Photos</label>
+          <label class="attach-btn" for="serial-input" style="margin-top:6pt;">📷 Upload Photos</label>
           <input type="file" id="serial-input" multiple accept="image/*" onchange="handleAttach(event,'serial')"/>
         </div>
         <div id="serial-grid" class="attach-grid" style="display:none;"></div>
-        <label class="attach-btn" for="serial-input-2" id="serial-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
+        <label class="attach-btn" for="serial-input-2" id="serial-add-btn" style="display:none;margin-top:6pt;">＋ Add More</label>
         <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.5.8</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.6.0</div>
     </div>
 
     <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Appendix B · Monitoring App Credentials</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge" style="background:#059669;">TURNOVER &amp; ACCEPTANCE</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}
+        </div>
       </div>
 
       <h2>B.1 Monitoring App Credentials</h2>
@@ -7809,22 +7922,27 @@ async function openTurnoverForm() {
           <div style="font-size:24pt;">📱</div>
           <div style="margin:4pt 0;"><strong>No credential screenshots attached yet.</strong></div>
           <div style="font-size:8pt;color:#94a3b8;">Click below to attach app screenshots (login screen, dashboard, etc.).</div>
-          <label class="attach-btn" for="app-input" style="margin-top:6pt;">+ Attach App Screenshots</label>
+          <label class="attach-btn" for="app-input" style="margin-top:6pt;">📱 Upload Screenshots</label>
           <input type="file" id="app-input" multiple accept="image/*" onchange="handleAttach(event,'app')"/>
         </div>
         <div id="app-grid" class="attach-grid" style="display:none;"></div>
-        <label class="attach-btn" for="app-input-2" id="app-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
+        <label class="attach-btn" for="app-input-2" id="app-add-btn" style="display:none;margin-top:6pt;">＋ Add More</label>
         <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.5.8</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.6.0</div>
     </div>
 
     <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
     <div class="pg">
       <div class="pg-header">
         <div><div class="pg-logo">FDG<span>SOLAR</span><small class="pg-logo-suffix"> VISAYAS</small></div><div class="pg-tag">Appendix C · Commissioning Test Report</div></div>
-        <div class="pg-meta"><strong>${refNo}</strong>${escapeHtml(clientName)}</div>
+        <div class="pg-meta">
+          <span class="pg-badge" style="background:#059669;">TURNOVER &amp; ACCEPTANCE</span><br/>
+          <strong>${refNo}</strong>
+          ${escapeHtml(clientName)}<br/>
+          Issued: ${today}
+        </div>
       </div>
 
       <h2>C.1 Commissioning Test Photographs</h2>
@@ -7835,11 +7953,11 @@ async function openTurnoverForm() {
           <div style="font-size:24pt;">📊</div>
           <div style="margin:4pt 0;"><strong>No commissioning photos attached yet.</strong></div>
           <div style="font-size:8pt;color:#94a3b8;">Click below to attach photos of string I-V test results, megger/isolation readings, earth-Ω measurements, and energization sequence verification.</div>
-          <label class="attach-btn" for="commission-input" style="margin-top:6pt;">+ Attach Commissioning Photos</label>
+          <label class="attach-btn" for="commission-input" style="margin-top:6pt;">📊 Upload Photos</label>
           <input type="file" id="commission-input" multiple accept="image/*" onchange="handleAttach(event,'commission')"/>
         </div>
         <div id="commission-grid" class="attach-grid" style="display:none;"></div>
-        <label class="attach-btn" for="commission-input-2" id="commission-add-btn" style="display:none;margin-top:6pt;">+ Add More</label>
+        <label class="attach-btn" for="commission-input-2" id="commission-add-btn" style="display:none;margin-top:6pt;">＋ Add More</label>
         <input type="file" id="commission-input-2" multiple accept="image/*" onchange="handleAttach(event,'commission')" style="display:none;"/>
       </div>
 
@@ -7854,7 +7972,7 @@ async function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.5.8</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.6.0</div>
     </div>
 
   </div>
