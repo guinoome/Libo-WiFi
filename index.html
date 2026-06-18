@@ -952,7 +952,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="logo-sun">☀️</div>
       <div class="logo-name">FDG Solar Visayas</div>
       <div class="logo-sub">Engineering | Procurement | Construction Pro Dashboard</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.6.0</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin-top:6px;">REV 3.6.1</div>
     </div>
     <div class="nav">
       <div class="nav-item active" onclick="switchView(&#39;view-calc&#39;, this)"><span class="nav-icon">🔢</span>Eng. Calculators</div>
@@ -3763,7 +3763,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     </div>
   </div>
 
-  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.6.0</div>
+  <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.6.1</div>
 </div>
 </body></html>`;
 
@@ -6635,8 +6635,8 @@ async function generatePDFQuote() {
         <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor${blueprintIncluded ? ' + Blueprint' : ''})</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
         ${discountDisplay ? `<tr><td style="background:#f1f5f9;">Engineering Design Discount</td><td style="font-family:monospace;color:#dc2626;">${escapeHtml(discountDisplay)}</td></tr>` : ''}
         <tr><td style="background:#f1f5f9;">Base (VAT-Exclusive)</td><td style="font-family:monospace;">₱${baseVatEx.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>
-        <tr><td style="background:#f1f5f9;">+ 12% VAT</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#94a3b8;'}">${isVatIn ? '₱' + vat12.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>excluded</em>'}</td></tr>
-        <tr><td style="background:#f1f5f9;">+ 10% Professional Fee</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#94a3b8;'}">${isVatIn ? '₱' + profFee.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>excluded</em>'}</td></tr>
+        <tr><td style="background:#f1f5f9;">+ 12% VAT</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#dc2626;'}">${isVatIn ? '₱' + vat12.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>excluded</em>'}</td></tr>
+        <tr><td style="background:#f1f5f9;">+ 10% Professional Fee</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#dc2626;'}">${isVatIn ? '₱' + profFee.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>Waived</em>'}</td></tr>
         <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL INVESTMENT (${isVatIn ? 'VAT Inclusive · Official Receipt' : 'VAT Exclusive · Acknowledgement Receipt'})</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
         ${!isVatIn ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: This is a VAT-Exclusive figure (Acknowledgement Receipt). The <strong>12% VAT</strong> and <strong>10% Professional Fee</strong> shown above are <strong>excluded</strong> from this total. ${blueprintIncluded ? 'The Blueprint (Sign &amp; Seal) price of <strong>₱' + blueprintVal.toLocaleString() + '</strong> is also VAT-Exclusive. ' : ''}Switch to VAT Inclusive for an Official Receipt (adds 22%).</td></tr>` : (blueprintIncluded ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: Blueprint (Sign &amp; Seal) input price of <strong>₱${blueprintVal.toLocaleString()}</strong> is entered VAT-Exclusive; the 12% VAT + 10% Professional Fee above are applied on the full base (blueprint included).</td></tr>` : '')}
         <tr><td style="background:#f1f5f9;">Daily Generation (from Eng. Calc)</td><td style="font-family:monospace;">${dailyKwh.toFixed(2)} kWh/day · ${monthlyKwh.toFixed(0)} kWh/month</td></tr>
@@ -7517,7 +7517,7 @@ h2.section {
       </div>
 
       <div class="pg-footer">
-        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.6.0
+        © ${new Date().getFullYear()} FDG Solar Visayas · ${escapeHtml(name)} · Issued ${today} · REV 3.6.1
       </div>
     </div>
   </div>
@@ -7899,7 +7899,7 @@ async function openTurnoverForm() {
         <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.6.0</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.6.1</div>
     </div>
 
     <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
@@ -7930,7 +7930,7 @@ async function openTurnoverForm() {
         <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.6.0</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.6.1</div>
     </div>
 
     <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
@@ -7972,7 +7972,7 @@ async function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.6.0</div>
+      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.6.1</div>
     </div>
 
   </div>
