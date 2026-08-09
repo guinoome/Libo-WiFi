@@ -1,0 +1,102 @@
+{
+  "resources/adminlte.min.js": {
+    "mtime": 1785059597.5885022,
+    "ast_hash": "ce042cca95a4c154dcb969cebc5ec378",
+    "semantic_hash": "ce042cca95a4c154dcb969cebc5ec378"
+  },
+  "resources/alert.js": {
+    "mtime": 1785059597.5885022,
+    "ast_hash": "db55f57a28fdeef0fc804a79197e46f5",
+    "semantic_hash": "db55f57a28fdeef0fc804a79197e46f5"
+  },
+  "resources/bootstrap.bundle.min.js": {
+    "mtime": 1785059597.5965023,
+    "ast_hash": "90146f01d8a2028ed6f2c3d2fba4ac9b",
+    "semantic_hash": "90146f01d8a2028ed6f2c3d2fba4ac9b"
+  },
+  "resources/forced_browser.js": {
+    "mtime": 1785059597.5965023,
+    "ast_hash": "854829e8b12d881c5f1cb3f53903d472",
+    "semantic_hash": "854829e8b12d881c5f1cb3f53903d472"
+  },
+  "resources/index.js": {
+    "mtime": 1785059597.5965023,
+    "ast_hash": "9dd03ea9b5a44f3fe7417912d65803ff",
+    "semantic_hash": "9dd03ea9b5a44f3fe7417912d65803ff"
+  },
+  "resources/jquery.min.js": {
+    "mtime": 1785059597.5965023,
+    "ast_hash": "8fb8fee4fcc3cc86ff6c724154c49c42",
+    "semantic_hash": "8fb8fee4fcc3cc86ff6c724154c49c42"
+  },
+  "resources/klcis.js": {
+    "mtime": 1785059597.5965023,
+    "ast_hash": "73b4ade2262de8924efe25ea97650eb4",
+    "semantic_hash": "73b4ade2262de8924efe25ea97650eb4"
+  },
+  "resources/qr.js": {
+    "mtime": 1785059597.6085021,
+    "ast_hash": "517b55d3688ce9ef1085a3d9632bcb97",
+    "semantic_hash": "517b55d3688ce9ef1085a3d9632bcb97"
+  },
+  "PRE-AUTHENTICATION-HOSTS.txt": {
+    "mtime": 1785059597.5725021,
+    "ast_hash": "8cb8715e26c6fcad885a08ea20c9b8a7",
+    "semantic_hash": "8cb8715e26c6fcad885a08ea20c9b8a7"
+  },
+  "docs/CLAUDE-CODE-STD-001.md": {
+    "mtime": 1785081629.1932673,
+    "ast_hash": "4466276441a3498588cb6a848de69fb4",
+    "semantic_hash": "4466276441a3498588cb6a848de69fb4"
+  },
+  "index.html": {
+    "mtime": 1785059597.5765023,
+    "ast_hash": "16c370d36c19707f45c496ca9b97df9a",
+    "semantic_hash": "16c370d36c19707f45c496ca9b97df9a"
+  },
+  "resources/background.png": {
+    "mtime": 1785059597.592502,
+    "ast_hash": "12baf3911f82846a95e64fbaa8782a2b",
+    "semantic_hash": "12baf3911f82846a95e64fbaa8782a2b"
+  },
+  "resources/gcash_logo.png": {
+    "mtime": 1785059597.5965023,
+    "ast_hash": "59bcc2d915ec5b6ace85b4740dc2d1c4",
+    "semantic_hash": "59bcc2d915ec5b6ace85b4740dc2d1c4"
+  },
+  "resources/logo.png": {
+    "mtime": 1785059597.6085021,
+    "ast_hash": "6db9893e2bb312348596c1b26ec287c2",
+    "semantic_hash": "6db9893e2bb312348596c1b26ec287c2"
+  },
+  "resources/maya_logo.png": {
+    "mtime": 1785059597.6085021,
+    "ast_hash": "314deb9f4b5c08095dd451be13eb7289",
+    "semantic_hash": "314deb9f4b5c08095dd451be13eb7289"
+  },
+  "resources/spay_logo.png": {
+    "mtime": 1785059597.6085021,
+    "ast_hash": "1416522d0700901d2d06697bd724d25e",
+    "semantic_hash": "1416522d0700901d2d06697bd724d25e"
+  },
+  "screenshots/1.jpg": {
+    "mtime": 1785059597.6085021,
+    "ast_hash": "8deadc34eda9a78eb597a3371a5849bd",
+    "semantic_hash": "8deadc34eda9a78eb597a3371a5849bd"
+  },
+  "screenshots/2.jpg": {
+    "mtime": 1785059597.6151836,
+    "ast_hash": "db392794ab1e7a2932e2a23d9e7b9612",
+    "semantic_hash": "db392794ab1e7a2932e2a23d9e7b9612"
+  },
+  "screenshots/3.jpg": {
+    "mtime": 1785059597.6151836,
+    "ast_hash": "2a53ea3b7778c4212f0ef390bdd76247",
+    "semantic_hash": "2a53ea3b7778c4212f0ef390bdd76247"
+  },
+  "screenshots/4.jpg": {
+    "mtime": 1785059597.6151836,
+    "ast_hash": "e73ac171fc591a0e5fc2df0dfd0367ea",
+    "semantic_hash": "e73ac171fc591a0e5fc2df0dfd0367ea"
+  }
+}
