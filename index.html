@@ -1334,6 +1334,271 @@ input:hover,select:hover,textarea:hover{
 }
 </style>
 
+
+<!-- FDG SOLAR REMASTER REV 3.7 — presentation-only enhancement -->
+<style id="fdg-rev37-style">
+/* Rev 3.7 is deliberately presentation-only. Existing application logic remains authoritative. */
+#view-calc .fdg-rev37-live-stage{
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr);
+  gap:16px;
+  margin:0 0 20px;
+}
+.fdg-r37-panel{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(148,163,184,.17);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.022),transparent 36%),
+    rgba(9,18,31,.86);
+  border-radius:16px;
+  box-shadow:0 14px 36px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.025);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.fdg-r37-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at 82% 6%,rgba(59,130,246,.08),transparent 28%);
+}
+.fdg-r37-head{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 17px 12px;
+  border-bottom:1px solid rgba(148,163,184,.11);
+}
+.fdg-r37-kicker{
+  color:#64748b;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:1.25px;
+  font-weight:800;
+}
+.fdg-r37-title{
+  margin-top:3px;
+  font-family:var(--display);
+  font-size:14px;
+  font-weight:800;
+  color:#f8fafc;
+}
+.fdg-r37-live-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid rgba(16,185,129,.22);
+  background:rgba(16,185,129,.08);
+  color:#34d399;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.55px;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.fdg-r37-live-pill::before{
+  content:"";
+  width:6px;height:6px;border-radius:50%;
+  background:#10b981;
+  box-shadow:0 0 12px rgba(16,185,129,.75);
+}
+.fdg-r37-flow{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:110px minmax(90px,1fr) minmax(110px,1.1fr) minmax(110px,1fr) 105px;
+  align-items:center;
+  gap:7px;
+  padding:24px 18px 20px;
+}
+.fdg-r37-node{
+  position:relative;
+  min-height:108px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  border-radius:13px;
+  border:1px solid rgba(148,163,184,.12);
+  background:rgba(255,255,255,.023);
+}
+.fdg-r37-node .ico{
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;
+  margin-bottom:8px;
+  font-size:22px;
+}
+.fdg-r37-node.solar .ico{background:rgba(245,158,11,.12);color:#fbbf24}
+.fdg-r37-node.pv .ico{background:rgba(59,130,246,.12);color:#60a5fa}
+.fdg-r37-node.load .ico{background:rgba(34,211,238,.09);color:#67e8f9}
+.fdg-r37-node.battery .ico{background:rgba(16,185,129,.11);color:#34d399}
+.fdg-r37-node.grid .ico{background:rgba(148,163,184,.10);color:#cbd5e1}
+.fdg-r37-node strong{
+  display:block;
+  color:#f8fafc;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.4;
+}
+.fdg-r37-node span{
+  display:block;
+  margin-top:3px;
+  color:#64748b;
+  font-size:9px;
+  line-height:1.35;
+}
+.fdg-r37-link{
+  position:relative;
+  height:2px;
+  background:linear-gradient(90deg,rgba(245,158,11,.85),rgba(34,211,238,.72));
+  box-shadow:0 0 12px rgba(59,130,246,.17);
+}
+.fdg-r37-link::after{
+  content:"";
+  position:absolute;
+  right:-1px;top:50%;
+  width:7px;height:7px;
+  border-top:2px solid #67e8f9;
+  border-right:2px solid #67e8f9;
+  transform:translateY(-50%) rotate(45deg);
+}
+.fdg-r37-link.alt{
+  background:linear-gradient(90deg,rgba(34,211,238,.7),rgba(16,185,129,.82));
+}
+.fdg-r37-link.return{
+  background:linear-gradient(90deg,rgba(167,139,250,.78),rgba(59,130,246,.68));
+}
+.fdg-r37-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px 16px;
+  padding:0 18px 16px;
+  color:#94a3b8;
+  font-size:9px;
+}
+.fdg-r37-legend span{display:inline-flex;align-items:center;gap:6px}
+.fdg-r37-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.fdg-r37-summary{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  padding:12px;
+}
+.fdg-r37-metric{
+  min-height:78px;
+  border-radius:12px;
+  padding:11px;
+  border:1px solid rgba(148,163,184,.11);
+  background:rgba(255,255,255,.025);
+}
+.fdg-r37-metric label{
+  display:block;
+  margin:0;
+  color:#64748b;
+  font-size:8px;
+  letter-spacing:.85px;
+  text-transform:uppercase;
+}
+.fdg-r37-metric strong{
+  display:block;
+  margin-top:7px;
+  color:#f8fafc;
+  font-family:var(--mono);
+  font-size:11px;
+  line-height:1.4;
+  word-break:break-word;
+}
+.fdg-r37-source-note{
+  padding:0 13px 13px;
+  color:#475569;
+  font-size:8px;
+  line-height:1.5;
+}
+#view-calc > .card{
+  border-color:rgba(148,163,184,.16);
+}
+#view-calc > .card:first-of-type{
+  background:
+    radial-gradient(circle at 86% 0%,rgba(245,158,11,.045),transparent 27%),
+    linear-gradient(180deg,rgba(255,255,255,.016),transparent 28%),
+    rgba(12,22,38,.88);
+}
+#view-calc input,#view-calc select,#view-calc textarea{
+  min-height:39px;
+  border-color:rgba(148,163,184,.18);
+  background:rgba(6,13,24,.66);
+}
+#view-calc input:focus,#view-calc select:focus,#view-calc textarea:focus{
+  border-color:rgba(245,158,11,.70);
+  box-shadow:0 0 0 3px rgba(245,158,11,.09);
+}
+#view-calc .btn-amber{
+  background:linear-gradient(135deg,#fbbf24,#f59e0b);
+  box-shadow:0 10px 24px rgba(245,158,11,.17);
+}
+#view-calc .card-header{
+  border-bottom-color:rgba(148,163,184,.10);
+}
+@media(max-width:1120px){
+  #view-calc .fdg-rev37-live-stage{grid-template-columns:1fr}
+  .fdg-r37-summary{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:768px){
+  #view-calc .fdg-rev37-live-stage{margin-bottom:14px}
+  .fdg-r37-flow{
+    grid-template-columns:1fr 24px 1fr;
+    gap:7px;
+    padding:14px 12px;
+  }
+  .fdg-r37-flow .fdg-r37-node:nth-of-type(3),
+  .fdg-r37-flow .fdg-r37-node:nth-of-type(4),
+  .fdg-r37-flow .fdg-r37-node:nth-of-type(5){
+    margin-top:6px;
+  }
+  .fdg-r37-link{min-width:20px}
+  .fdg-r37-summary{grid-template-columns:1fr 1fr}
+}
+@media(max-width:430px){
+  .fdg-r37-flow{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .fdg-r37-link{
+    width:2px;height:22px;margin:auto;
+    background:linear-gradient(180deg,rgba(245,158,11,.85),rgba(34,211,238,.72));
+  }
+  .fdg-r37-link::after{
+    right:auto;left:50%;top:auto;bottom:-1px;
+    transform:translateX(-50%) rotate(135deg);
+  }
+  .fdg-r37-node{min-height:84px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .fdg-r37-link::before{
+    content:"";
+    position:absolute;
+    top:50%;left:0;
+    width:22px;height:2px;
+    transform:translateY(-50%);
+    background:linear-gradient(90deg,transparent,#fff,transparent);
+    opacity:.5;
+    animation:fdgR37Flow 2.8s linear infinite;
+  }
+  @keyframes fdgR37Flow{from{left:-18px}to{left:calc(100% - 2px)}}
+}
+</style>
+
 </head>
 <body class="">
 
@@ -4275,6 +4540,106 @@ tr:nth-child(even) td { background:#f8fafc; }
     observeOutputs();
   }
 
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
+
+
+<script id="fdg-rev37-script">
+(function(){
+  const value = (id, fallback='—') => {
+    const el = document.getElementById(id);
+    const txt = el ? (el.textContent || '').replace(/\s+/g,' ').trim() : '';
+    return txt || fallback;
+  };
+  const shortKwh = (txt) => {
+    const m = String(txt || '').match(/(\d+(?:\.\d+)?)\s*kWh/i);
+    return m ? m[1] + ' kWh' : (txt || '—');
+  };
+  function injectRev37(){
+    const calc = document.getElementById('view-calc');
+    if(!calc || calc.querySelector('.fdg-rev37-live-stage')) return;
+
+    const stage = document.createElement('section');
+    stage.className = 'fdg-rev37-live-stage';
+    stage.setAttribute('aria-label','Live solar system visual summary');
+    stage.innerHTML = \`
+      <div class="fdg-r37-panel">
+        <div class="fdg-r37-head">
+          <div>
+            <div class="fdg-r37-kicker">Read-only visual mirror</div>
+            <div class="fdg-r37-title">Energy Flow · Current Calculated State</div>
+          </div>
+          <div class="fdg-r37-live-pill">Existing engine</div>
+        </div>
+        <div class="fdg-r37-flow">
+          <div class="fdg-r37-node solar"><div class="ico">☀</div><strong id="r37-day">—</strong><span>Daytime solar / offset</span></div>
+          <div class="fdg-r37-link"></div>
+          <div class="fdg-r37-node pv"><div class="ico">▦</div><strong id="r37-pv">—</strong><span>PV array</span></div>
+          <div class="fdg-r37-link alt"></div>
+          <div class="fdg-r37-node load"><div class="ico">⌂</div><strong id="r37-load">—</strong><span>Daily equivalent load</span></div>
+          <div class="fdg-r37-link return"></div>
+          <div class="fdg-r37-node battery"><div class="ico">▣</div><strong id="r37-battery">—</strong><span>Battery requirement / bank</span></div>
+          <div class="fdg-r37-link alt"></div>
+          <div class="fdg-r37-node grid"><div class="ico">⌁</div><strong id="r37-grid">Existing logic</strong><span>Grid / offset interaction</span></div>
+        </div>
+        <div class="fdg-r37-legend">
+          <span><i class="fdg-r37-dot" style="background:#fbbf24"></i>Solar</span>
+          <span><i class="fdg-r37-dot" style="background:#22d3ee"></i>Direct use</span>
+          <span><i class="fdg-r37-dot" style="background:#10b981"></i>Battery path</span>
+          <span><i class="fdg-r37-dot" style="background:#a78bfa"></i>Charge / discharge</span>
+          <span><i class="fdg-r37-dot" style="background:#94a3b8"></i>Grid state</span>
+        </div>
+      </div>
+      <aside class="fdg-r37-panel">
+        <div class="fdg-r37-head">
+          <div>
+            <div class="fdg-r37-kicker">Live outputs</div>
+            <div class="fdg-r37-title">Engineering Snapshot</div>
+          </div>
+        </div>
+        <div class="fdg-r37-summary">
+          <div class="fdg-r37-metric"><label>Inverter</label><strong id="r37-inverter">—</strong></div>
+          <div class="fdg-r37-metric"><label>Investment</label><strong id="r37-investment">—</strong></div>
+          <div class="fdg-r37-metric"><label>Monthly savings</label><strong id="r37-savings">—</strong></div>
+          <div class="fdg-r37-metric"><label>Battery bank</label><strong id="r37-bank">—</strong></div>
+        </div>
+        <div class="fdg-r37-source-note">Presentation only. Values are mirrored from the existing calculator DOM; Rev 3.7 does not replace or recompute the authoritative engineering logic.</div>
+      </aside>
+    \`;
+
+    const hero = calc.querySelector('.fdg-hero');
+    if(hero) hero.insertAdjacentElement('afterend', stage);
+    else calc.insertBefore(stage, calc.firstChild);
+  }
+
+  function updateRev37(){
+    const set = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt || '—'; };
+    set('r37-day', value('flowValDay'));
+    set('r37-pv', value('out-pkwp'));
+    set('r37-load', value('mathDailyKwh'));
+    set('r37-battery', shortKwh(value('flowValBattery')));
+    set('r37-inverter', value('out-inverter'));
+    set('r37-investment', value('out-investment'));
+    set('r37-savings', value('flowValSavings'));
+    set('r37-bank', value('out-battery'));
+  }
+
+  function observeRev37(){
+    ['flowValDay','out-pkwp','mathDailyKwh','flowValBattery','out-inverter','out-investment','flowValSavings','out-battery'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) new MutationObserver(updateRev37).observe(el,{subtree:true,childList:true,characterData:true});
+    });
+    document.addEventListener('input',()=>requestAnimationFrame(updateRev37),true);
+    document.addEventListener('change',()=>requestAnimationFrame(updateRev37),true);
+  }
+
+  function init(){
+    injectRev37();
+    updateRev37();
+    observeRev37();
+  }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
 })();
