@@ -926,6 +926,679 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .pl-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 .pl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 </style>
+
+<!-- FDG PREMIUM UI REFRESH — presentation-only layer -->
+<style id="fdg-premium-ui-refresh">
+/* FDG PREMIUM UI REFRESH
+   Presentation layer only. No calculator, storage, quotation, CRM, PDF, or sync logic is changed. */
+
+:root{
+  --fdg-surface-glass: rgba(15,24,41,.78);
+  --fdg-shadow: 0 22px 60px rgba(0,0,0,.28);
+  --fdg-shadow-soft: 0 12px 32px rgba(0,0,0,.18);
+  --fdg-hairline: rgba(255,255,255,.065);
+}
+
+.main{
+  position:relative;
+  background:
+    radial-gradient(circle at 84% -8%, rgba(245,158,11,.09), transparent 30%),
+    radial-gradient(circle at 46% 16%, rgba(59,130,246,.055), transparent 34%),
+    linear-gradient(180deg,#080d1a 0%,#09101d 42%,#080d1a 100%);
+}
+.main::before{
+  content:"";
+  position:fixed;
+  inset:0 0 0 250px;
+  pointer-events:none;
+  opacity:.17;
+  background-image:
+    linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent 74%);
+}
+
+.sidebar{
+  background:linear-gradient(180deg,rgba(6,10,20,.98),rgba(6,10,20,.94));
+  box-shadow:18px 0 50px rgba(0,0,0,.12);
+}
+.sidebar-logo{
+  padding-top:28px;
+}
+.logo-sun{
+  border-radius:12px;
+  transform:rotate(-3deg);
+  box-shadow:0 12px 34px rgba(245,158,11,.22),0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.nav{padding:16px 10px;}
+.nav-item{
+  border-left:0;
+  border-radius:10px;
+  margin:3px 0;
+  padding:11px 12px;
+}
+.nav-item .nav-icon{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.045);
+}
+.nav-item.active{
+  border-left:0;
+  background:linear-gradient(90deg,rgba(245,158,11,.15),rgba(245,158,11,.045));
+  box-shadow:inset 0 0 0 1px rgba(245,158,11,.14);
+}
+.nav-item.active .nav-icon{
+  background:rgba(245,158,11,.16);
+  border-color:rgba(245,158,11,.24);
+}
+.view-section{
+  max-width:1480px;
+  margin:0 auto;
+  padding:34px 38px 48px;
+}
+.page-title{
+  letter-spacing:-.5px;
+}
+.card{
+  border-radius:16px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.018),transparent 32%),
+    var(--fdg-surface-glass);
+  box-shadow:0 1px 0 rgba(255,255,255,.025) inset,0 12px 28px rgba(0,0,0,.10);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.card:hover{
+  border-color:rgba(148,163,184,.28);
+  box-shadow:var(--fdg-shadow-soft);
+  transform:translateY(-1px);
+}
+.sub-card{
+  border-radius:12px;
+  background:rgba(12,18,34,.76);
+}
+input,select,textarea{
+  border-radius:9px;
+}
+.btn{
+  border-radius:9px;
+}
+.stat-chip{
+  border-radius:12px;
+}
+
+/* ---- Premium live engineering hero ---- */
+#view-calc > .page-header{display:none;}
+.fdg-hero{
+  min-height:360px;
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  margin:0 0 24px;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:var(--fdg-shadow);
+  isolation:isolate;
+  background-image:
+    linear-gradient(90deg,rgba(5,10,20,.96) 0%,rgba(5,10,20,.91) 36%,rgba(5,10,20,.56) 61%,rgba(5,10,20,.20) 100%),
+    linear-gradient(180deg,rgba(4,8,16,.08),rgba(4,8,16,.52)),
+    url("https://images.pexels.com/photos/29206495/pexels-photo-29206495/free-photo-of-modern-home-with-rooftop-solar-panels.jpeg?auto=compress&dpr=1&h=900&w=1600");
+  background-size:cover;
+  background-position:center 54%;
+}
+.fdg-hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:
+    radial-gradient(circle at 72% 24%,rgba(251,191,36,.20),transparent 16%),
+    linear-gradient(120deg,transparent 58%,rgba(255,255,255,.055) 59%,transparent 60%);
+  animation:fdgHeroGlow 7s ease-in-out infinite alternate;
+}
+.fdg-hero::after{
+  content:"";
+  position:absolute;
+  inset:auto 0 0 0;
+  height:44%;
+  z-index:-1;
+  background:linear-gradient(to top,rgba(4,8,16,.92),transparent);
+}
+@keyframes fdgHeroGlow{
+  from{opacity:.62;transform:translate3d(-.5%,0,0)}
+  to{opacity:1;transform:translate3d(.5%,-.7%,0)}
+}
+.fdg-hero-inner{
+  min-height:360px;
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);
+  gap:28px;
+  align-items:end;
+  padding:42px;
+}
+.fdg-hero-copy{
+  align-self:center;
+  max-width:760px;
+}
+.fdg-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  padding:7px 11px;
+  border:1px solid rgba(245,158,11,.24);
+  background:rgba(245,158,11,.09);
+  color:#fbbf24;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.35px;
+  text-transform:uppercase;
+  margin-bottom:18px;
+  backdrop-filter:blur(8px);
+}
+.fdg-eyebrow-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#10b981;
+  box-shadow:0 0 0 5px rgba(16,185,129,.09),0 0 18px rgba(16,185,129,.65);
+}
+.fdg-hero h1{
+  font-family:var(--display);
+  font-size:clamp(34px,4vw,58px);
+  line-height:.98;
+  letter-spacing:-2.2px;
+  margin:0;
+  max-width:760px;
+  color:#f8fafc;
+  text-wrap:balance;
+}
+.fdg-hero h1 em{
+  font-style:normal;
+  color:#f59e0b;
+}
+.fdg-hero-lead{
+  max-width:650px;
+  margin:18px 0 0;
+  color:#cbd5e1;
+  font-size:14px;
+  line-height:1.7;
+}
+.fdg-hero-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:24px;
+}
+.fdg-hero-btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.10);
+  min-height:42px;
+  padding:0 15px;
+  border-radius:10px;
+  font-family:var(--display);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.55px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;
+}
+.fdg-hero-btn:hover{transform:translateY(-2px)}
+.fdg-hero-btn.primary{
+  color:#0b1020;
+  background:linear-gradient(135deg,#fbbf24,#f59e0b);
+  border-color:rgba(251,191,36,.65);
+  box-shadow:0 12px 28px rgba(245,158,11,.22);
+}
+.fdg-hero-btn.secondary{
+  color:#e2e8f0;
+  background:rgba(8,13,26,.62);
+  backdrop-filter:blur(9px);
+}
+.fdg-hero-live{
+  align-self:end;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(7,12,23,.68);
+  box-shadow:0 20px 40px rgba(0,0,0,.22);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-radius:16px;
+}
+.fdg-live-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:2px 2px 12px;
+  border-bottom:1px solid rgba(255,255,255,.075);
+}
+.fdg-live-title{
+  font-family:var(--display);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+}
+.fdg-live-state{
+  color:#34d399;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+}
+.fdg-live-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:11px;
+}
+.fdg-live-metric{
+  min-height:72px;
+  border-radius:11px;
+  padding:11px 12px;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.055);
+}
+.fdg-live-label{
+  color:#64748b;
+  text-transform:uppercase;
+  font-size:8px;
+  letter-spacing:1px;
+  font-weight:800;
+}
+.fdg-live-value{
+  color:#f8fafc;
+  margin-top:6px;
+  font-family:var(--mono);
+  font-weight:700;
+  font-size:13px;
+  line-height:1.35;
+}
+.fdg-live-metric.investment .fdg-live-value{color:#fbbf24}
+.fdg-hero-foot{
+  position:absolute;
+  left:42px;
+  bottom:16px;
+  color:rgba(203,213,225,.56);
+  font-size:9px;
+  letter-spacing:.25px;
+}
+
+/* Slim context hero for non-calculator working views */
+.fdg-context-strip{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:center;
+  margin:0 0 22px;
+  padding:15px 18px;
+  border-radius:14px;
+  border:1px solid rgba(245,158,11,.16);
+  background:
+    radial-gradient(circle at 85% 0%,rgba(245,158,11,.09),transparent 26%),
+    linear-gradient(100deg,rgba(15,24,41,.88),rgba(12,18,34,.68));
+}
+.fdg-context-strip::after{
+  content:"";
+  position:absolute;
+  right:-35px;top:-45px;
+  width:150px;height:150px;border-radius:50%;
+  border:1px solid rgba(245,158,11,.12);
+  box-shadow:0 0 0 28px rgba(245,158,11,.025),0 0 0 56px rgba(245,158,11,.018);
+}
+.fdg-context-copy strong{
+  display:block;
+  font-family:var(--display);
+  font-size:13px;
+  letter-spacing:.15px;
+}
+.fdg-context-copy span{
+  display:block;
+  margin-top:3px;
+  font-size:11px;
+  color:var(--text2);
+}
+.fdg-context-badge{
+  flex:0 0 auto;
+  position:relative;
+  z-index:1;
+  padding:7px 10px;
+  border-radius:999px;
+  color:#fbbf24;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+  background:rgba(245,158,11,.07);
+  border:1px solid rgba(245,158,11,.18);
+}
+
+/* More alive, but restrained, interaction language */
+.view-section.active > .card,
+.view-section.active > .stats-row,
+.view-section.active > .g2,
+.view-section.active > .g3{
+  animation:fdgSurfaceIn .42s cubic-bezier(.2,.75,.2,1) both;
+}
+@keyframes fdgSurfaceIn{
+  from{opacity:0;transform:translateY(9px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.btn-amber,.btn-green{
+  box-shadow:0 8px 24px rgba(0,0,0,.16);
+}
+input:hover,select:hover,textarea:hover{
+  border-color:rgba(148,163,184,.36);
+}
+
+@media(max-width:1024px){
+  .fdg-hero-inner{grid-template-columns:1fr;padding:34px;min-height:430px}
+  .fdg-hero-copy{align-self:start}
+  .fdg-hero-live{max-width:620px}
+}
+@media(max-width:768px){
+  .main::before{inset:0}
+  .view-section{padding:18px 12px 88px}
+  .fdg-hero{min-height:auto;border-radius:18px;background-position:63% center}
+  .fdg-hero-inner{min-height:520px;padding:26px 20px 22px;align-content:space-between}
+  .fdg-hero h1{font-size:36px;letter-spacing:-1.4px;max-width:94%}
+  .fdg-hero-lead{font-size:13px;max-width:94%}
+  .fdg-hero-live{width:100%;padding:12px}
+  .fdg-live-grid{gap:7px}
+  .fdg-live-metric{min-height:67px}
+  .fdg-hero-foot{display:none}
+  .fdg-context-strip{align-items:flex-start;flex-direction:column;padding-right:70px}
+}
+@media(max-width:420px){
+  .fdg-hero-inner{min-height:560px}
+  .fdg-hero-actions{display:grid;grid-template-columns:1fr}
+  .fdg-hero-btn{width:100%}
+  .fdg-live-grid{grid-template-columns:1fr 1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .fdg-hero::before,
+  .view-section.active > .card,
+  .view-section.active > .stats-row,
+  .view-section.active > .g2,
+  .view-section.active > .g3{
+    animation:none!important;
+  }
+  *{scroll-behavior:auto!important}
+}
+</style>
+
+
+<!-- FDG SOLAR REMASTER REV 3.7 — presentation-only enhancement -->
+<style id="fdg-rev37-style">
+/* Rev 3.7 is deliberately presentation-only. Existing application logic remains authoritative. */
+#view-calc .fdg-rev37-live-stage{
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr);
+  gap:16px;
+  margin:0 0 20px;
+}
+.fdg-r37-panel{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(148,163,184,.17);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.022),transparent 36%),
+    rgba(9,18,31,.86);
+  border-radius:16px;
+  box-shadow:0 14px 36px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.025);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.fdg-r37-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at 82% 6%,rgba(59,130,246,.08),transparent 28%);
+}
+.fdg-r37-head{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 17px 12px;
+  border-bottom:1px solid rgba(148,163,184,.11);
+}
+.fdg-r37-kicker{
+  color:#64748b;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:1.25px;
+  font-weight:800;
+}
+.fdg-r37-title{
+  margin-top:3px;
+  font-family:var(--display);
+  font-size:14px;
+  font-weight:800;
+  color:#f8fafc;
+}
+.fdg-r37-live-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid rgba(16,185,129,.22);
+  background:rgba(16,185,129,.08);
+  color:#34d399;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.55px;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.fdg-r37-live-pill::before{
+  content:"";
+  width:6px;height:6px;border-radius:50%;
+  background:#10b981;
+  box-shadow:0 0 12px rgba(16,185,129,.75);
+}
+.fdg-r37-flow{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:110px minmax(90px,1fr) minmax(110px,1.1fr) minmax(110px,1fr) 105px;
+  align-items:center;
+  gap:7px;
+  padding:24px 18px 20px;
+}
+.fdg-r37-node{
+  position:relative;
+  min-height:108px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  border-radius:13px;
+  border:1px solid rgba(148,163,184,.12);
+  background:rgba(255,255,255,.023);
+}
+.fdg-r37-node .ico{
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;
+  margin-bottom:8px;
+  font-size:22px;
+}
+.fdg-r37-node.solar .ico{background:rgba(245,158,11,.12);color:#fbbf24}
+.fdg-r37-node.pv .ico{background:rgba(59,130,246,.12);color:#60a5fa}
+.fdg-r37-node.load .ico{background:rgba(34,211,238,.09);color:#67e8f9}
+.fdg-r37-node.battery .ico{background:rgba(16,185,129,.11);color:#34d399}
+.fdg-r37-node.grid .ico{background:rgba(148,163,184,.10);color:#cbd5e1}
+.fdg-r37-node strong{
+  display:block;
+  color:#f8fafc;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.4;
+}
+.fdg-r37-node span{
+  display:block;
+  margin-top:3px;
+  color:#64748b;
+  font-size:9px;
+  line-height:1.35;
+}
+.fdg-r37-link{
+  position:relative;
+  height:2px;
+  background:linear-gradient(90deg,rgba(245,158,11,.85),rgba(34,211,238,.72));
+  box-shadow:0 0 12px rgba(59,130,246,.17);
+}
+.fdg-r37-link::after{
+  content:"";
+  position:absolute;
+  right:-1px;top:50%;
+  width:7px;height:7px;
+  border-top:2px solid #67e8f9;
+  border-right:2px solid #67e8f9;
+  transform:translateY(-50%) rotate(45deg);
+}
+.fdg-r37-link.alt{
+  background:linear-gradient(90deg,rgba(34,211,238,.7),rgba(16,185,129,.82));
+}
+.fdg-r37-link.return{
+  background:linear-gradient(90deg,rgba(167,139,250,.78),rgba(59,130,246,.68));
+}
+.fdg-r37-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px 16px;
+  padding:0 18px 16px;
+  color:#94a3b8;
+  font-size:9px;
+}
+.fdg-r37-legend span{display:inline-flex;align-items:center;gap:6px}
+.fdg-r37-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.fdg-r37-summary{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  padding:12px;
+}
+.fdg-r37-metric{
+  min-height:78px;
+  border-radius:12px;
+  padding:11px;
+  border:1px solid rgba(148,163,184,.11);
+  background:rgba(255,255,255,.025);
+}
+.fdg-r37-metric label{
+  display:block;
+  margin:0;
+  color:#64748b;
+  font-size:8px;
+  letter-spacing:.85px;
+  text-transform:uppercase;
+}
+.fdg-r37-metric strong{
+  display:block;
+  margin-top:7px;
+  color:#f8fafc;
+  font-family:var(--mono);
+  font-size:11px;
+  line-height:1.4;
+  word-break:break-word;
+}
+.fdg-r37-source-note{
+  padding:0 13px 13px;
+  color:#475569;
+  font-size:8px;
+  line-height:1.5;
+}
+#view-calc > .card{
+  border-color:rgba(148,163,184,.16);
+}
+#view-calc > .card:first-of-type{
+  background:
+    radial-gradient(circle at 86% 0%,rgba(245,158,11,.045),transparent 27%),
+    linear-gradient(180deg,rgba(255,255,255,.016),transparent 28%),
+    rgba(12,22,38,.88);
+}
+#view-calc input,#view-calc select,#view-calc textarea{
+  min-height:39px;
+  border-color:rgba(148,163,184,.18);
+  background:rgba(6,13,24,.66);
+}
+#view-calc input:focus,#view-calc select:focus,#view-calc textarea:focus{
+  border-color:rgba(245,158,11,.70);
+  box-shadow:0 0 0 3px rgba(245,158,11,.09);
+}
+#view-calc .btn-amber{
+  background:linear-gradient(135deg,#fbbf24,#f59e0b);
+  box-shadow:0 10px 24px rgba(245,158,11,.17);
+}
+#view-calc .card-header{
+  border-bottom-color:rgba(148,163,184,.10);
+}
+@media(max-width:1120px){
+  #view-calc .fdg-rev37-live-stage{grid-template-columns:1fr}
+  .fdg-r37-summary{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:768px){
+  #view-calc .fdg-rev37-live-stage{margin-bottom:14px}
+  .fdg-r37-flow{
+    grid-template-columns:1fr 24px 1fr;
+    gap:7px;
+    padding:14px 12px;
+  }
+  .fdg-r37-flow .fdg-r37-node:nth-of-type(3),
+  .fdg-r37-flow .fdg-r37-node:nth-of-type(4),
+  .fdg-r37-flow .fdg-r37-node:nth-of-type(5){
+    margin-top:6px;
+  }
+  .fdg-r37-link{min-width:20px}
+  .fdg-r37-summary{grid-template-columns:1fr 1fr}
+}
+@media(max-width:430px){
+  .fdg-r37-flow{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .fdg-r37-link{
+    width:2px;height:22px;margin:auto;
+    background:linear-gradient(180deg,rgba(245,158,11,.85),rgba(34,211,238,.72));
+  }
+  .fdg-r37-link::after{
+    right:auto;left:50%;top:auto;bottom:-1px;
+    transform:translateX(-50%) rotate(135deg);
+  }
+  .fdg-r37-node{min-height:84px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .fdg-r37-link::before{
+    content:"";
+    position:absolute;
+    top:50%;left:0;
+    width:22px;height:2px;
+    transform:translateY(-50%);
+    background:linear-gradient(90deg,transparent,#fff,transparent);
+    opacity:.5;
+    animation:fdgR37Flow 2.8s linear infinite;
+  }
+  @keyframes fdgR37Flow{from{left:-18px}to{left:calc(100% - 2px)}}
+}
+</style>
+
 </head>
 <body class="">
 
@@ -3765,6 +4438,213 @@ tr:nth-child(even) td { background:#f8fafc; }
 
   <div class="footer-line">© FDG Solar Visayas · ${escapeHtml(refNo)} · Issued ${today} · Internal Job Order · REV 3.6.1</div>
 </div>
+
+<script id="fdg-premium-ui-script">
+/* FDG PREMIUM UI REFRESH — presentation-only DOM enhancement */
+(function(){
+  const textOf = (id, fallback='—') => {
+    const el = document.getElementById(id);
+    const value = el ? (el.textContent || '').trim() : '';
+    return value || fallback;
+  };
+
+  function injectHero(){
+    const calc = document.getElementById('view-calc');
+    if(!calc || calc.querySelector('.fdg-hero')) return;
+
+    const hero = document.createElement('section');
+    hero.className = 'fdg-hero';
+    hero.setAttribute('aria-label','FDG Solar engineering workspace');
+    hero.innerHTML = `
+      <div class="fdg-hero-inner">
+        <div class="fdg-hero-copy">
+          <div class="fdg-eyebrow"><span class="fdg-eyebrow-dot"></span>Engineering workbench · live system model</div>
+          <h1>Design the system. <em>Prove the energy.</em> Build with confidence.</h1>
+          <p class="fdg-hero-lead">One engineering workspace for load interpretation, solar sizing, battery autonomy, protection checks, economics, and synchronized client quotation.</p>
+          <div class="fdg-hero-actions">
+            <button type="button" class="fdg-hero-btn primary" data-fdg-view="view-quote">Open quotation</button>
+            <button type="button" class="fdg-hero-btn secondary" data-fdg-scroll="s1-1ph">Start system sizing</button>
+          </div>
+        </div>
+        <aside class="fdg-hero-live" aria-label="Live recommended configuration">
+          <div class="fdg-live-head">
+            <div class="fdg-live-title">Recommended configuration</div>
+            <div class="fdg-live-state">● Live sync</div>
+          </div>
+          <div class="fdg-live-grid">
+            <div class="fdg-live-metric"><div class="fdg-live-label">Inverter</div><div id="fdgHeroInv" class="fdg-live-value">—</div></div>
+            <div class="fdg-live-metric"><div class="fdg-live-label">PV array</div><div id="fdgHeroPV" class="fdg-live-value">—</div></div>
+            <div class="fdg-live-metric"><div class="fdg-live-label">Battery</div><div id="fdgHeroBat" class="fdg-live-value">—</div></div>
+            <div class="fdg-live-metric investment"><div class="fdg-live-label">Investment</div><div id="fdgHeroCost" class="fdg-live-value">—</div></div>
+          </div>
+        </aside>
+      </div>
+      <div class="fdg-hero-foot">Presentation layer only · engineering calculations remain authoritative in the existing engine</div>
+    `;
+
+    calc.insertBefore(hero, calc.firstChild);
+
+    hero.querySelector('[data-fdg-view]')?.addEventListener('click', function(){
+      if(typeof window.switchView === 'function') window.switchView(this.dataset.fdgView, null);
+    });
+    hero.querySelector('[data-fdg-scroll]')?.addEventListener('click', function(){
+      document.getElementById(this.dataset.fdgScroll)?.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  }
+
+  function injectContextStrips(){
+    const config = {
+      'view-quote':['Client Proposal Studio','Build the commercial proposal from the same engineering model used for system sizing.','Live engineering → quotation'],
+      'view-battery':['Hardware & Pricing Library','Maintain approved system components and costing inputs without changing the engineering workflow.','Controlled equipment data'],
+      'view-pipeline':['Commercial Pipeline','Move qualified opportunities from engineering study to proposal, follow-up, and conversion.','Engineering + commercial'],
+      'view-history':['Quotation Archive','Retrieve prior proposals, conversion status, and project references from one working record.','Project continuity'],
+      'view-learn':['Costing & Economics','Keep engineering decisions connected to transparent EPC costing and financial performance.','Evidence-led economics']
+    };
+    Object.entries(config).forEach(([id,v])=>{
+      const view=document.getElementById(id);
+      if(!view || view.querySelector('.fdg-context-strip')) return;
+      const header=view.querySelector('.page-header');
+      if(!header) return;
+      const strip=document.createElement('div');
+      strip.className='fdg-context-strip';
+      strip.innerHTML=`<div class="fdg-context-copy"><strong>${v[0]}</strong><span>${v[1]}</span></div><div class="fdg-context-badge">${v[2]}</div>`;
+      header.insertAdjacentElement('afterend',strip);
+    });
+  }
+
+  function updateHero(){
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val||'—';};
+    set('fdgHeroInv',textOf('out-inverter'));
+    const pvPanel=textOf('out-panels');
+    const pvKwp=textOf('out-pkwp','');
+    set('fdgHeroPV',pvKwp ? `${pvPanel} · ${pvKwp}` : pvPanel);
+    const bat=textOf('out-battery');
+    const batAh=textOf('out-batah','');
+    set('fdgHeroBat',batAh ? `${bat} · ${batAh}` : bat);
+    set('fdgHeroCost',textOf('out-investment'));
+  }
+
+  function observeOutputs(){
+    ['out-inverter','out-panels','out-pkwp','out-battery','out-batah','out-investment'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) new MutationObserver(updateHero).observe(el,{subtree:true,childList:true,characterData:true});
+    });
+    document.addEventListener('input',()=>requestAnimationFrame(updateHero),true);
+    document.addEventListener('change',()=>requestAnimationFrame(updateHero),true);
+  }
+
+  function init(){
+    injectHero();
+    injectContextStrips();
+    updateHero();
+    observeOutputs();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
+
+
+<script id="fdg-rev37-script">
+(function(){
+  const value = (id, fallback='—') => {
+    const el = document.getElementById(id);
+    const txt = el ? (el.textContent || '').replace(/\s+/g,' ').trim() : '';
+    return txt || fallback;
+  };
+  const shortKwh = (txt) => {
+    const m = String(txt || '').match(/(\d+(?:\.\d+)?)\s*kWh/i);
+    return m ? m[1] + ' kWh' : (txt || '—');
+  };
+  function injectRev37(){
+    const calc = document.getElementById('view-calc');
+    if(!calc || calc.querySelector('.fdg-rev37-live-stage')) return;
+
+    const stage = document.createElement('section');
+    stage.className = 'fdg-rev37-live-stage';
+    stage.setAttribute('aria-label','Live solar system visual summary');
+    stage.innerHTML = \`
+      <div class="fdg-r37-panel">
+        <div class="fdg-r37-head">
+          <div>
+            <div class="fdg-r37-kicker">Read-only visual mirror</div>
+            <div class="fdg-r37-title">Energy Flow · Current Calculated State</div>
+          </div>
+          <div class="fdg-r37-live-pill">Existing engine</div>
+        </div>
+        <div class="fdg-r37-flow">
+          <div class="fdg-r37-node solar"><div class="ico">☀</div><strong id="r37-day">—</strong><span>Daytime solar / offset</span></div>
+          <div class="fdg-r37-link"></div>
+          <div class="fdg-r37-node pv"><div class="ico">▦</div><strong id="r37-pv">—</strong><span>PV array</span></div>
+          <div class="fdg-r37-link alt"></div>
+          <div class="fdg-r37-node load"><div class="ico">⌂</div><strong id="r37-load">—</strong><span>Daily equivalent load</span></div>
+          <div class="fdg-r37-link return"></div>
+          <div class="fdg-r37-node battery"><div class="ico">▣</div><strong id="r37-battery">—</strong><span>Battery requirement / bank</span></div>
+          <div class="fdg-r37-link alt"></div>
+          <div class="fdg-r37-node grid"><div class="ico">⌁</div><strong id="r37-grid">Existing logic</strong><span>Grid / offset interaction</span></div>
+        </div>
+        <div class="fdg-r37-legend">
+          <span><i class="fdg-r37-dot" style="background:#fbbf24"></i>Solar</span>
+          <span><i class="fdg-r37-dot" style="background:#22d3ee"></i>Direct use</span>
+          <span><i class="fdg-r37-dot" style="background:#10b981"></i>Battery path</span>
+          <span><i class="fdg-r37-dot" style="background:#a78bfa"></i>Charge / discharge</span>
+          <span><i class="fdg-r37-dot" style="background:#94a3b8"></i>Grid state</span>
+        </div>
+      </div>
+      <aside class="fdg-r37-panel">
+        <div class="fdg-r37-head">
+          <div>
+            <div class="fdg-r37-kicker">Live outputs</div>
+            <div class="fdg-r37-title">Engineering Snapshot</div>
+          </div>
+        </div>
+        <div class="fdg-r37-summary">
+          <div class="fdg-r37-metric"><label>Inverter</label><strong id="r37-inverter">—</strong></div>
+          <div class="fdg-r37-metric"><label>Investment</label><strong id="r37-investment">—</strong></div>
+          <div class="fdg-r37-metric"><label>Monthly savings</label><strong id="r37-savings">—</strong></div>
+          <div class="fdg-r37-metric"><label>Battery bank</label><strong id="r37-bank">—</strong></div>
+        </div>
+        <div class="fdg-r37-source-note">Presentation only. Values are mirrored from the existing calculator DOM; Rev 3.7 does not replace or recompute the authoritative engineering logic.</div>
+      </aside>
+    \`;
+
+    const hero = calc.querySelector('.fdg-hero');
+    if(hero) hero.insertAdjacentElement('afterend', stage);
+    else calc.insertBefore(stage, calc.firstChild);
+  }
+
+  function updateRev37(){
+    const set = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt || '—'; };
+    set('r37-day', value('flowValDay'));
+    set('r37-pv', value('out-pkwp'));
+    set('r37-load', value('mathDailyKwh'));
+    set('r37-battery', shortKwh(value('flowValBattery')));
+    set('r37-inverter', value('out-inverter'));
+    set('r37-investment', value('out-investment'));
+    set('r37-savings', value('flowValSavings'));
+    set('r37-bank', value('out-battery'));
+  }
+
+  function observeRev37(){
+    ['flowValDay','out-pkwp','mathDailyKwh','flowValBattery','out-inverter','out-investment','flowValSavings','out-battery'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) new MutationObserver(updateRev37).observe(el,{subtree:true,childList:true,characterData:true});
+    });
+    document.addEventListener('input',()=>requestAnimationFrame(updateRev37),true);
+    document.addEventListener('change',()=>requestAnimationFrame(updateRev37),true);
+  }
+
+  function init(){
+    injectRev37();
+    updateRev37();
+    observeRev37();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
+
 </body></html>`;
 
   w.document.open();
