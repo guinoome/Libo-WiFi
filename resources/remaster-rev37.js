@@ -61,7 +61,7 @@
     // UI badge only; generated documents are deliberately untouched.
     var nodes=sidebar.querySelectorAll('.sidebar-logo > div');
     Array.prototype.forEach.call(nodes,function(node){
-      if(/^REV\s+/i.test((node.textContent||'').trim())) node.textContent='REV 3.7.3';
+      if(/^REV\s+/i.test((node.textContent||'').trim())) node.textContent='REV 3.7.4';
     });
 
     if(document.querySelector('.fdg-r37-sidebar-handle')) return;
