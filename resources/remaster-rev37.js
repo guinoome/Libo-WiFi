@@ -246,9 +246,26 @@
         '<div class="fdg-r37-flow-wrap">'+flowSvg()+'</div>'+
         '<div class="fdg-r37-flow-legend">'+
           '<span><i class="fdg-r37-dot" style="background:#f4c34f"></i>Solar</span>'+
-          '<span><i class="fdg-r37-dot" style="background:#23d7df"></i>Direct use</span>'+
-          '<span><i class="fdg-r37-dot" style="background:#c76bf0"></i>Battery charge / discharge</span>'+
-          '<span><i class="fdg-r37-dot" style="background:#7fa4c7"></i>Grid interaction</span>'+
+          '<span><i class="fdg-r37-dot" style="background:#23d7df"></i>Direct daytime load</span>'+
+          '<span><i class="fdg-r37-dot" style="background:#c76bf0"></i>Battery charging / discharge</span>'+
+          '<span><i class="fdg-r37-dot" style="background:#7fa4c7"></i>Grid backup</span>'+
+        '</div>'+
+        '<div class="fdg-r37-allocation">'+
+          '<div class="fdg-r37-allocation-head">'+
+            '<div><strong>Solar Window Allocation</strong><small>Installed PV during 4.5 peak-sun-hours, after the current 20% design-loss allowance</small></div>'+
+            '<div class="fdg-r37-coverage" id="r37SolarCoverage">—</div>'+
+          '</div>'+
+          '<div class="fdg-r37-allocation-bar" aria-label="Solar energy allocation">'+
+            '<div class="fdg-r37-alloc-load" id="r37AllocLoad"></div>'+
+            '<div class="fdg-r37-alloc-charge" id="r37AllocCharge"></div>'+
+            '<div class="fdg-r37-alloc-shortfall" id="r37AllocShortfall"></div>'+
+          '</div>'+
+          '<div class="fdg-r37-allocation-stats">'+
+            '<div class="fdg-r37-allocation-stat load"><small>Direct Daytime Load</small><strong id="r37AllocLoadText">—</strong></div>'+
+            '<div class="fdg-r37-allocation-stat charge"><small>Battery Charging</small><strong id="r37AllocChargeText">—</strong></div>'+
+            '<div class="fdg-r37-allocation-stat solar"><small>Design-Useful Solar</small><strong id="r37AllocSolarText">—</strong></div>'+
+          '</div>'+
+          '<div class="fdg-r37-allocation-note" id="r37AllocNote">No export/surplus path is modeled in this view. The bar only shows how the available solar window is assigned to direct daytime load and battery charging.</div>'+
         '</div>'+
         '<div class="fdg-r37-chart-box">'+
           '<div class="fdg-r37-chart-head"><strong>Typical Day Profile</strong><span>Normalized visualization from selected day/night profile — not a second calculation engine</span></div>'+
@@ -396,6 +413,57 @@
     return basis;
   }
 
+  function solarAllocation(){
+    // Mirrors the current autosizer sizing basis without changing it:
+    // target PV kW = (day load + gross battery energy basis) / 4.5 h × 1.20
+    // Therefore design-useful solar energy = installed kWp × 4.5 h / 1.20.
+    var SUN_HOURS=4.5;
+    var DESIGN_ALLOWANCE=1.20;
+    var DOD=0.80;
+
+    var daily=numberFromText(txt('mathDailyKwh','0'));
+    var ratios=profileRatios();
+    var dayLoad=Math.max(0,daily*ratios.day);
+    var nightLoad=Math.max(0,daily*ratios.night);
+    var arch=val('auto-sys-type','hybrid');
+    var isGTI=arch==='gridtie';
+
+    var surgeRaw=val('flowSurge','');
+    var surge=surgeRaw==='' ? daily*0.20 : parseFloat(surgeRaw);
+    if(!isFinite(surge) || surge<0) surge=0;
+
+    var usableBattery=isGTI ? 0 : (nightLoad+surge);
+    var chargeBasis=isGTI ? 0 : (usableBattery/DOD);
+    var required=dayLoad+chargeBasis;
+
+    var installedPV=numberFromText(txt('out-pkwp','0'));
+    var usefulSolar=installedPV>0 ? (installedPV*SUN_HOURS/DESIGN_ALLOWANCE) : 0;
+    var rawCoverage=required>0 ? (usefulSolar/required) : 0;
+    var coverage=Math.max(0,Math.min(1,rawCoverage));
+
+    var loadShare=required>0 ? dayLoad/required : 0;
+    var chargeShare=required>0 ? chargeBasis/required : 0;
+
+    return {
+      sunHours:SUN_HOURS,
+      allowance:DESIGN_ALLOWANCE,
+      daily:daily,
+      dayLoad:dayLoad,
+      nightLoad:nightLoad,
+      surge:surge,
+      usableBattery:usableBattery,
+      chargeBasis:chargeBasis,
+      required:required,
+      installedPV:installedPV,
+      usefulSolar:usefulSolar,
+      rawCoverage:rawCoverage,
+      coverage:coverage,
+      loadShare:loadShare,
+      chargeShare:chargeShare,
+      isGTI:isGTI
+    };
+  }
+
   function updateUI(){
     var profile=byId('flowProfile');
     var profileText=profile && profile.options && profile.selectedIndex>=0 ? profile.options[profile.selectedIndex].text : '—';
@@ -420,11 +488,46 @@
     setText('r37InputPhase',phaseLabel());
     setText('r37InputArch',architectureLabel());
 
-    setText('r37SvgSolar',txt('flowValDay'));
+    var alloc=solarAllocation();
+    setText('r37SvgSolar',alloc.usefulSolar>0 ? alloc.usefulSolar.toFixed(2)+' kWh' : '—');
     setText('r37SvgPV',pv || panels || '—');
-    setText('r37SvgLoad',txt('mathDailyKwh'));
-    setText('r37SvgBattery',txt('flowValBattery'));
+    setText('r37SvgLoad',alloc.dayLoad>0 ? alloc.dayLoad.toFixed(2)+' kWh' : '—');
+    setText('r37SvgBattery',alloc.isGTI ? 'No charging' : (alloc.chargeBasis>0 ? alloc.chargeBasis.toFixed(2)+' kWh' : '—'));
     setText('r37SvgGrid',architectureLabel());
+
+    var coveragePct=alloc.required>0 ? Math.min(100,alloc.rawCoverage*100) : 0;
+    var loadDutyPct=alloc.required>0 ? alloc.loadShare*100 : 0;
+    var chargeDutyPct=alloc.required>0 ? alloc.chargeShare*100 : 0;
+    var coveredScale=alloc.coverage;
+    var loadBarPct=loadDutyPct*coveredScale;
+    var chargeBarPct=chargeDutyPct*coveredScale;
+    var shortfallPct=Math.max(0,100-loadBarPct-chargeBarPct);
+
+    var loadBar=byId('r37AllocLoad');
+    var chargeBar=byId('r37AllocCharge');
+    var shortfallBar=byId('r37AllocShortfall');
+    if(loadBar) loadBar.style.width=loadBarPct.toFixed(2)+'%';
+    if(chargeBar) chargeBar.style.width=chargeBarPct.toFixed(2)+'%';
+    if(shortfallBar) shortfallBar.style.width=shortfallPct.toFixed(2)+'%';
+
+    setText('r37AllocLoadText',alloc.dayLoad.toFixed(2)+' kWh · '+loadDutyPct.toFixed(0)+'%');
+    setText('r37AllocChargeText',alloc.isGTI ? '0.00 kWh · 0%' : alloc.chargeBasis.toFixed(2)+' kWh · '+chargeDutyPct.toFixed(0)+'%');
+    setText('r37AllocSolarText',alloc.usefulSolar.toFixed(2)+' kWh · '+alloc.sunHours.toFixed(1)+' h PSH');
+
+    var coverageEl=byId('r37SolarCoverage');
+    if(coverageEl){
+      coverageEl.textContent=(coveragePct>=99.5?'100':coveragePct.toFixed(0))+'% covered';
+      coverageEl.classList.toggle('warn',coveragePct<99.5);
+    }
+    var note=byId('r37AllocNote');
+    if(note){
+      if(coveragePct>=99.5){
+        note.textContent='PV is adequate for the modeled solar window: direct daytime load + battery charging. No export/surplus path is included.';
+      } else {
+        var gap=Math.max(0,alloc.required-alloc.usefulSolar);
+        note.textContent='PV is below the modeled solar-window requirement by '+gap.toFixed(2)+' kWh/day. No export/surplus path is included.';
+      }
+    }
 
     setText('r37OutPV',pv || panels || '—');
     setText('r37OutInv',txt('out-inverter'));
