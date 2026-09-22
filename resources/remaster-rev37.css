@@ -474,3 +474,294 @@
 @media(prefers-reduced-motion:reduce){
   #view-calc *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   REV 3.7.2 — SIDEBAR AUTOHIDE + TARGET-REFERENCE VISUAL PASS
+   Presentation only.
+   ───────────────────────────────────────────────────────────── */
+
+html,body{background:#06101d}
+
+.app{position:relative}
+.main{
+  width:100%;
+  min-width:0;
+  background:
+    radial-gradient(circle at 70% -8%,rgba(245,158,11,.06),transparent 30%),
+    linear-gradient(180deg,#07111f 0%,#081522 46%,#07111f 100%) !important;
+}
+
+/* Desktop sidebar is an overlay, not layout-consuming chrome. */
+.sidebar{
+  position:fixed !important;
+  top:0;bottom:0;left:0;
+  width:250px !important;
+  min-width:250px !important;
+  z-index:800 !important;
+  transform:translateX(calc(-100% + 14px));
+  transition:transform .28s cubic-bezier(.2,.75,.2,1),box-shadow .28s ease !important;
+  box-shadow:none;
+  background:
+    linear-gradient(180deg,rgba(4,10,20,.985),rgba(5,12,23,.975)) !important;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+.sidebar:hover,
+.sidebar.fdg-r37-open,
+body.fdg-r37-nav-open .sidebar{
+  transform:translateX(0);
+  box-shadow:22px 0 60px rgba(0,0,0,.42);
+}
+.sidebar::after{
+  content:"";
+  position:absolute;
+  top:0;right:0;bottom:0;
+  width:14px;
+  background:linear-gradient(180deg,rgba(245,158,11,.20),rgba(59,130,246,.08),rgba(245,158,11,.13));
+  opacity:.55;
+  pointer-events:none;
+}
+
+.fdg-r37-sidebar-handle{
+  position:fixed;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  width:34px;
+  height:86px;
+  z-index:820;
+  border:1px solid rgba(245,158,11,.28);
+  border-left:0;
+  border-radius:0 14px 14px 0;
+  background:rgba(5,13,24,.88);
+  color:#fbbf24;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:8px 10px 30px rgba(0,0,0,.24);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  transition:left .28s cubic-bezier(.2,.75,.2,1),background .18s ease;
+}
+body.fdg-r37-nav-open .fdg-r37-sidebar-handle,
+.sidebar:hover ~ .main + .fdg-r37-sidebar-handle{left:248px}
+.fdg-r37-sidebar-handle:hover{background:rgba(245,158,11,.12)}
+.fdg-r37-sidebar-handle span{
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:1.7px;
+  text-transform:uppercase;
+}
+.fdg-r37-nav-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:790;
+  background:rgba(1,6,14,.56);
+  backdrop-filter:blur(2px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}
+body.fdg-r37-nav-open .fdg-r37-nav-backdrop{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* Premium sidebar refinement when revealed. */
+.sidebar-logo{padding:26px 20px 19px !important}
+.sidebar .logo-sun{
+  width:42px !important;height:42px !important;
+  border-radius:12px !important;
+  box-shadow:0 12px 30px rgba(245,158,11,.23) !important;
+}
+.sidebar .logo-name{
+  font-size:17px !important;
+  letter-spacing:.2px !important;
+}
+.sidebar .logo-sub{
+  max-width:190px;
+  line-height:1.25;
+  color:#64748b !important;
+}
+.sidebar .nav{padding:14px 10px !important}
+.sidebar .nav-item{
+  margin:4px 0;
+  padding:11px 12px !important;
+  border-radius:10px;
+  border-left:0 !important;
+}
+.sidebar .nav-item.active{
+  box-shadow:inset 0 0 0 1px rgba(245,158,11,.17);
+  background:linear-gradient(90deg,rgba(245,158,11,.16),rgba(245,158,11,.04)) !important;
+}
+
+/* Let the calculator own the viewport. */
+#view-calc{
+  max-width:1680px;
+  margin:0 auto;
+  padding:18px 22px 42px !important;
+}
+#view-calc > .page-header{display:none !important}
+
+/* Reference-driven hero: larger image, cleaner typography, less admin chrome. */
+#view-calc .fdg-r37-hero{
+  min-height:455px !important;
+  margin-bottom:18px !important;
+  border-radius:24px !important;
+  border-color:rgba(255,255,255,.10) !important;
+  background:
+    linear-gradient(90deg,rgba(3,9,18,.97) 0%,rgba(3,9,18,.91) 31%,rgba(3,9,18,.47) 62%,rgba(3,9,18,.16) 100%),
+    linear-gradient(180deg,rgba(3,9,18,.03),rgba(3,9,18,.58)),
+    url("https://images.pexels.com/photos/29206495/pexels-photo-29206495/free-photo-of-modern-home-with-rooftop-solar-panels.jpeg?auto=compress&dpr=1&w=2000") !important;
+  background-size:cover !important;
+  background-position:center 48% !important;
+  box-shadow:0 28px 80px rgba(0,0,0,.34) !important;
+}
+#view-calc .fdg-r37-hero-inner{
+  min-height:455px !important;
+  grid-template-columns:minmax(0,1.22fr) minmax(350px,.78fr) !important;
+  padding:44px 42px 36px !important;
+}
+#view-calc .fdg-r37-hero h1{
+  font-size:clamp(46px,5.1vw,76px) !important;
+  line-height:.93 !important;
+  letter-spacing:-3px !important;
+  max-width:820px !important;
+  text-shadow:0 8px 28px rgba(0,0,0,.35);
+}
+#view-calc .fdg-r37-hero h1 em{
+  color:#f6b83f !important;
+}
+#view-calc .fdg-r37-hero p{
+  max-width:690px !important;
+  font-size:14px !important;
+  color:#c7d2df !important;
+}
+#view-calc .fdg-r37-live-card{
+  border-radius:17px !important;
+  padding:16px !important;
+  background:linear-gradient(180deg,rgba(8,19,33,.86),rgba(7,16,29,.78)) !important;
+  border-color:rgba(148,163,184,.18) !important;
+}
+#view-calc .fdg-r37-live-metric{
+  min-height:82px !important;
+  border-color:rgba(148,163,184,.10) !important;
+  background:linear-gradient(180deg,rgba(255,255,255,.036),rgba(255,255,255,.018)) !important;
+}
+#view-calc .fdg-r37-live-metric strong{
+  font-size:13px !important;
+}
+
+/* Main engineering visual block: closer to reference proportions. */
+#view-calc .fdg-r37-workspace{
+  grid-template-columns:minmax(0,1.58fr) minmax(315px,.42fr) !important;
+  gap:14px !important;
+  margin-bottom:14px !important;
+}
+#view-calc .fdg-r37-panel{
+  border-radius:15px !important;
+  border-color:rgba(90,124,160,.22) !important;
+  background:
+    linear-gradient(180deg,rgba(16,37,58,.94),rgba(8,21,36,.93)) !important;
+  box-shadow:0 16px 38px rgba(0,0,0,.15) !important;
+}
+#view-calc .fdg-r37-flow{
+  padding:27px 20px 20px !important;
+}
+#view-calc .fdg-r37-node{
+  min-height:126px !important;
+  background:linear-gradient(180deg,rgba(17,43,66,.78),rgba(8,24,40,.70)) !important;
+}
+#view-calc .fdg-r37-node strong{font-size:13px !important}
+
+/* Existing engineering controls: premium but still fully original. */
+#view-calc > .card{
+  border-radius:16px !important;
+  border:1px solid rgba(90,124,160,.20) !important;
+  background:
+    linear-gradient(180deg,rgba(15,34,54,.96),rgba(8,21,36,.95)) !important;
+  box-shadow:0 13px 34px rgba(0,0,0,.11) !important;
+}
+#view-calc > .card:first-of-type{
+  margin-top:0 !important;
+  border-color:rgba(245,158,11,.18) !important;
+}
+#view-calc .card-header{
+  border-bottom:1px solid rgba(148,163,184,.10) !important;
+}
+#view-calc input,
+#view-calc select,
+#view-calc textarea{
+  background:rgba(4,15,28,.78) !important;
+  border-color:rgba(90,124,160,.26) !important;
+}
+
+/* Make the first-fold content feel like the approved reference rather than legacy admin UI. */
+#view-calc .card-title{letter-spacing:.1px}
+#view-calc .card-desc{color:#7890aa !important}
+
+@media(max-width:1180px){
+  #view-calc{padding:14px 14px 34px !important}
+  #view-calc .fdg-r37-hero-inner{
+    grid-template-columns:1fr !important;
+    padding:34px 30px 28px !important;
+  }
+  #view-calc .fdg-r37-hero{min-height:610px !important}
+  #view-calc .fdg-r37-live-card{max-width:720px}
+}
+
+@media(max-width:768px){
+  .sidebar{
+    width:min(86vw,320px) !important;
+    min-width:min(86vw,320px) !important;
+    transform:translateX(-100%) !important;
+  }
+  .sidebar.fdg-r37-open,
+  body.fdg-r37-nav-open .sidebar{transform:translateX(0) !important}
+  .sidebar::after{display:none}
+  .fdg-r37-sidebar-handle{
+    left:0;
+    top:96px;
+    transform:none;
+    width:38px;height:56px;
+    border-radius:0 12px 12px 0;
+  }
+  body.fdg-r37-nav-open .fdg-r37-sidebar-handle{left:min(86vw,320px)}
+  .fdg-r37-sidebar-handle span{
+    writing-mode:horizontal-tb;
+    transform:none;
+    font-size:0;
+  }
+  .fdg-r37-sidebar-handle span::after{
+    content:"☰";
+    font-size:18px;
+    letter-spacing:0;
+  }
+
+  #view-calc{
+    padding:10px 9px 28px !important;
+  }
+  #view-calc .fdg-r37-hero{
+    min-height:600px !important;
+    border-radius:17px !important;
+    background-position:64% center !important;
+  }
+  #view-calc .fdg-r37-hero-inner{
+    min-height:600px !important;
+    padding:24px 19px 18px !important;
+    align-content:space-between;
+  }
+  #view-calc .fdg-r37-hero h1{
+    font-size:41px !important;
+    letter-spacing:-1.8px !important;
+  }
+  #view-calc .fdg-r37-workspace{grid-template-columns:1fr !important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .sidebar,.fdg-r37-sidebar-handle,.fdg-r37-nav-backdrop{transition:none !important}
+}
