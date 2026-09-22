@@ -632,3 +632,97 @@ body.fdg-r37-nav-open .fdg-r37-nav-backdrop{opacity:1;pointer-events:auto}
   .sidebar,.fdg-r37-sidebar-handle,.fdg-r37-nav-backdrop{transition:none!important}
   #view-calc .fdg-r37-focus-flash{animation:none!important}
 }
+
+
+/* ── REV 3.7.4 SOLAR WINDOW ALLOCATION ─────────────────────
+   Mirrors the current autosizer design basis:
+   PV target = (day load + gross battery basis) / 4.5h × 1.20
+   No export/surplus path is presented. */
+#view-calc .fdg-r37-allocation{
+  margin:0 10px 10px;
+  padding:10px 11px 11px;
+  border-top:1px solid rgba(121,157,191,.12);
+  border-bottom:1px solid rgba(121,157,191,.12);
+  background:linear-gradient(180deg,rgba(5,20,34,.48),rgba(5,18,31,.28));
+}
+#view-calc .fdg-r37-allocation-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  margin-bottom:8px;
+}
+#view-calc .fdg-r37-allocation-head strong{
+  display:block;color:#ecf5fc;font-size:9px;font-weight:800;
+}
+#view-calc .fdg-r37-allocation-head small{
+  display:block;margin-top:2px;color:#607b91;font-size:7px;line-height:1.4;
+}
+#view-calc .fdg-r37-coverage{
+  flex:0 0 auto;
+  min-width:70px;
+  padding:5px 8px;
+  border:1px solid rgba(49,211,138,.20);
+  border-radius:999px;
+  background:rgba(49,211,138,.07);
+  color:#58e2a0;
+  font-family:var(--mono);
+  font-size:8px;font-weight:900;text-align:center;
+}
+#view-calc .fdg-r37-coverage.warn{
+  border-color:rgba(246,181,63,.28);
+  background:rgba(246,181,63,.08);
+  color:#ffd068;
+}
+#view-calc .fdg-r37-allocation-bar{
+  position:relative;
+  display:flex;
+  width:100%;height:18px;
+  overflow:hidden;
+  border:1px solid rgba(121,157,191,.18);
+  border-radius:999px;
+  background:#061522;
+}
+#view-calc .fdg-r37-alloc-load{
+  height:100%;
+  background:linear-gradient(90deg,#22c7df,#41b9ef);
+  transition:width .45s ease;
+}
+#view-calc .fdg-r37-alloc-charge{
+  height:100%;
+  background:linear-gradient(90deg,#8b5cf6,#c66cf0);
+  transition:width .45s ease;
+}
+#view-calc .fdg-r37-alloc-shortfall{
+  height:100%;
+  background:repeating-linear-gradient(135deg,rgba(246,181,63,.28) 0 5px,rgba(246,181,63,.10) 5px 10px);
+  transition:width .45s ease;
+}
+#view-calc .fdg-r37-allocation-stats{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:6px;margin-top:8px;
+}
+#view-calc .fdg-r37-allocation-stat{
+  min-height:44px;
+  padding:6px 7px;
+  border-radius:8px;
+  border:1px solid rgba(121,157,191,.10);
+  background:rgba(6,23,38,.58);
+}
+#view-calc .fdg-r37-allocation-stat small{
+  display:block;color:#667f95;font-size:6px;text-transform:uppercase;letter-spacing:.65px;
+}
+#view-calc .fdg-r37-allocation-stat strong{
+  display:block;margin-top:3px;color:#edf5fb;font-family:var(--mono);font-size:8px;line-height:1.35;
+}
+#view-calc .fdg-r37-allocation-stat.load strong{color:#54d7ef}
+#view-calc .fdg-r37-allocation-stat.charge strong{color:#d38af5}
+#view-calc .fdg-r37-allocation-stat.solar strong{color:#ffd06a}
+#view-calc .fdg-r37-allocation-note{
+  margin-top:7px;color:#557087;font-size:6.5px;line-height:1.45;
+}
+@media(max-width:520px){
+  #view-calc .fdg-r37-allocation-stats{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  #view-calc .fdg-r37-alloc-load,
+  #view-calc .fdg-r37-alloc-charge,
+  #view-calc .fdg-r37-alloc-shortfall{transition:none!important}
+}
