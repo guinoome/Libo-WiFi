@@ -1304,10 +1304,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
               </div>
               <select id="flowProfile" onchange="calculateFlow()" style="margin-bottom:10px;">
                 <option value="0.05,0.95">Mostly Nighttime (5% Day / 95% Night)</option>
-                <option value="0.25,0.75">Nighttime Heavy (25% Day / 75% Night)</option>
+                <option value="0.25,0.75" selected="">Nighttime Heavy (25% Day / 75% Night)</option>
                 <option value="0.50,0.50">24/7 Balanced (50% Day / 50% Night)</option>
                 <option value="0.75,0.25">Daytime Heavy (75% Day / 25% Night)</option>
-                <option value="0.95,0.05" selected="">Mostly Daytime (95% Day / 5% Night)</option>
+                <option value="0.95,0.05">Mostly Daytime (95% Day / 5% Night)</option>
               </select>
               <div id="flowSurgeGroup" style="display: block;">
                 <label style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:4px;">
@@ -2799,8 +2799,8 @@ function getFlowConsumption(){
     // The entered hours represent DAYTIME active hours = the day-% portion of the day.
     // Scale up to full 24h load using the Load Profile day percentage.
     // e.g. 8 daytime hrs @ 95% day → total daily energy = dayEnergy / 0.95 (night gets the 5%).
-    const profileAmps = (document.getElementById('flowProfile')?.value || '0.95,0.05').split(',');
-    const dayPctAmps = parseFloat(profileAmps[0]) || 0.95;
+    const profileAmps = (document.getElementById('flowProfile')?.value || '0.25,0.75').split(',');
+    const dayPctAmps = parseFloat(profileAmps[0]) || 0.25;
     const dayEnergyKwh = rawKw * hours;                        // daytime kWh from amps × day hrs
     const totalDailyKwh = dayPctAmps > 0 ? dayEnergyKwh / dayPctAmps : dayEnergyKwh;  // gross up to 24h
     const derived = totalDailyKwh * 30; // monthly
