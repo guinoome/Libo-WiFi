@@ -156,7 +156,83 @@
     document.addEventListener('change',function(){ requestAnimationFrame(updatePresentation); },true);
   }
 
+
+  function setupRev37Shell(){
+    var sidebar = document.querySelector('.sidebar');
+    if(!sidebar) return;
+
+    // Visible application revision only. Generated documents remain untouched.
+    var revNodes = sidebar.querySelectorAll('.sidebar-logo > div');
+    Array.prototype.forEach.call(revNodes,function(node){
+      var txt=(node.textContent||'').trim();
+      if(/^REV\s+/i.test(txt)) node.textContent='REV 3.7';
+    });
+
+    if(!document.querySelector('.fdg-r37-sidebar-handle')){
+      var handle=document.createElement('button');
+      handle.type='button';
+      handle.className='fdg-r37-sidebar-handle';
+      handle.setAttribute('aria-label','Open navigation');
+      handle.setAttribute('aria-expanded','false');
+      handle.innerHTML='<span>Navigation</span>';
+      document.body.appendChild(handle);
+
+      var backdrop=document.createElement('div');
+      backdrop.className='fdg-r37-nav-backdrop';
+      document.body.appendChild(backdrop);
+
+      function closeNav(){
+        sidebar.classList.remove('fdg-r37-open');
+        document.body.classList.remove('fdg-r37-nav-open');
+        handle.setAttribute('aria-expanded','false');
+      }
+      function openNav(){
+        sidebar.classList.add('fdg-r37-open');
+        document.body.classList.add('fdg-r37-nav-open');
+        handle.setAttribute('aria-expanded','true');
+      }
+      function toggleNav(){
+        if(document.body.classList.contains('fdg-r37-nav-open')) closeNav();
+        else openNav();
+      }
+
+      handle.addEventListener('click',toggleNav);
+      backdrop.addEventListener('click',closeNav);
+      document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeNav(); });
+
+      // Desktop: reveal on pointer approach, hide after leaving.
+      var hideTimer=null;
+      sidebar.addEventListener('mouseenter',function(){
+        if(hideTimer) clearTimeout(hideTimer);
+        sidebar.classList.add('fdg-r37-open');
+      });
+      sidebar.addEventListener('mouseleave',function(){
+        if(document.body.classList.contains('fdg-r37-nav-open')) return;
+        hideTimer=setTimeout(function(){ sidebar.classList.remove('fdg-r37-open'); },220);
+      });
+      handle.addEventListener('mouseenter',function(){
+        if(window.matchMedia('(hover:hover)').matches){
+          if(hideTimer) clearTimeout(hideTimer);
+          sidebar.classList.add('fdg-r37-open');
+        }
+      });
+      handle.addEventListener('mouseleave',function(){
+        if(window.matchMedia('(hover:hover)').matches && !document.body.classList.contains('fdg-r37-nav-open')){
+          hideTimer=setTimeout(function(){ sidebar.classList.remove('fdg-r37-open'); },300);
+        }
+      });
+
+      // Any navigation click closes the overlay after the existing handler runs.
+      sidebar.addEventListener('click',function(e){
+        if(e.target.closest('.nav-item') && window.innerWidth<=980){
+          setTimeout(closeNav,80);
+        }
+      });
+    }
+  }
+
   function init(){
+    setupRev37Shell();
     buildHero();
     buildWorkspace();
     updatePresentation();
