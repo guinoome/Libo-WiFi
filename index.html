@@ -2893,7 +2893,7 @@ function renderDBTable(cat) {
               title="PV design target used by Interactive BOM. Click to edit."
               style="cursor:text;font-family:var(--mono);color:var(--accent);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
               onclick="editInvField(this)">
-              ${(Number(item.designPvKw) > 0 ? Number(item.designPvKw) : (parseFloat((item.name.match(/(\\d+(?:\\.\\d+)?)\\s*kW/i)||[])[1]) || 0)).toFixed(1)} kWp design
+              ${(Number(item.designPvKw) > 0 ? Number(item.designPvKw) : (parseFloat((item.name.match(/(\d+(?:\.\d+)?)\s*kW/i)||[])[1]) || 0)).toFixed(1)} kWp design
             </span>
             ${Number(item.manufacturerMaxPvKw)>0 ? `<div style="font-size:9px;color:var(--green);margin-top:3px;">✓ Manufacturer max: ${Number(item.manufacturerMaxPvKw).toFixed(1)} kWp${item.specModel?' · '+item.specModel:''}</div>` : `<div style="font-size:9px;color:var(--text3);margin-top:3px;">Manufacturer max not verified</div>`}
           </td>` : ''}
