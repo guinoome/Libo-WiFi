@@ -1493,7 +1493,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
         <div class="g4">
           <div class="fg"><label>Category</label>
-            <select id="db-category">
+            <select id="db-category" onchange="toggleDbTechFields()">
               <option value="panels">PV Panels</option>
               <option value="inverters">Inverters</option>
               <option value="batteries">Batteries</option>
@@ -1509,6 +1509,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           </div>
           <div class="fg"><label>Price (₱)</label>
             <input type="number" id="db-price" placeholder="144000">
+          </div>
+          <div class="fg" id="db-maxpv-wrap" style="display:none;">
+            <label>Max PV Input per Inverter (kW) <span style="color:var(--text3);font-weight:400;">— optional</span></label>
+            <input type="number" id="db-maxpv" placeholder="E.g., 18" min="0" step="0.1">
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">If blank, manual BOM sync uses nominal inverter kW as the PV design cap.</div>
           </div>
         </div>
         <div class="btn-group">
@@ -2719,17 +2724,30 @@ function updateItem(type) {
 // ================================================================
 // DB MANAGER
 // ================================================================
+function toggleDbTechFields() {
+  const cat = document.getElementById('db-category')?.value;
+  const wrap = document.getElementById('db-maxpv-wrap');
+  if (wrap) wrap.style.display = cat === 'inverters' ? 'block' : 'none';
+}
+
 function addDBItem() {
   const cat = document.getElementById('db-category').value;
   const name = document.getElementById('db-name').value.trim();
   const client = document.getElementById('db-client').value.trim();
   const price = parseFloat(document.getElementById('db-price').value);
   if(!name || !client || isNaN(price)) return toast('Fill all fields to add hardware', 'error');
-  hwDB[cat].push({name, client, price});
+
+  const item = {name, client, price};
+  if (cat === 'inverters') {
+    const maxPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
+    if (Number.isFinite(maxPvKw) && maxPvKw > 0) item.maxPvKw = maxPvKw;
+  }
+  hwDB[cat].push(item);
   saveDB();
   document.getElementById('db-name').value='';
   document.getElementById('db-client').value='';
   document.getElementById('db-price').value='';
+  if (document.getElementById('db-maxpv')) document.getElementById('db-maxpv').value='';
   renderDBTable(cat);
   toast(`"${name}" added to database`, 'success');
 }
@@ -2761,9 +2779,11 @@ function sortDBItems(cat, items) {
 function renderDBTable(cat) {
   const sortMode = invSortState[cat] || 'name';
   const items = sortDBItems(cat, hwDB[cat]);
+  const isInv = cat === 'inverters';
+  const colCount = isInv ? 5 : 4;
   let html = `
     <tr style="background:var(--bg3);">
-      <th colspan="4" style="text-align:left;padding:8px 12px;">
+      <th colspan="${colCount}" style="text-align:left;padding:8px 12px;">
         <span style="font-size:11px;color:var(--text3);">SORT BY:</span>
         <button class="btn btn-sm ${sortMode==='name'?'btn-amber':'btn-slate'}" style="margin-left:6px;" onclick="setInvSort('${cat}','name')">Name (Tier)</button>
         <button class="btn btn-sm ${sortMode==='size'?'btn-amber':'btn-slate'}" style="margin-left:4px;" onclick="setInvSort('${cat}','size')">Size</button>
@@ -2774,6 +2794,7 @@ function renderDBTable(cat) {
     <tr>
       <th onclick="setInvSort('${cat}','name')" style="cursor:pointer;">Internal Name ⇅</th>
       <th>Client Spec</th>
+      ${isInv ? '<th>Max PV Input / Unit</th>' : ''}
       <th onclick="setInvSort('${cat}','price')" style="cursor:pointer;">Price ⇅</th>
       <th>Actions</th>
     </tr>`;
@@ -2786,6 +2807,9 @@ function renderDBTable(cat) {
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="client"
             style="cursor:text;color:var(--text2);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;min-width:120px;"
             onclick="editInvField(this)">${item.client}</span></td>
+      ${isInv ? `<td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
+            style="cursor:text;font-family:var(--mono);color:${item.maxPvKw?'var(--green)':'var(--text3)'};border-bottom:1px dashed var(--border2);padding:2px 4px;"
+            onclick="editInvField(this)">${item.maxPvKw ? Number(item.maxPvKw).toFixed(1)+' kW' : 'Nominal fallback'}</span></td>` : ''}
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="price"
             style="cursor:text;font-family:var(--mono);color:var(--accent);font-weight:700;border-bottom:1px dashed var(--border2);padding:2px 4px;"
             onclick="editInvField(this)">₱${item.price.toLocaleString()}</span></td>
@@ -2805,17 +2829,30 @@ function editInvField(span) {
   const idx   = parseInt(span.dataset.idx);
   const field = span.dataset.field;
   const cur   = hwDB[cat][idx][field];
-  let label   = field === 'name' ? 'Internal Name' : field === 'client' ? 'Client Spec' : 'Price';
-  let val     = prompt(`Edit ${label}:`, cur);
+
+  const label = field === 'name' ? 'Internal Name'
+    : field === 'client' ? 'Client Spec'
+    : field === 'price' ? 'Price'
+    : field === 'maxPvKw' ? 'Max PV Input per Inverter (kW)'
+    : field;
+
+  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (blank or 0 = nominal-kW fallback)':''}`, cur ?? '');
   if (val === null) return;
+
   if (field === 'price') {
     val = parseFloat(val);
     if (isNaN(val) || val < 0) { toast('Invalid price', 'error'); return; }
+    hwDB[cat][idx][field] = val;
+  } else if (field === 'maxPvKw') {
+    const n = parseFloat(val);
+    if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].maxPvKw;
+    else hwDB[cat][idx].maxPvKw = n;
   } else {
     val = String(val).trim();
     if (!val) { toast(`${label} cannot be empty`, 'error'); return; }
+    hwDB[cat][idx][field] = val;
   }
-  hwDB[cat][idx][field] = val;
+
   saveDB();
   renderDBTable(cat);
   toast(`${label} updated for "${hwDB[cat][idx].name}"`, 'success');
