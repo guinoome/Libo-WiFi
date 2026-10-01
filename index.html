@@ -6765,7 +6765,7 @@ async function generatePDFQuote() {
             </div>
             <div>
               <div class="cover-foot-label">SYSTEM</div>
-              <div class="cover-foot-val">${sysSize} kWp ${escapeHtml(sysType)}</div>
+              <div class="cover-foot-val">${sysSize.toFixed(2)} kWp ${escapeHtml(sysType)}</div>
             </div>
           </div>
           <div class="cover-contact-line">
@@ -6795,7 +6795,7 @@ async function generatePDFQuote() {
       <div class="hero-investment">
         <div class="hero-inv-label">⭐ TOTAL INVESTMENT (${vatLabelShort})</div>
         <div class="hero-inv-val">₱${grandTotal.toLocaleString()}</div>
-        <div class="hero-inv-sub">${sysSize} kWp ${escapeHtml(sysType)} · Turnkey EPC Solution · 80% downpayment, balance after commissioning</div>
+        <div class="hero-inv-sub">${sysSize.toFixed(2)} kWp PV · ${inverterCapacityKw.toFixed(2)} kW inverter · ${escapeHtml(sysType)} · Turnkey EPC Solution · 80% downpayment, balance after commissioning</div>
         ${vatNoteHTML}
       </div>
 
@@ -6807,7 +6807,7 @@ async function generatePDFQuote() {
 
       <h2>System Specifications</h2>
       <div class="specs-grid">
-        <div class="spec-card"><div class="spec-card-label">Total Capacity</div><div class="spec-card-val">${sysSize} kWp</div><div class="spec-card-sub">${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp total</div></div>
+        <div class="spec-card"><div class="spec-card-label">Total Capacity</div><div class="spec-card-val">${sysSize.toFixed(2)} kWp</div><div class="spec-card-sub">${bomState.panelQty} × ${bomState.panelW}W modules · Interactive BOM</div></div>
         <div class="spec-card"><div class="spec-card-label">System Type</div><div class="spec-card-val">${escapeHtml(sysType)}</div><div class="spec-card-sub">${cfg.phase}-Phase ${cfg.V_AC}V AC</div></div>
         ${cfg.batQ>0?`<div class="spec-card"><div class="spec-card-label">Energy Storage</div><div class="spec-card-val">${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4</div></div>`:''}
         <div class="spec-card"><div class="spec-card-label">Daily Equivalent</div><div class="spec-card-val">${dailyKwh.toFixed(1)} kWh</div><div class="spec-card-sub">${engDailyKwh > 0 ? 'Client load profile' : `${PEAK_SUN}h sun × ${(SYS_LOSS*100).toFixed(0)}% derate`}</div></div>
@@ -6816,9 +6816,9 @@ async function generatePDFQuote() {
       <!-- ⭐ HERO: ESTIMATED MONTHLY SAVINGS -->
       <div class="savings-box">
         <div class="savings-box-label">⭐ Estimated Monthly ${showKwhOnly ? 'Generation Offset' : 'Savings'}</div>
-        <div class="savings-box-val">${showKwhOnly ? consumptionKwhPerMonth.toFixed(0) + ' kWh' : '₱' + consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        <div class="savings-box-val">${showKwhOnly ? estimatedMonthlyOffsetKwh.toFixed(0) + ' kWh' : '₱' + estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
         <div class="${showKwhOnly ? 'savings-box-sub' : 'savings-box-sub-hero'}">${showKwhOnly ? 'Energy offset against your monthly consumption · enter ₱/kWh in Eng. Calc for peso payback' : '✨ Turn your monthly electric bill into savings.'}</div>
-        ${showKwhOnly ? '' : `<div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>`}
+        ${showKwhOnly ? '' : `<div class="savings-box-formula">PAYBACK: ₱${grandTotal.toLocaleString()} ÷ ₱${estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})}/mo = <strong>${paybackMonths} months (${paybackYears} years)</strong></div>`}
       </div>
 
       <div class="compute-block">
@@ -6831,19 +6831,19 @@ async function generatePDFQuote() {
         <tr><td style="background:#f1f5f9;">+ 10% Professional Fee</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#dc2626;'}">${isVatIn ? '₱' + profFee.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>Waived</em>'}</td></tr>
         <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL INVESTMENT (${isVatIn ? 'VAT Inclusive · Official Receipt' : 'VAT Exclusive · Acknowledgement Receipt'})</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
         ${!isVatIn ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: This is a VAT-Exclusive figure (Acknowledgement Receipt). The <strong>12% VAT</strong> and <strong>10% Professional Fee</strong> shown above are <strong>excluded</strong> from this total. ${blueprintIncluded ? 'The Blueprint (Sign &amp; Seal) price of <strong>₱' + blueprintVal.toLocaleString() + '</strong> is also VAT-Exclusive. ' : ''}Switch to VAT Inclusive for an Official Receipt (adds 22%).</td></tr>` : (blueprintIncluded ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: Blueprint (Sign &amp; Seal) input price of <strong>₱${blueprintVal.toLocaleString()}</strong> is entered VAT-Exclusive; the 12% VAT + 10% Professional Fee above are applied on the full base (blueprint included).</td></tr>` : '')}
-        <tr><td style="background:#f1f5f9;">Daily Generation (from Eng. Calc)</td><td style="font-family:monospace;">${dailyKwh.toFixed(2)} kWh/day · ${monthlyKwh.toFixed(0)} kWh/month</td></tr>
+        <tr><td style="background:#f1f5f9;">Estimated Solar Generation (Actual BOM PV)</td><td style="font-family:monospace;">${solarProjection.dailyGenerationKwh.toFixed(2)} kWh/day · ${monthlyKwh.toFixed(0)} kWh/month <em style="color:#94a3b8;">(${sysSize.toFixed(2)} kWp × ${PEAK_SUN}h × ${(SYS_LOSS*100).toFixed(0)}%)</em></td></tr>
         ${showKwhOnly
           ? `<tr><td style="background:#f1f5f9;">Current Monthly Consumption</td><td style="font-family:monospace;"><strong>${consumptionKwhPerMonth.toFixed(0)} kWh</strong> <em style="color:#94a3b8;">(amperage-based — no rate known for 3Ph)</em></td></tr>
-             <tr><td style="background:#fef3c7;font-weight:700;">Monthly Energy Offset</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">${Math.min(monthlyKwh, consumptionKwhPerMonth).toFixed(0)} kWh</td></tr>
+             <tr><td style="background:#fef3c7;font-weight:700;">Monthly Energy Offset</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">${estimatedMonthlyOffsetKwh.toFixed(0)} kWh</td></tr>
              <tr><td style="background:#f1f5f9;">Payback</td><td style="font-family:monospace;"><em style="color:#94a3b8;">Cannot compute in peso — enter ₱/kWh rate in Eng. Calc for industrial/commercial clients</em></td></tr>`
           : (isAmpsMode
             ? `<tr><td style="background:#f1f5f9;">Monthly Consumption (from amperage)</td><td style="font-family:monospace;"><strong>${consumptionKwhPerMonth.toFixed(0)} kWh</strong></td></tr>
                <tr><td style="background:#f1f5f9;">Monthly Avg. Price <em style="color:#94a3b8;font-weight:400;">(${consumptionKwhPerMonth.toFixed(0)} kWh × ₱${rate.toFixed(2)}/kWh)</em></td><td style="font-family:monospace;"><strong>₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</strong></td></tr>
-               <tr><td style="background:#fef3c7;font-weight:700;">Monthly Savings (= Avg. Price)</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
-               <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
+               <tr><td style="background:#fef3c7;font-weight:700;">Estimated Monthly Solar Savings</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
+               <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
                <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>`
             : `<tr><td style="background:#f1f5f9;">Current Monthly Bill</td><td style="font-family:monospace;"><strong>₱${monthlyBillPesos.toLocaleString(undefined,{maximumFractionDigits:0})}</strong> ${monthlyBillPesos > 0 ? '' : '<em style="color:#94a3b8;">(no bill entered — using rate × generation)</em>'}</td></tr>
-               <tr><td style="background:#fef3c7;font-weight:700;">Monthly Savings (= Current Bill)</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
+               <tr><td style="background:#fef3c7;font-weight:700;">Estimated Monthly Solar Savings</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
                <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
                <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>`)
         }
@@ -6895,7 +6895,7 @@ async function generatePDFQuote() {
       </table>
       <div class="info-block" style="background:#fef3c7;border-left-color:#f59e0b;">
         <strong style="color:#92400e;">Investment recovered in Year ${paybackYears}</strong><br/>
-        <span style="font-size:8pt;color:#64748b;font-family:monospace;">Formula: ₱${grandTotal.toLocaleString()} ÷ ₱${(consumptionPesosPerMonth*12).toLocaleString(undefined,{maximumFractionDigits:0})} (yearly bill replaced) = <strong>${paybackYears} years</strong></span><br/>
+        <span style="font-size:8pt;color:#64748b;font-family:monospace;">Formula: ₱${grandTotal.toLocaleString()} ÷ ₱${(estimatedMonthlySavings*12).toLocaleString(undefined,{maximumFractionDigits:0})} (estimated yearly solar savings) = <strong>${paybackYears} years</strong></span><br/>
         <span style="font-size:8pt;color:#64748b;">Every year after = pure profit.</span>
       </div>
 
