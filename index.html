@@ -1511,9 +1511,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             <input type="number" id="db-price" placeholder="144000">
           </div>
           <div class="fg" id="db-maxpv-wrap" style="display:none;">
-            <label>Max PV Input per Inverter (kW) <span style="color:var(--text3);font-weight:400;">— optional</span></label>
-            <input type="number" id="db-maxpv" placeholder="E.g., 18" min="0" step="0.1">
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">If blank, manual BOM sync uses nominal inverter kW as the PV design cap.</div>
+            <label>PV Design Capacity per Inverter (kWp) <span style="color:var(--text3);font-weight:400;">— editable</span></label>
+            <input type="number" id="db-maxpv" placeholder="Defaults to inverter kW, e.g. 14" min="0" step="0.1">
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">Controls the PV size targeted by Interactive BOM. Verified manufacturer max remains a separate hard safety ceiling.</div>
           </div>
         </div>
         <div class="btn-group">
@@ -2132,15 +2132,15 @@ const defaultDB = {
     {price:40000,name:"5kW 24V MPPT Hybrid Inverter",client:"Advanced Series 5kW 24V Hybrid Inverter"},
     {price:64000,name:"Deye/Solis 6kW Hybrid",client:"Advanced Series 6kW Hybrid Inverter"},
     {price:55000,name:"SUNGROW 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center"},
-    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",maxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",designPvKw:6,manufacturerMaxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:92000,name:"Deye/Solis 8kW Hybrid",client:"Advanced Series 8kW Hybrid Inverter"},
     {price:73000,name:"SUNGROW 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center"},
-    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",maxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
+    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",designPvKw:8,manufacturerMaxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:89000,name:"SUNGROW 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center"},
-    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",maxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
+    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",designPvKw:10,manufacturerMaxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:144000,name:"Deye 12kW 3-Phase Hybrid",client:"Advanced Series 12kW 3-Phase Power Center"},
-    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
-    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",designPvKw:12,manufacturerMaxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",designPvKw:14,manufacturerMaxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:180000,name:"Elite 16kW Hybrid",client:"Elite Series 16kW Hybrid Power Center"},
     {price:210000,name:"Deye 20kW 3-Phase Hybrid",client:"Advanced Series 20kW 3-Phase Power Center"},
     {price:175200,name:"LuxPower 20kW 1-Phase",client:"Elite Series 20kW 1-Phase Power Center"},
@@ -2238,14 +2238,28 @@ Object.keys(defaultDB).forEach(cat => {
 // This allows newly verified manufacturer metadata to reach existing local inventories
 // without bumping/wiping the localStorage database.
 function mergeDefaultTechnicalMetadata() {
-  const TECH_KEYS = ['maxPvKw','specModel','specSource','specRevision','specVerified'];
+  const TECH_KEYS = ['designPvKw','manufacturerMaxPvKw','specModel','specSource','specRevision','specVerified'];
   let changed = 0;
 
   Object.keys(defaultDB).forEach(cat => {
     if (!Array.isArray(hwDB[cat])) return;
     defaultDB[cat].forEach(defItem => {
       const stored = hwDB[cat].find(i => i.name === defItem.name);
-      if (!stored || stored.specOverride === true) return;
+      if (!stored) return;
+
+      // Migrate previous Max-PV semantics into separate design-target and hard-limit fields.
+      if (cat === 'inverters' && stored.maxPvKw !== undefined) {
+        const legacy = parseFloat(stored.maxPvKw);
+        if (Number.isFinite(legacy) && legacy > 0) {
+          if (stored.specVerified === true && stored.specOverride !== true) {
+            if (stored.manufacturerMaxPvKw === undefined) { stored.manufacturerMaxPvKw = legacy; changed++; }
+          } else if (stored.designPvKw === undefined) {
+            stored.designPvKw = legacy; changed++;
+          }
+        }
+        delete stored.maxPvKw;
+        changed++;
+      }
 
       TECH_KEYS.forEach(key => {
         if (defItem[key] !== undefined && stored[key] === undefined) {
@@ -2584,28 +2598,46 @@ function getBOMInverterUnitKw() {
   return m ? parseFloat(m[1]) : (invSize || 0);
 }
 
-function getBOMInverterMaxPvKwPerUnit() {
+function getCurrentBatteryVoltage() {
+  // Prefer the selected/restored battery description so reopened quotations retain
+  // the quoted DC bus even if autosizer globals have since changed.
+  const sources = [
+    document.getElementById('desc-battery')?.value || '',
+    document.getElementById('desc-inverter')?.value || '',
+    getSelectedBOMOption('inverter')?.name || ''
+  ];
+  for (const source of sources) {
+    const m = String(source).match(/\b(12|24|48)\s*V\b/i);
+    if (m) return parseInt(m[1]);
+  }
+  return (typeof invVolts !== 'undefined' && invVolts) ? invVolts : 48;
+}
+
+function getBOMInverterPvDesign() {
   const item = getSelectedBOMOption('inverter');
   const unitKw = getBOMInverterUnitKw();
   const rec = (item && item.index >= 0 && hwDB?.inverters?.[item.index]) ? hwDB.inverters[item.index] : null;
-  // Optional future-ready technical metadata. Imported inventory JSON may provide any
-  // of these keys. If absent, FDG's current design convention falls back to a 1:1
-  // nominal inverter-kW PV design cap for manual BOM overrides.
-  const explicit = parseFloat(
-    rec?.maxPvKw ?? rec?.maxPVKw ?? rec?.maxPvInputKw ?? rec?.maxPvInputPowerKw
-  );
-  const hasExplicit = Number.isFinite(explicit) && explicit > 0;
+
+  // User-selected PV design capacity. Defaults to nominal inverter kW.
+  let designKw = parseFloat(rec?.designPvKw);
+  if (!Number.isFinite(designKw) || designKw <= 0) designKw = unitKw;
+
+  // Verified manufacturer maximum is a hard safety ceiling, not the default design target.
+  const manufacturerMaxKw = parseFloat(rec?.manufacturerMaxPvKw);
+  const hasManufacturerMax = Number.isFinite(manufacturerMaxKw) && manufacturerMaxKw > 0;
+  const effectiveDesignKw = hasManufacturerMax ? Math.min(designKw, manufacturerMaxKw) : designKw;
+
   return {
-    kw: hasExplicit ? explicit : unitKw,
-    explicit: hasExplicit,
-    verified: hasExplicit && rec?.specVerified === true && rec?.specOverride !== true,
-    custom: hasExplicit && (rec?.specOverride === true || rec?.specVerified !== true),
+    designKw,
+    effectiveDesignKw,
+    manufacturerMaxKw: hasManufacturerMax ? manufacturerMaxKw : 0,
+    hasManufacturerMax,
+    verified: hasManufacturerMax && rec?.specVerified === true,
     model: rec?.specModel || '',
     source: rec?.specSource || '',
     revision: rec?.specRevision || ''
   };
 }
-
 function getBOMSystemState() {
   const panelW = getBOMPanelW();
   const panelQty = Math.max(0, parseInt(document.getElementById('qty-panels')?.value) || 0);
@@ -2614,7 +2646,7 @@ function getBOMSystemState() {
   const invUnitKw = getBOMInverterUnitKw();
   const invQtyNow = Math.max(1, parseInt(document.getElementById('qty-inverter')?.value) || 1);
   const invTotalKw = invUnitKw > 0 ? invUnitKw * invQtyNow : 0;
-  const pvLimit = getBOMInverterMaxPvKwPerUnit();
+  const pvDesign = getBOMInverterPvDesign();
 
   return {
     panelW,
@@ -2623,14 +2655,16 @@ function getBOMSystemState() {
     invUnitKw,
     invQty: invQtyNow,
     invTotalKw,
-    maxPvPerUnitKw: pvLimit.kw,
-    maxPvTotalKw: pvLimit.kw * invQtyNow,
-    hasExplicitMaxPv: pvLimit.explicit,
-    hasVerifiedMaxPv: pvLimit.verified,
-    hasCustomMaxPv: pvLimit.custom,
-    maxPvModel: pvLimit.model,
-    maxPvSource: pvLimit.source,
-    maxPvRevision: pvLimit.revision
+    designPvPerUnitKw: pvDesign.designKw,
+    effectiveDesignPvPerUnitKw: pvDesign.effectiveDesignKw,
+    designPvTotalKw: pvDesign.effectiveDesignKw * invQtyNow,
+    manufacturerMaxPvPerUnitKw: pvDesign.manufacturerMaxKw,
+    manufacturerMaxPvTotalKw: pvDesign.manufacturerMaxKw * invQtyNow,
+    hasManufacturerMaxPv: pvDesign.hasManufacturerMax,
+    hasVerifiedManufacturerMaxPv: pvDesign.verified,
+    maxPvModel: pvDesign.model,
+    maxPvSource: pvDesign.source,
+    maxPvRevision: pvDesign.revision
   };
 }
 
@@ -2658,15 +2692,16 @@ function getBOMSolarProjection(ratePerKwh, consumptionKwhPerMonth) {
 
 function syncPanelsToCurrentInverter({ notify = false } = {}) {
   const state = getBOMSystemState();
-  if (!(state.invUnitKw > 0) || !(state.maxPvTotalKw > 0) || !(state.panelW > 0)) return;
+  if (!(state.invUnitKw > 0) || !(state.designPvTotalKw > 0) || !(state.panelW > 0)) return;
 
-  // If true manufacturer max-PV metadata exists, never exceed it.
-  // Otherwise match the nearest practical panel count to the selected inverter total,
-  // which preserves the current FDG 1:1 manual-override convention.
-  let q = state.hasExplicitMaxPv
-    ? Math.floor((state.maxPvTotalKw * 1000) / state.panelW)
-    : Math.round((state.maxPvTotalKw * 1000) / state.panelW);
-  q = Math.max(1, q);
+  // BOM follows the user's PV DESIGN TARGET, not the manufacturer maximum.
+  let q = Math.max(1, Math.round((state.designPvTotalKw * 1000) / state.panelW));
+
+  // Manufacturer maximum remains a hard safety ceiling when known.
+  if (state.hasManufacturerMaxPv && state.manufacturerMaxPvTotalKw > 0) {
+    const maxPanels = Math.max(1, Math.floor((state.manufacturerMaxPvTotalKw * 1000) / state.panelW));
+    q = Math.min(q, maxPanels);
+  }
 
   const qtyPanels = document.getElementById('qty-panels');
   if (qtyPanels) qtyPanels.value = q;
@@ -2674,17 +2709,12 @@ function syncPanelsToCurrentInverter({ notify = false } = {}) {
 
   if (notify) {
     const actualPv = q * state.panelW / 1000;
-    if (state.hasVerifiedMaxPv) {
-      const model = state.maxPvModel ? ` (${state.maxPvModel})` : '';
-      toast(`✓ PV array synced to VERIFIED manufacturer Max PV Input${model}: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
-    } else if (state.hasCustomMaxPv) {
-      toast(`✓ PV array synced to CUSTOM Max PV Input: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
-    } else {
-      toast(`⚠ Exact inverter model/spec not verified. Using nominal ${state.invUnitKw.toFixed(1)}kW fallback: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'warn');
-    }
+    let msg = '✓ PV BOM synced to design target: ' + q + '× ' + state.panelW + 'W = ' + actualPv.toFixed(2) + ' kWp (target ' + state.designPvTotalKw.toFixed(2) + ' kWp';
+    if (state.hasVerifiedManufacturerMaxPv) msg += ' · manufacturer max ' + state.manufacturerMaxPvTotalKw.toFixed(2) + ' kWp';
+    msg += ')';
+    toast(msg, 'success');
   }
 }
-
 function syncManualInverterBOM({ notify = false } = {}) {
   const unitKw = getBOMInverterUnitKw();
   if (!(unitKw > 0)) return;
@@ -2790,13 +2820,8 @@ function addDBItem() {
 
   const item = {name, client, price};
   if (cat === 'inverters') {
-    const maxPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
-    if (Number.isFinite(maxPvKw) && maxPvKw > 0) {
-      item.maxPvKw = maxPvKw;
-      item.specOverride = true;
-      item.specVerified = false;
-      item.specSource = 'Manual entry';
-    }
+    const designPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
+    if (Number.isFinite(designPvKw) && designPvKw > 0) item.designPvKw = designPvKw;
   }
   hwDB[cat].push(item);
   saveDB();
@@ -2850,7 +2875,7 @@ function renderDBTable(cat) {
     <tr>
       <th onclick="setInvSort('${cat}','name')" style="cursor:pointer;">Internal Name ⇅</th>
       <th>Client Spec</th>
-      ${isInv ? '<th>Max PV Input / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">manufacturer spec status</span></th>' : ''}
+      ${isInv ? '<th>PV Design / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">user target · max shown below</span></th>' : ''}
       <th onclick="setInvSort('${cat}','price')" style="cursor:pointer;">Price ⇅</th>
       <th>Actions</th>
     </tr>`;
@@ -2864,15 +2889,13 @@ function renderDBTable(cat) {
             style="cursor:text;color:var(--text2);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;min-width:120px;"
             onclick="editInvField(this)">${item.client}</span></td>
       ${isInv ? `<td>
-            <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
-              title="${item.specSource ? item.specSource + (item.specRevision ? ' · '+item.specRevision : '') : 'Exact manufacturer model/spec not yet verified'}"
-              style="cursor:text;font-family:var(--mono);color:${item.specVerified===true?'var(--green)':item.maxPvKw?'var(--accent)':'#f59e0b'};border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
+            <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="designPvKw"
+              title="PV design target used by Interactive BOM. Click to edit."
+              style="cursor:text;font-family:var(--mono);color:var(--accent);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
               onclick="editInvField(this)">
-              ${item.maxPvKw
-                ? (item.specVerified===true?'✓ VERIFIED ':'CUSTOM ') + Number(item.maxPvKw).toFixed(1)+' kW'
-                : '⚠ EXACT MODEL REQUIRED'}
+              ${(Number(item.designPvKw) > 0 ? Number(item.designPvKw) : (parseFloat((item.name.match(/(\d+(?:\.\d+)?)\s*kW/i)||[])[1]) || 0)).toFixed(1)} kWp design
             </span>
-            ${item.specModel ? `<div style="font-size:9px;color:var(--text3);margin-top:3px;">${item.specModel}${item.specRevision?' · '+item.specRevision:''}</div>` : ''}
+            ${Number(item.manufacturerMaxPvKw)>0 ? `<div style="font-size:9px;color:var(--green);margin-top:3px;">✓ Manufacturer max: ${Number(item.manufacturerMaxPvKw).toFixed(1)} kWp${item.specModel?' · '+item.specModel:''}</div>` : `<div style="font-size:9px;color:var(--text3);margin-top:3px;">Manufacturer max not verified</div>`}
           </td>` : ''}
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="price"
             style="cursor:text;font-family:var(--mono);color:var(--accent);font-weight:700;border-bottom:1px dashed var(--border2);padding:2px 4px;"
@@ -2897,23 +2920,23 @@ function editInvField(span) {
   const label = field === 'name' ? 'Internal Name'
     : field === 'client' ? 'Client Spec'
     : field === 'price' ? 'Price'
-    : field === 'maxPvKw' ? 'Max PV Input per Inverter (kW)'
+    : field === 'designPvKw' ? 'PV Design Capacity per Inverter (kWp)'
     : field;
 
-  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (manual edits become CUSTOM; blank/0 disables verified auto-spec for this item)':''}`, cur ?? '');
+  let val = prompt(`Edit ${label}:${field==='designPvKw'?' (blank/0 = nominal inverter kW; manufacturer max remains separate)':''}`, cur ?? '');
   if (val === null) return;
 
   if (field === 'price') {
     val = parseFloat(val);
     if (isNaN(val) || val < 0) { toast('Invalid price', 'error'); return; }
     hwDB[cat][idx][field] = val;
-  } else if (field === 'maxPvKw') {
+  } else if (field === 'designPvKw') {
     const n = parseFloat(val);
-    hwDB[cat][idx].specOverride = true;
-    hwDB[cat][idx].specVerified = false;
-    hwDB[cat][idx].specSource = 'Manual override';
-    if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].maxPvKw;
-    else hwDB[cat][idx].maxPvKw = n;
+    if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].designPvKw;
+    else {
+      const hardMax = parseFloat(hwDB[cat][idx].manufacturerMaxPvKw);
+      hwDB[cat][idx].designPvKw = (Number.isFinite(hardMax) && hardMax > 0) ? Math.min(n, hardMax) : n;
+    }
   } else {
     val = String(val).trim();
     if (!val) { toast(`${label} cannot be empty`, 'error'); return; }
@@ -3054,7 +3077,7 @@ function getFlowConsumption(){
 // ================================================================
 // FLOW VISUALIZER & CORE SYNC
 // ================================================================
-function calculateFlow(){
+function calculateFlow(skipQuotationSync = false){
   const cons = getFlowConsumption();
   const daily = cons / 30;
   const dkEl = document.getElementById('mathDailyKwh');
@@ -3115,8 +3138,10 @@ function calculateFlow(){
       sw('flowBarNightLoad', '0%'); sw('flowBarSurge', '0%');
     }
   }
-  clearTimeout(window._syncTimer);
-  window._syncTimer = setTimeout(() => syncToQuotation(true), 100);
+  if (!skipQuotationSync) {
+    clearTimeout(window._syncTimer);
+    window._syncTimer = setTimeout(() => syncToQuotation(true), 100);
+  }
 }
 
 function syncToQuotation(silent) {
@@ -3805,8 +3830,10 @@ async function openJobOrder(withPrices) {
   const rawGT = parseFloat((document.getElementById('sys-grandtotal').value || '0').replace(/[^0-9.-]/g, ''));
   if (!rawGT) return toast('Build BOM first — system total is ₱0.', 'error');
 
-  // Pull all values needed
-  const sysKw   = document.getElementById('sys-size').value || '?';
+  // Pull all values needed. Keep PV DC capacity and inverter AC capacity distinct.
+  const bomState = getBOMSystemState();
+  const sysKw   = document.getElementById('sys-size').value || '?'; // AC inverter total
+  const pvKwp   = bomState.pvKwp || 0;
   const batQtyV = parseInt(document.getElementById('qty-battery').value) || 0;
   const aQty    = parseInt(document.getElementById('qty-acc').value) || 0;
   const iQty    = parseInt(document.getElementById('qty-inverter').value) || 1;
@@ -3832,7 +3859,7 @@ async function openJobOrder(withPrices) {
   const bomPhaseParts = bomPhaseStr.split('|');
   const sysPhaseVal = parseInt(bomPhaseParts[0]) || 1;
   const V_AC = parseInt(bomPhaseParts[1]) || 220;
-  const V_DC_BAT = (typeof invVolts !== 'undefined' && invVolts) ? invVolts : 48;
+  const V_DC_BAT = getCurrentBatteryVoltage();
   const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;
   const PF = 0.9;
   const acDivisor = (sysPhaseVal === 3 ? 1.732 : 1) * V_AC * PF;
@@ -4001,7 +4028,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     <div class="info-cell"><div class="label">Client</div><div class="val">${escapeHtml(cliName)}</div></div>
     <div class="info-cell"><div class="label">Date Issued</div><div class="val">${escapeHtml(cliDate)}</div></div>
     <div class="info-cell" style="grid-column:span 2;"><div class="label">Site Address</div><div class="val">${escapeHtml(cliAddr)}</div></div>
-    <div class="info-cell"><div class="label">System</div><div class="val">${escapeHtml(sysKw)} kW · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V</div></div>
+    <div class="info-cell"><div class="label">System</div><div class="val">${pvKwp.toFixed(2)} kWp PV · ${escapeHtml(sysKw)} kW inverter · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V</div></div>
     <div class="info-cell"><div class="label">Lead Installer</div><div class="val">${escapeHtml(installer)}</div></div>
   </div>
 
@@ -4025,7 +4052,7 @@ tr:nth-child(even) td { background:#f8fafc; }
   <div style="margin-top:14pt;background:#fef3c7;border:2pt solid #f59e0b;padding:10pt 14pt;border-radius:6pt;page-break-inside:avoid;">
     <h4 style="font-size:11pt;font-weight:900;color:#0f172a;letter-spacing:1pt;text-transform:uppercase;margin-bottom:8pt;">🔒 INTERNAL — INSTALLER &amp; SITE NOTES</h4>
     <p style="font-size:9pt;margin-bottom:4pt;"><strong>Lead Installer / Foreman:</strong> ${escapeHtml(installer)}</p>
-    <p style="font-size:9pt;margin-bottom:4pt;"><strong>System Sizing Reference:</strong> ${escapeHtml(sysKw)} kW · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V · ${iQty} inverter(s) · ${panels} panel(s) · ${batQtyV} battery bank(s)</p>
+    <p style="font-size:9pt;margin-bottom:4pt;"><strong>System Sizing Reference:</strong> ${pvKwp.toFixed(2)} kWp PV · ${escapeHtml(sysKw)} kW inverter · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V · ${iQty} inverter(s) · ${panels} panel(s) · ${batQtyV} battery bank(s)</p>
     <p style="font-size:9pt;margin-bottom:4pt;"><strong>MPPT Distribution:</strong> ${mpptCnt} MPPT × strings (1 MPPT per 4kW inverter capacity)</p>
     ${notes ? `<div style="margin-top:8pt;padding-top:8pt;border-top:1pt dashed #b45309;">
       <strong style="font-size:9pt;">📝 Site / Project Notes:</strong>
@@ -4138,7 +4165,7 @@ async function generateDoc(type) {
     const isGT  = sysType.includes('Grid-Tied');
     const pitches = {
       Elite: `<h4>🌟 PREMIUM ENGINEERING. MAXIMUM YIELD.</h4>
-        <p>Your ${pvKwp.toFixed(2)}kWp FDG Solar Visayas system is engineered at the highest level — precision-designed for maximum energy output, zero compromise. Elite-grade inverter with real-time MPPT optimization, 24/7 cloud monitoring, and 6,000+ cycle battery storage.${isHyb?' Complete blackout protection with seamless automatic switchover — your home stays powered, always.':''}${isOG?' Fully autonomous — complete independence from the utility grid.':''}${isGT?' Maximum daytime offset with intelligent export management — zero-waste solar generation every day.':''} Built to last for years. This is a long-term energy asset.</p>`,
+        <p>Your ${pvKwp.toFixed(2)}kWp FDG Solar Visayas system is engineered at the highest level — precision-designed for maximum energy output, zero compromise. Elite-grade inverter with real-time MPPT optimization, 24/7 cloud monitoring, and 6,000+ cycle battery storage.${isHyb?' Complete blackout protection with seamless automatic switchover — your home stays powered, always.':''}${isOG?' Fully autonomous — complete independence from the utility grid.':''}${isGT?' Maximum daytime self-consumption with intelligent load matching — solar energy prioritized for on-site use.':''} Built to last for years. This is a long-term energy asset.</p>`,
       Advanced: `<h4>⚖️ PROVEN RELIABILITY. SMART INVESTMENT.</h4>
         <p>Your ${pvKwp.toFixed(2)}kWp FDG Solar Visayas system delivers the ideal balance of performance, reliability, and financial return. Industry-standard components trusted by thousands of Philippine installations.${isHyb?' Hybrid architecture saves on every sunny day AND protects during brownouts and outages.':''}${isOG?' Off-grid independence — no more monthly bills, no more outage anxiety. Your power, your rules.':''}${isGT?' Smart grid-tied savings with proven technology — consistent daily bill reduction, year after year.':''}</p>`,
       Essential: `<h4>🔋 CORE ENERGY SECURITY. EVERY PESO COUNTS.</h4>
@@ -4179,7 +4206,7 @@ async function generateDoc(type) {
     const bomPhaseParts = bomPhaseStr.split('|');
     const sysPhaseVal = parseInt(bomPhaseParts[0]) || 1;
     const V_AC = parseInt(bomPhaseParts[1]) || 220;
-    const V_DC_BAT = invVolts || 48;                      // battery bus voltage
+    const V_DC_BAT = getCurrentBatteryVoltage();          // battery bus voltage from current/restored BOM
     const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;          // typical MPPT string voltage
     const PF = 0.9;                                       // assumed power factor
 
@@ -4269,77 +4296,82 @@ async function openSLD() {
 }
 
 function readSLDConfig() {
-  const panels = parseInt(document.getElementById('qty-panels')?.value) || 0;
-  const invQ   = parseInt(document.getElementById('qty-inverter')?.value) || 1;
-  const batQ   = parseInt(document.getElementById('qty-battery')?.value) || 0;
-  const invDesc = (document.getElementById('desc-inverter')?.value || '').toLowerCase();
-  // Phase + voltage: parse from auto-phase hidden input ("1|220", "3|220", "3|380")
-  // This distinguishes 3Ph 220V (delta) vs 3Ph 380V (wye/Y line-to-line)
+  const bomState = getBOMSystemState();
+  const panels = bomState.panelQty;
+  const panelW = bomState.panelW;
+  const pvKwp = bomState.pvKwp;
+  const invQ = bomState.invQty;
+  const sysKw = bomState.invTotalKw; // AC inverter total
+  const sInvKw = bomState.invUnitKw; // per inverter
+  const batQ = parseInt(document.getElementById('qty-battery')?.value) || 0;
+
+  const invDescEl = document.getElementById('desc-inverter');
+  const invDescRaw = invDescEl?.value || '';
+  const invClientDesc = invDescEl?.dataset?.client || invDescRaw;
+  const panelDescEl = document.getElementById('desc-panels');
+  const panelClientDesc = panelDescEl?.dataset?.client || panelDescEl?.value || '';
+  const batDescEl = document.getElementById('desc-battery');
+  const batClientDesc = batDescEl?.dataset?.client || batDescEl?.value || '';
+  const batAhMatch = (batDescEl?.value || '').match(/(\d+(?:\.\d+)?)\s*Ah/i);
+  const currentBatAh = batAhMatch ? parseFloat(batAhMatch[1]) : (batSizeAh || 0);
+
   const phaseStr = document.getElementById('auto-phase')?.value || '1|220';
   const phaseParts = phaseStr.split('|');
-  const phaseFromHidden = parseInt(phaseParts[0]) || 1;
-  const voltsFromHidden = parseInt(phaseParts[1]) || 220;
-  const phase = phaseFromHidden;
-  const V_AC = voltsFromHidden;
-  const sysKw  = parseFloat(document.getElementById('out-system')?.textContent) || (invQ * (invSize||5));
-  const panelW = panels > 0 ? Math.round(sysKw * 1000 / panels) : 0;
-  const V_DC_BAT = invVolts || 48;
+  const phase = parseInt(phaseParts[0]) || 1;
+  const V_AC = parseInt(phaseParts[1]) || 220;
+  const V_DC_BAT = getCurrentBatteryVoltage();
 
-  // === Inverter type classification (generic, no brand) ===
+  // Architecture follows the same live selector used by the quotation/calculator.
+  const arch = document.getElementById('auto-sys-type')?.value || '';
   let invType;
-  if (batQ === 0)                  invType = 'Grid-Tie Inverter';
-  else if (/off.?grid/.test(invDesc))  invType = 'Off-Grid Inverter';
-  else                                 invType = 'Hybrid On/Off-Grid Inverter';
-  const isHybrid  = invType === 'Hybrid On/Off-Grid Inverter';
+  if (arch === 'gridtie' || batQ === 0) invType = 'Grid-Tie Inverter';
+  else if (arch === 'offgrid' || /off.?grid/i.test(invDescRaw)) invType = 'Off-Grid Inverter';
+  else invType = 'Hybrid On/Off-Grid Inverter';
+  const isHybrid = invType === 'Hybrid On/Off-Grid Inverter';
   const isOffGrid = invType === 'Off-Grid Inverter';
   const isGridTie = invType === 'Grid-Tie Inverter';
 
-  // === MPPT distribution rule (per user spec) ===
-  // 1 MPPT per 4kW of inverter capacity (rounded up):
-  //   ≤4kW   → 1 MPPT
-  //   5-8kW  → 2 MPPT
-  //   9-12kW → 3 MPPT
-  //   13-16kW → 4 MPPT etc.
-  // Manual override available via sys-mppt-override
-  const invKwForMppt = parseFloat(document.getElementById('sys-size')?.value) || 0;
+  // Existing MPPT distribution convention retained; now based on actual BOM inverter total.
+  const invKwForMppt = sysKw || 0;
   const autoMppt = Math.max(1, Math.ceil(invKwForMppt / 4));
   const manualMppt = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
-  const mpptCount = (manualMppt > 0 && manualMppt <= Math.max(panels, 1)) ? manualMppt : Math.min(autoMppt, panels);
+  const mpptCount = panels > 0
+    ? ((manualMppt > 0 && manualMppt <= panels) ? manualMppt : Math.min(autoMppt, panels))
+    : 0;
   const basePerMppt = mpptCount > 0 ? Math.floor(panels / mpptCount) : 0;
-  const remainder   = panels - basePerMppt * mpptCount;
+  const remainder = panels - basePerMppt * mpptCount;
   const panelsByMppt = [];
   for (let i = 0; i < mpptCount; i++) {
     panelsByMppt.push(i === mpptCount - 1 ? basePerMppt + remainder : basePerMppt);
   }
 
-  // === Breaker calcs (NEC 125% continuous, PH std sizes) ===
+  // Existing protection calculation convention retained; source values now match BOM.
   const STD = [10,15,20,30,40,50,60,75,100,125,150,200,225,250,300,400,500,630,800,1000,1250,1600];
-  const next = a => { for(const b of STD) if(b>=a) return b; return STD[STD.length-1]; };
-  const sInvKw   = sysKw / Math.max(invQ,1);
-  const acDiv    = (phase===3 ? 1.732 : 1) * V_AC * 0.9;       // 0.9 PF
-  const acA_inv  = (sInvKw * 1000) / acDiv;
-  const acBr     = next(acA_inv * 1.25);
-  const gridIso  = next(acA_inv * 1.25 * 1.1);                 // grid iso 10% margin over inverter AC
-  const dcA_bat  = batQ>0 ? (sInvKw * 1000) / V_DC_BAT : 0;
-  const dcBatMain = batQ>0 ? next((dcA_bat / 0.976) * 1.25) : 0; // include eff
-  const perStringA  = batQ>1 ? dcA_bat / batQ : dcA_bat;
+  const next = a => { for (const b of STD) if (b >= a) return b; return STD[STD.length-1]; };
+  const acDiv = (phase===3 ? 1.732 : 1) * V_AC * 0.9;
+  const acA_inv = sInvKw > 0 ? (sInvKw * 1000) / acDiv : 0;
+  const acBr = next(acA_inv * 1.25);
+  const gridIso = next(acA_inv * 1.25 * 1.1);
+  const dcA_bat = batQ>0 && sInvKw>0 ? (sInvKw * 1000) / V_DC_BAT : 0;
+  const dcBatMain = batQ>0 ? next((dcA_bat / 0.976) * 1.25) : 0;
+  const perStringA = batQ>1 ? dcA_bat / batQ : dcA_bat;
   const perStringBr = batQ>1 ? next(perStringA * 1.25) : 0;
-  const dcPvA   = 14;                 // typical Isc for 550–620W panel
-  const dcPvBr  = next(dcPvA * 1.25); // per string
+  const dcPvA = 14;
+  const dcPvBr = next(dcPvA * 1.25);
   const needBusbar = batQ > 2;
 
   return {
-    panels, panelW, panelsByMppt, mpptCount,
-    invQ, iQty: invQ, invType, isHybrid, isOffGrid, isGridTie,
-    batQ, batSizeAh, V_DC_BAT, V_AC, phase,
-    sysKw: sysKw.toFixed(2), sInvKw: sInvKw.toFixed(2),
+    panels, panelW, pvKwp, panelsByMppt, mpptCount,
+    invQ, iQty: invQ, invType, invClientDesc, isHybrid, isOffGrid, isGridTie,
+    batQ, batSizeAh: currentBatAh, batClientDesc, panelClientDesc, V_DC_BAT, V_AC, phase,
+    sysKw: Number(sysKw || 0).toFixed(2), sInvKw: Number(sInvKw || 0).toFixed(2),
     acA_inv: acA_inv.toFixed(1), acBr, gridIso,
     dcA_bat: dcA_bat.toFixed(1), dcBatMain,
     perStringA: perStringA.toFixed(1), perStringBr,
     dcPvA, dcPvBr,
     needBusbar,
     clientName: document.getElementById('cli-name')?.value || 'Client',
-    projDate: new Date().toLocaleDateString('en-PH', {year:'numeric',month:'short',day:'numeric'}),
+    projDate: getDocDate(),
     revision: 'R1.0',
     designer: 'FDG Solar Visayas Engineering'
   };
@@ -4629,7 +4661,7 @@ function realInverter(x, y, w, h, type, sInvKw, phase, V_AC, V_DC, sysKw, mppt, 
     <!-- LCD glass -->
     <rect x="${x+w/2-58}" y="${y+121}" width="116" height="58" rx="3" fill="#022c22"/>
     <rect x="${x+w/2-58}" y="${y+121}" width="116" height="20" rx="3" fill="url(#lcdGloss)" opacity="0.3"/>
-    <text x="${x+w/2}" y="${y+143}" text-anchor="middle" fill="#10b981" font="bold 13px monospace">${sysKw}kWp</text>
+    <text x="${x+w/2}" y="${y+143}" text-anchor="middle" fill="#10b981" font="bold 13px monospace">${sInvKw} kW AC</text>
     <text x="${x+w/2}" y="${y+159}" text-anchor="middle" fill="#10b981" font="9px monospace">ONLINE · ${mppt}MPPT</text>
     <text x="${x+w/2}" y="${y+172}" text-anchor="middle" fill="#10b981" font="8px monospace" opacity="0.7">━━━━━━━━━━</text>
     <!-- Status LED row (with glow) -->
@@ -5428,7 +5460,7 @@ function buildSLDPage(c) {
     <svg viewBox="0 0 ${F_W} ${F_H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;display:block;margin:0 auto;background:#fafbfc;border:1px solid #cbd5e1;border-radius:4px;">
       <defs>${arrowDefs}</defs>
       <text x="${F_W/2}" y="22" text-anchor="middle" font="bold 13px sans-serif" fill="#0f172a" letter-spacing="2.5">⟨ SINGLE-LINE DIAGRAM · PER-ARRAY PROTECTION VIEW ⟩</text>
-      <text x="${F_W/2}" y="40" text-anchor="middle" font="9.5px sans-serif" fill="#94a3b8">${c.clientName} · ${c.invType} · ${c.sysKw} kWp · ${c.phase}-Phase ${c.V_AC}V</text>
+      <text x="${F_W/2}" y="40" text-anchor="middle" font="9.5px sans-serif" fill="#94a3b8">${c.clientName} · ${c.invType} · ${c.pvKwp.toFixed(2)} kWp PV · ${c.sysKw} kW inverter · ${c.phase}-Phase ${c.V_AC}V</text>
       <text x="${F_W/2}" y="56" text-anchor="middle" font="8.5px sans-serif" fill="#64748b">${numPV} PV string${numPV>1?'s':''} · ${numBat||'no'} battery pack${numBat!==1?'s':''} · ${numInv} inverter${numInv>1?'s':''} · all parallel paths shown</text>
 
       ${pvSvg}
@@ -5462,7 +5494,7 @@ function buildSLDPage(c) {
 <html><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SLD — ${c.clientName} — ${c.sysKw} kWp</title>
+<title>SLD — ${c.clientName} — ${c.pvKwp.toFixed(2)} kWp</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#e2e8f0;font-size:9.5pt;line-height:1.4;}
@@ -5646,12 +5678,12 @@ function buildSLDPage(c) {
       </div>
 
       <h1 class="doc-title">System Single-Line Diagram</h1>
-      <div class="doc-sub">${c.clientName} · ${c.sysKw} kWp ${c.invType}</div>
+      <div class="doc-sub">${c.clientName} · ${c.pvKwp.toFixed(2)} kWp PV · ${c.sysKw} kW inverter · ${c.invType}</div>
 
       <h2>System Specifications</h2>
       <div class="specs-grid">
-        <div class="spec-card"><div class="spec-card-label">Capacity</div><div class="spec-card-val">${c.sysKw} kWp</div><div class="spec-card-sub">${(c.panels*c.panelW/1000).toFixed(2)} kWp total</div></div>
-        <div class="spec-card"><div class="spec-card-label">Inverter</div><div class="spec-card-val">${c.sInvKw} kW</div><div class="spec-card-sub">${c.phase}-Ph ${c.V_AC}V</div></div>
+        <div class="spec-card"><div class="spec-card-label">PV Capacity</div><div class="spec-card-val">${c.pvKwp.toFixed(2)} kWp</div><div class="spec-card-sub">${c.panels} × ${c.panelW}Wp installed</div></div>
+        <div class="spec-card"><div class="spec-card-label">Inverter</div><div class="spec-card-val">${c.sysKw} kW</div><div class="spec-card-sub">${c.invQ} × ${c.sInvKw}kW · ${c.phase}-Ph ${c.V_AC}V</div></div>
         ${c.batQ>0?`<div class="spec-card"><div class="spec-card-label">Storage</div><div class="spec-card-val">${(c.batQ*c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">${c.batQ}× ${c.V_DC_BAT}V LiFePO4</div></div>`:''}
         <div class="spec-card"><div class="spec-card-label">MPPT</div><div class="spec-card-val">${c.mpptCount}</div><div class="spec-card-sub">DC tracking</div></div>
       </div>
@@ -5686,7 +5718,7 @@ function buildSLDPage(c) {
         <thead><tr><th>Tag</th><th>Component</th><th>Specification</th><th>Quantity</th></tr></thead>
         <tbody>
           <tr><td><strong>PV-1</strong></td><td>Solar PV Modules</td><td>${c.panelW}Wp Mono-Crystalline</td><td>${c.panels} pcs</td></tr>
-          <tr><td><strong>INV-1</strong></td><td>${c.invType} Inverter</td><td>${c.sInvKw} kW · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>1 pc</td></tr>
+          <tr><td><strong>INV-1</strong></td><td>${escapeHtml(String(c.invClientDesc || c.invType).replace(/\s+Inverter$/i,""))} Inverter</td><td>${c.sInvKw} kW/unit · ${c.sysKw} kW total · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>${c.invQ} pc${c.invQ>1?'s':''}</td></tr>
           ${c.batQ>0?`<tr><td><strong>BAT-1</strong></td><td>LiFePO4 Battery</td><td>${c.V_DC_BAT}V × ${c.batSizeAh}Ah · ${(c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh/unit</td><td>${c.batQ} pc${c.batQ>1?'s':''}</td></tr>`:''}
           <tr><td><strong>ATS-1</strong></td><td>Auto Transfer Switch</td><td>${c.gridIso}A · ${c.phase===3?3:2}P · SOLAR/GEN/UTILITY</td><td>1 pc</td></tr>
           <tr><td><strong>CB-PV</strong></td><td>DC PV Breaker</td><td>${c.dcPvBr}A · 2P · 1000V DC</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
@@ -5695,7 +5727,7 @@ function buildSLDPage(c) {
           <tr><td><strong>SPD-DC</strong></td><td>DC Surge Protector Type II</td><td>${c.dcPvBr}A · 1000V DC · per array</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
           <tr><td><strong>SPD-AC</strong></td><td>AC Surge Protector Type II</td><td>${c.gridIso}A · ${c.V_AC}V AC</td><td>1 pc</td></tr>
           <tr><td><strong>RLY-ISL</strong></td><td>Islanding / Anti-Islanding Relay</td><td>Voltage/Frequency monitoring · ${c.V_AC}V AC</td><td>1 pc</td></tr>
-          <tr><td><strong>METER</strong></td><td>Utility kWh Meter</td><td>Bi-directional Net Meter</td><td>1 pc</td></tr>
+          <tr><td><strong>METER</strong></td><td>Utility kWh Meter</td><td>Grid import / backup monitoring · no export assumption</td><td>1 pc</td></tr>
         </tbody>
       </table>
 
@@ -5733,15 +5765,65 @@ function calcROI(){
 // QUOTE HISTORY — localStorage key `fdgQuoteHistory_v1` (legacy `fdgQuoteHistory`)
 // ================================================================
 const QH_KEY = 'fdgQuoteHistory_v1';
+function deriveSavedQuoteCapacities(q) {
+  if (!q || !q.snapshot) return null;
+  const snap = q.snapshot;
+  if (snap.actualBOM) {
+    return {
+      pvKwp: parseFloat(snap.actualBOM.pvKwp) || 0,
+      inverterKw: parseFloat(snap.actualBOM.invTotalKw) || 0
+    };
+  }
+
+  const inp = snap.inputs || {};
+  const panelQty = parseInt(inp['qty-panels']) || 0;
+  const panelSource = inp['sel-panels'] || inp['desc-panels'] || '';
+  const panelMatch = String(panelSource).match(/(\d+(?:\.\d+)?)\s*W/i);
+  const panelW = panelMatch ? parseFloat(panelMatch[1]) : 0;
+
+  const invQtySaved = parseInt(inp['qty-inverter']) || 1;
+  const invSource = inp['sel-inverter'] || inp['desc-inverter'] || '';
+  const invMatch = String(invSource).match(/(\d+(?:\.\d+)?)\s*kW/i);
+  const invUnitKw = invMatch ? parseFloat(invMatch[1]) : 0;
+
+  return {
+    pvKwp: panelQty > 0 && panelW > 0 ? panelQty * panelW / 1000 : 0,
+    inverterKw: invUnitKw > 0 ? invQtySaved * invUnitKw : 0
+  };
+}
+
+function normalizeQuoteHistoryCapacity(arr) {
+  if (!Array.isArray(arr)) return { arr: [], changed: false };
+  let changed = false;
+  arr.forEach(q => {
+    const derived = deriveSavedQuoteCapacities(q);
+    if (!derived) return;
+    if ((!q.pvKwp || parseFloat(q.pvKwp) <= 0) && derived.pvKwp > 0) {
+      q.pvKwp = derived.pvKwp.toFixed(2);
+      changed = true;
+    }
+    if ((!q.inverterKw || parseFloat(q.inverterKw) <= 0) && derived.inverterKw > 0) {
+      q.inverterKw = derived.inverterKw.toFixed(2);
+      changed = true;
+    }
+  });
+  return { arr, changed };
+}
+
 function loadQuoteHistory() {
   try {
     let arr = JSON.parse(localStorage.getItem(QH_KEY));
-    if (arr && arr.length) return arr;
+    if (arr && arr.length) {
+      const normalized = normalizeQuoteHistoryCapacity(arr);
+      if (normalized.changed) localStorage.setItem(QH_KEY, JSON.stringify(normalized.arr));
+      return normalized.arr;
+    }
     // Migrate from legacy
     const legacy = JSON.parse(localStorage.getItem('fdgQuoteHistory'));
     if (legacy && legacy.length) {
-      localStorage.setItem(QH_KEY, JSON.stringify(legacy));
-      return legacy;
+      const normalized = normalizeQuoteHistoryCapacity(legacy);
+      localStorage.setItem(QH_KEY, JSON.stringify(normalized.arr));
+      return normalized.arr;
     }
   } catch(e) {}
   return [];
@@ -6180,9 +6262,25 @@ function captureQuoteSnapshot() {
     if (el.type === 'checkbox' || el.type === 'radio') snap.checks[el.id] = el.checked;
     else snap.inputs[el.id] = el.value;
   });
-  // Persist BOM + key globals
+  // Persist BOM + key globals. This is the quoted installed configuration, not just the recommendation.
   try { snap.bomTotal = (typeof bomTotal !== 'undefined') ? bomTotal : 0; } catch(e){}
   try { snap.rawGrandTotal = (typeof rawGrandTotal !== 'undefined') ? rawGrandTotal : 0; } catch(e){}
+  try { snap.actualBOM = getBOMSystemState(); } catch(e){}
+  try {
+    snap.engineGlobals = {
+      recPanels: (typeof recPanels !== 'undefined') ? recPanels : 0,
+      recSysKw: (typeof recSysKw !== 'undefined') ? recSysKw : 0,
+      invQty: (typeof invQty !== 'undefined') ? invQty : 1,
+      invSize: (typeof invSize !== 'undefined') ? invSize : 0,
+      invVolts: (typeof invVolts !== 'undefined') ? invVolts : 48,
+      batQty: (typeof batQty !== 'undefined') ? batQty : 0,
+      batSizeAh: (typeof batSizeAh !== 'undefined') ? batSizeAh : 0,
+      batNeedAh: (typeof batNeedAh !== 'undefined') ? batNeedAh : 0,
+      usableKwhNeed: (typeof usableKwhNeed !== 'undefined') ? usableKwhNeed : 0,
+      batEffDod: (typeof batEffDod !== 'undefined') ? batEffDod : 0,
+      clientMonthlyKwh: (typeof clientMonthlyKwh !== 'undefined') ? clientMonthlyKwh : 0
+    };
+  } catch(e){}
   return snap;
 }
 
@@ -6197,14 +6295,37 @@ function loadQuoteSnapshot(idx) {
   // Restore globals
   if (typeof snap.bomTotal !== 'undefined') { try { bomTotal = snap.bomTotal; } catch(e){} }
   if (typeof snap.rawGrandTotal !== 'undefined') { try { rawGrandTotal = snap.rawGrandTotal; } catch(e){} }
+  if (snap.engineGlobals) {
+    try {
+      if (snap.engineGlobals.recPanels !== undefined) recPanels = snap.engineGlobals.recPanels;
+      if (snap.engineGlobals.recSysKw !== undefined) recSysKw = snap.engineGlobals.recSysKw;
+      if (snap.engineGlobals.invQty !== undefined) invQty = snap.engineGlobals.invQty;
+      if (snap.engineGlobals.invSize !== undefined) invSize = snap.engineGlobals.invSize;
+      if (snap.engineGlobals.invVolts !== undefined) invVolts = snap.engineGlobals.invVolts;
+      if (snap.engineGlobals.batQty !== undefined) batQty = snap.engineGlobals.batQty;
+      if (snap.engineGlobals.batSizeAh !== undefined) batSizeAh = snap.engineGlobals.batSizeAh;
+      if (snap.engineGlobals.batNeedAh !== undefined) batNeedAh = snap.engineGlobals.batNeedAh;
+      if (snap.engineGlobals.usableKwhNeed !== undefined) usableKwhNeed = snap.engineGlobals.usableKwhNeed;
+      if (snap.engineGlobals.batEffDod !== undefined) batEffDod = snap.engineGlobals.batEffDod;
+      if (snap.engineGlobals.clientMonthlyKwh !== undefined) clientMonthlyKwh = snap.engineGlobals.clientMonthlyKwh;
+    } catch(e){}
+  } else {
+    // Backward compatibility for older snapshots: derive safe BOM globals without res-sizing the quote.
+    try {
+      const restored = getBOMSystemState();
+      recPanels = restored.panelQty;
+      recSysKw = restored.invTotalKw;
+      invQty = restored.invQty;
+      invSize = restored.invUnitKw;
+    } catch(e){}
+  }
   // Lock the session ref to this saved quote's ref so all generated docs match it
   currentQuoteRef = q.ref;
   const badge = document.getElementById('quoteRefBadge'); if (badge) badge.textContent = 'REF: ' + currentQuoteRef;
-  // Re-run all live recalcs so dependent displays + the Client Proposal refresh
+  // Recalculate prices/displays WITHOUT running the autosizer, which would overwrite a manual BOM quote.
   try { if (typeof calcBOM === 'function') calcBOM(); } catch(e){}
   try { if (typeof calcGrandTotal === 'function') calcGrandTotal(); } catch(e){}
-  try { if (typeof calculateFlow === 'function') calculateFlow(); } catch(e){}
-  try { if (typeof syncToQuotation === 'function') syncToQuotation(); } catch(e){}
+  try { if (typeof calculateFlow === 'function') calculateFlow(true); } catch(e){}
   // Jump to the Quotation Generator so user can print any document
   switchView('view-quote', document.querySelector('.nav-item[onclick*=view-quote]'));
   document.getElementById('edit-quote-bg')?.remove();
@@ -6216,7 +6337,9 @@ function saveQuote() {
   const ref = currentQuoteRef;
   const client = document.getElementById('cli-name').value || 'Unnamed Client';
   const date = document.getElementById('cli-date').value || new Date().toISOString().slice(0,10);
-  const sysKw = document.getElementById('sys-size').value || '?';
+  const bomState = getBOMSystemState();
+  const pvKwp = bomState.pvKwp > 0 ? bomState.pvKwp.toFixed(2) : '?';
+  const inverterKw = bomState.invTotalKw > 0 ? bomState.invTotalKw.toFixed(2) : (document.getElementById('sys-size').value || '?');
   const sysType = document.getElementById('sys-type').value.replace(/[⚡🔌🔋]/g,'').trim();
   const amount = document.getElementById('sys-grandtotal').value;
   const amountRaw = rawGrandTotal;
@@ -6226,7 +6349,7 @@ function saveQuote() {
   if(history.find(q => q.ref === ref)) {
     toast('This quote reference is already saved.', 'warn'); return;
   }
-  history.unshift({ ref, client, date, sysKw, sysType, amount, amountRaw, snapshot, status: 'pending', saved: new Date().toISOString() });
+  history.unshift({ ref, client, date, pvKwp, inverterKw, sysKw: pvKwp, sysType, amount, amountRaw, snapshot, status: 'pending', saved: new Date().toISOString() });
   saveQuoteHistory(history);
   currentQuoteRef = generateQuoteRef();
   document.getElementById('quoteRefBadge').textContent = 'REF: ' + currentQuoteRef;
@@ -6259,7 +6382,7 @@ function renderHistoryTable() {
       <td style="font-family:var(--mono);font-size:11px;color:var(--accent);">${q.ref}</td>
       <td style="font-weight:600;">${q.client}${q.notes ? ' <span title="Has follow-up notes" style="font-size:11px;">📝</span>' : ''}</td>
       <td style="color:var(--text2);font-size:12px;">${q.date}</td>
-      <td style="font-size:12px;">${q.sysKw}kW ${q.sysType}</td>
+      <td style="font-size:12px;">${q.pvKwp || q.sysKw || "?"} kWp PV${q.inverterKw ? " · "+q.inverterKw+" kW inv" : ""} · ${q.sysType}</td>
       <td style="font-family:var(--mono);font-weight:700;color:var(--green);">${q.amount}</td>
       <td>
         <select onchange="updateQuoteStatus(${idx}, this.value)" style="padding:5px 8px;font-size:11px;border-radius:4px;background:var(--bg2);color:${sc};border-color:${sc};">
@@ -6313,8 +6436,8 @@ function openEditQuote(idx) {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div>
-            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">System (kW)</label>
-            <input id="eq-syskw" type="text" value="${(q.sysKw||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">PV Capacity (kWp)</label>
+            <input id="eq-syskw" type="text" value="${(q.pvKwp||q.sysKw||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
           </div>
           <div>
             <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Type</label>
@@ -6346,7 +6469,8 @@ function saveEditQuote(idx) {
   q.client  = document.getElementById('eq-client').value.trim() || q.client;
   q.date    = document.getElementById('eq-date').value || q.date;
   q.status  = document.getElementById('eq-status').value;
-  q.sysKw   = document.getElementById('eq-syskw').value.trim();
+  q.pvKwp   = document.getElementById('eq-syskw').value.trim();
+  q.sysKw   = q.pvKwp; // legacy alias for older history consumers
   q.sysType = document.getElementById('eq-systype').value.trim();
   q.amount  = document.getElementById('eq-amount').value.trim();
   q.notes   = document.getElementById('eq-notes').value;
@@ -7831,19 +7955,24 @@ h2.section {
 
 async function openTurnoverForm() {
   if (!(await requirePassword('open Turnover & Warranty Form'))) return;
+  if (typeof calcBOM === 'function') calcBOM();
   const cfg = readSLDConfig();
+  const bomState = getBOMSystemState();
   const clientName = document.getElementById('cli-name')?.value || 'Client';
   const clientAddress = document.getElementById('cli-address')?.value || '_______________________________________________';
-  const sysKw = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
+  const pvKwp = bomState.pvKwp;
+  const inverterKw = bomState.invTotalKw;
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
   const today = getDocDate();
-  // Ref = the current session quote reference (matches the badge shown in the app).
-  // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
+  // Ref stays locked to the same quote/session used by proposal, Full Quote, SLD, and JO.
   const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
 
-  const panelDesc = `${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp Solar Panels (Total)`;
-  const invDesc = `${cfg.sInvKw}kW ${escapeHtml(cfg.invType)} · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
-  const batDesc = cfg.batQ > 0 ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 (${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh)` : 'N/A — Grid-Tied system';
+  const panelDesc = `${cfg.panels}× ${cfg.panelW}W PV modules = ${pvKwp.toFixed(2)} kWp installed`;
+  const cleanInv = String(cfg.invClientDesc || cfg.invType || '').replace(/^\d+x\s*/i,'').trim();
+  const invDesc = `${cfg.invQ}× ${cfg.sInvKw}kW${cleanInv ? ' · ' + escapeHtml(cleanInv) : ''} · ${inverterKw.toFixed(2)}kW total · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
+  const batDesc = cfg.batQ > 0
+    ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 = ${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh gross`
+    : 'N/A — Grid-Tied system';
 
   let html = `<!DOCTYPE html>
 <html><head>
@@ -8047,8 +8176,8 @@ async function openTurnoverForm() {
       <table class="info-table">
         <tr><td>Client / Owner</td><td><strong>${escapeHtml(clientName)}</strong></td></tr>
         <tr><td>Site Address</td><td>${escapeHtml(clientAddress)}</td></tr>
-        <tr><td>System Capacity</td><td><strong>${sysKw} kWp ${escapeHtml(sysType)}</strong></td></tr>
-        <tr><td>Panel Configuration</td><td>${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp · ${cfg.mpptCount} MPPT</td></tr>
+        <tr><td>System Capacity</td><td><strong>${pvKwp.toFixed(2)} kWp PV · ${inverterKw.toFixed(2)} kW inverter · ${escapeHtml(sysType)}</strong></td></tr>
+        <tr><td>Panel Configuration</td><td>${cfg.panels} × ${cfg.panelW}W = ${pvKwp.toFixed(2)} kWp · ${cfg.mpptCount} MPPT</td></tr>
         <tr><td>Inverter</td><td>${invDesc}</td></tr>
         <tr><td>Battery Bank</td><td>${batDesc}</td></tr>
         <tr><td>Energization Date</td><td>_____________________ &nbsp;&nbsp; (warranty start)</td></tr>
@@ -8392,8 +8521,8 @@ function migrateHistoryToPipeline() {
     pipe.push({
       id: 'L' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       name: q.client || 'Unknown',
-      est_kWp: parseFloat(q.system) || 0,
-      est_value_PHP: parseFloat(q.amount) || 0,
+      est_kWp: parseFloat(q.pvKwp || q.sysKw || q.system) || 0,
+      est_value_PHP: parseFloat(q.amountRaw) || parseFloat(String(q.amount||'').replace(/[^0-9.]/g,'')) || 0,
       stage,
       next_action: '',
       next_action_date: '',
