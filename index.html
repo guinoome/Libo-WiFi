@@ -3813,8 +3813,10 @@ async function openJobOrder(withPrices) {
   const rawGT = parseFloat((document.getElementById('sys-grandtotal').value || '0').replace(/[^0-9.-]/g, ''));
   if (!rawGT) return toast('Build BOM first — system total is ₱0.', 'error');
 
-  // Pull all values needed
-  const sysKw   = document.getElementById('sys-size').value || '?';
+  // Pull all values needed. Keep PV DC capacity and inverter AC capacity distinct.
+  const bomState = getBOMSystemState();
+  const sysKw   = document.getElementById('sys-size').value || '?'; // AC inverter total
+  const pvKwp   = bomState.pvKwp || 0;
   const batQtyV = parseInt(document.getElementById('qty-battery').value) || 0;
   const aQty    = parseInt(document.getElementById('qty-acc').value) || 0;
   const iQty    = parseInt(document.getElementById('qty-inverter').value) || 1;
@@ -4009,7 +4011,7 @@ tr:nth-child(even) td { background:#f8fafc; }
     <div class="info-cell"><div class="label">Client</div><div class="val">${escapeHtml(cliName)}</div></div>
     <div class="info-cell"><div class="label">Date Issued</div><div class="val">${escapeHtml(cliDate)}</div></div>
     <div class="info-cell" style="grid-column:span 2;"><div class="label">Site Address</div><div class="val">${escapeHtml(cliAddr)}</div></div>
-    <div class="info-cell"><div class="label">System</div><div class="val">${escapeHtml(sysKw)} kW · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V</div></div>
+    <div class="info-cell"><div class="label">System</div><div class="val">${pvKwp.toFixed(2)} kWp PV · ${escapeHtml(sysKw)} kW inverter · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V</div></div>
     <div class="info-cell"><div class="label">Lead Installer</div><div class="val">${escapeHtml(installer)}</div></div>
   </div>
 
@@ -4033,7 +4035,7 @@ tr:nth-child(even) td { background:#f8fafc; }
   <div style="margin-top:14pt;background:#fef3c7;border:2pt solid #f59e0b;padding:10pt 14pt;border-radius:6pt;page-break-inside:avoid;">
     <h4 style="font-size:11pt;font-weight:900;color:#0f172a;letter-spacing:1pt;text-transform:uppercase;margin-bottom:8pt;">🔒 INTERNAL — INSTALLER &amp; SITE NOTES</h4>
     <p style="font-size:9pt;margin-bottom:4pt;"><strong>Lead Installer / Foreman:</strong> ${escapeHtml(installer)}</p>
-    <p style="font-size:9pt;margin-bottom:4pt;"><strong>System Sizing Reference:</strong> ${escapeHtml(sysKw)} kW · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V · ${iQty} inverter(s) · ${panels} panel(s) · ${batQtyV} battery bank(s)</p>
+    <p style="font-size:9pt;margin-bottom:4pt;"><strong>System Sizing Reference:</strong> ${pvKwp.toFixed(2)} kWp PV · ${escapeHtml(sysKw)} kW inverter · ${escapeHtml(sysType)} · ${sysPhaseVal}Ph ${V_AC}V · ${iQty} inverter(s) · ${panels} panel(s) · ${batQtyV} battery bank(s)</p>
     <p style="font-size:9pt;margin-bottom:4pt;"><strong>MPPT Distribution:</strong> ${mpptCnt} MPPT × strings (1 MPPT per 4kW inverter capacity)</p>
     ${notes ? `<div style="margin-top:8pt;padding-top:8pt;border-top:1pt dashed #b45309;">
       <strong style="font-size:9pt;">📝 Site / Project Notes:</strong>
