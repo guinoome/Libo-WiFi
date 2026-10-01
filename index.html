@@ -2875,14 +2875,12 @@ function renderDBTable(cat) {
             onclick="editInvField(this)">${item.client}</span></td>
       ${isInv ? `<td>
             <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="designPvKw"
-              title="${item.specSource ? item.specSource + (item.specRevision ? ' · '+item.specRevision : '') : 'Exact manufacturer model/spec not yet verified'}"
-              style="cursor:text;font-family:var(--mono);color:${item.specVerified===true?'var(--green)':item.maxPvKw?'var(--accent)':'#f59e0b'};border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
+              title="PV design target used by Interactive BOM. Click to edit."
+              style="cursor:text;font-family:var(--mono);color:var(--accent);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
               onclick="editInvField(this)">
-              ${item.maxPvKw
-                ? (item.specVerified===true?'✓ VERIFIED ':'CUSTOM ') + Number(item.maxPvKw).toFixed(1)+' kW'
-                : '⚠ EXACT MODEL REQUIRED'}
+              ${(Number(item.designPvKw) > 0 ? Number(item.designPvKw) : (parseFloat((item.name.match(/(\\d+(?:\\.\\d+)?)\\s*kW/i)||[])[1]) || 0)).toFixed(1)} kWp design
             </span>
-            ${item.specModel ? `<div style="font-size:9px;color:var(--text3);margin-top:3px;">${item.specModel}${item.specRevision?' · '+item.specRevision:''}</div>` : ''}
+            ${Number(item.manufacturerMaxPvKw)>0 ? `<div style="font-size:9px;color:var(--green);margin-top:3px;">✓ Manufacturer max: ${Number(item.manufacturerMaxPvKw).toFixed(1)} kWp${item.specModel?' · '+item.specModel:''}</div>` : `<div style="font-size:9px;color:var(--text3);margin-top:3px;">Manufacturer max not verified</div>`}
           </td>` : ''}
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="price"
             style="cursor:text;font-family:var(--mono);color:var(--accent);font-weight:700;border-bottom:1px dashed var(--border2);padding:2px 4px;"
@@ -2910,7 +2908,7 @@ function editInvField(span) {
     : field === 'designPvKw' ? 'PV Design Capacity per Inverter (kWp)'
     : field;
 
-  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (manual edits become CUSTOM; blank/0 disables verified auto-spec for this item)':''}`, cur ?? '');
+  let val = prompt(`Edit ${label}:${field==='designPvKw'?' (blank/0 = nominal inverter kW; manufacturer max remains separate)':''}`, cur ?? '');
   if (val === null) return;
 
   if (field === 'price') {
