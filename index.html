@@ -3952,7 +3952,9 @@ async function generateDoc(type) {
   if (!rawGT) return toast('Build BOM first — system total is ₱0.', 'error');
 
   const p = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  const sysKw   = document.getElementById('sys-size').value || '?';
+  const bomState = getBOMSystemState();
+  const sysKw   = document.getElementById('sys-size').value || '?'; // AC inverter total
+  const pvKwp   = bomState.pvKwp > 0 ? bomState.pvKwp : (parseFloat(sysKw) || 0);
   const batQtyV = parseInt(document.getElementById('qty-battery').value) || 0;
   const aQty    = parseInt(document.getElementById('qty-acc').value) || 0;
   const iQty    = parseInt(document.getElementById('qty-inverter').value) || 1;
@@ -3968,7 +3970,7 @@ async function generateDoc(type) {
   p('p-cli-name',    document.getElementById('cli-name')?.value    || 'N/A');
   p('p-cli-date',    document.getElementById('cli-date')?.value    || 'N/A');
   p('p-cli-address', document.getElementById('cli-address')?.value || 'N/A');
-  p('p-system-size', sysKw + ' kW (' + phaseTxt.split(' ')[0] + ')');
+  p('p-system-size', pvKwp.toFixed(2) + ' kWp PV · ' + (parseFloat(sysKw)||0).toFixed(2) + ' kW inverter (' + phaseTxt.split(' ')[0] + ')');
   p('p-sys-type',    document.getElementById('sys-type')?.value?.replace(/[⚡🔌🔋]/g,'').trim() || '');
 
   // Investment
@@ -3988,8 +3990,9 @@ async function generateDoc(type) {
     const invClient = document.getElementById('desc-inverter')?.dataset?.client
                    || document.getElementById('desc-inverter')?.value || '';
     let cleanInv = invClient.replace(/^\d+x\s*/,'');
-    if (!cleanInv.includes(sysKw + 'kW')) cleanInv = sysKw + 'kW ' + cleanInv;
-    p('c-desc-panels',   `${sysKw} kW High-Efficiency PV Array`);
+    const invTotalKw = parseFloat(sysKw) || bomState.invTotalKw || 0;
+    if (!cleanInv.includes(invTotalKw + 'kW')) cleanInv = invTotalKw + 'kW ' + cleanInv;
+    p('c-desc-panels',   `${pvKwp.toFixed(2)} kWp High-Efficiency PV Array`);
     p('c-desc-inverter', cleanInv);
     p('c-desc-mount',    'FDG Solar Visayas Engineered Aluminum Structural Mounting');
     p('c-desc-electrical','Code-Compliant BOS, Protection Devices & Metering');
@@ -4039,13 +4042,14 @@ async function generateDoc(type) {
     };
     document.getElementById('p-client-pitch').innerHTML = pitches[tier] || pitches.Essential;
 
-    // ROI — cap at client's actual bill so oversized systems don't fake-inflate savings
+    // ROI — actual Interactive BOM PV array × 4.5 PSH × 81% yield, capped by client consumption.
     const rate = autoRate || 12.56;
     const anchor = rawGT;
-    const generatedKwh = parseFloat(sysKw) * 4.5 * 30;          // theoretical generation
+    const projection = getBOMSolarProjection(rate, clientMonthlyKwh);
+    const generatedKwh = projection.monthlyGenerationKwh;
     const billCapKwh   = clientMonthlyKwh > 0 ? clientMonthlyKwh : generatedKwh;
-    const usefulKwh    = Math.min(generatedKwh, billCapKwh);    // can't save more than you spend
-    const ms = usefulKwh * rate;
+    const usefulKwh    = projection.usefulMonthlyKwh;
+    const ms = projection.monthlySavings;
     p('p-roi-monthly', '₱' + ms.toLocaleString(undefined,{maximumFractionDigits:0}));
     p('p-roi-yearly',  '₱' + (ms*12).toLocaleString(undefined,{maximumFractionDigits:0}));
     p('p-roi-payback', anchor>0&&ms>0 ? (anchor/(ms*12)).toFixed(1)+' Years' : 'N/A');
@@ -6844,7 +6848,7 @@ async function generatePDFQuote() {
                <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>`
             : `<tr><td style="background:#f1f5f9;">Current Monthly Bill</td><td style="font-family:monospace;"><strong>₱${monthlyBillPesos.toLocaleString(undefined,{maximumFractionDigits:0})}</strong> ${monthlyBillPesos > 0 ? '' : '<em style="color:#94a3b8;">(no bill entered — using rate × generation)</em>'}</td></tr>
                <tr><td style="background:#fef3c7;font-weight:700;">Estimated Monthly Solar Savings</td><td style="font-family:monospace;font-weight:700;background:#fef3c7;">₱${estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
-               <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${consumptionPesosPerMonth.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
+               <tr><td style="background:#f1f5f9;">Payback (Months)</td><td style="font-family:monospace;">₱${grandTotal.toLocaleString()} ÷ ₱${estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0})} = <strong>${paybackMonths} months</strong></td></tr>
                <tr><td style="background:#f1f5f9;">Payback (Years)</td><td style="font-family:monospace;">${paybackMonths} ÷ 12 = <strong>${paybackYears} years</strong></td></tr>`)
         }
       </table>
