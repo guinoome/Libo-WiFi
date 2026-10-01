@@ -3062,7 +3062,7 @@ function getFlowConsumption(){
 // ================================================================
 // FLOW VISUALIZER & CORE SYNC
 // ================================================================
-function calculateFlow(){
+function calculateFlow(skipQuotationSync = false){
   const cons = getFlowConsumption();
   const daily = cons / 30;
   const dkEl = document.getElementById('mathDailyKwh');
@@ -3123,8 +3123,10 @@ function calculateFlow(){
       sw('flowBarNightLoad', '0%'); sw('flowBarSurge', '0%');
     }
   }
-  clearTimeout(window._syncTimer);
-  window._syncTimer = setTimeout(() => syncToQuotation(true), 100);
+  if (!skipQuotationSync) {
+    clearTimeout(window._syncTimer);
+    window._syncTimer = setTimeout(() => syncToQuotation(true), 100);
+  }
 }
 
 function syncToQuotation(silent) {
@@ -6195,9 +6197,25 @@ function captureQuoteSnapshot() {
     if (el.type === 'checkbox' || el.type === 'radio') snap.checks[el.id] = el.checked;
     else snap.inputs[el.id] = el.value;
   });
-  // Persist BOM + key globals
+  // Persist BOM + key globals. This is the quoted installed configuration, not just the recommendation.
   try { snap.bomTotal = (typeof bomTotal !== 'undefined') ? bomTotal : 0; } catch(e){}
   try { snap.rawGrandTotal = (typeof rawGrandTotal !== 'undefined') ? rawGrandTotal : 0; } catch(e){}
+  try { snap.actualBOM = getBOMSystemState(); } catch(e){}
+  try {
+    snap.engineGlobals = {
+      recPanels: (typeof recPanels !== 'undefined') ? recPanels : 0,
+      recSysKw: (typeof recSysKw !== 'undefined') ? recSysKw : 0,
+      invQty: (typeof invQty !== 'undefined') ? invQty : 1,
+      invSize: (typeof invSize !== 'undefined') ? invSize : 0,
+      invVolts: (typeof invVolts !== 'undefined') ? invVolts : 48,
+      batQty: (typeof batQty !== 'undefined') ? batQty : 0,
+      batSizeAh: (typeof batSizeAh !== 'undefined') ? batSizeAh : 0,
+      batNeedAh: (typeof batNeedAh !== 'undefined') ? batNeedAh : 0,
+      usableKwhNeed: (typeof usableKwhNeed !== 'undefined') ? usableKwhNeed : 0,
+      batEffDod: (typeof batEffDod !== 'undefined') ? batEffDod : 0,
+      clientMonthlyKwh: (typeof clientMonthlyKwh !== 'undefined') ? clientMonthlyKwh : 0
+    };
+  } catch(e){}
   return snap;
 }
 
@@ -6212,14 +6230,37 @@ function loadQuoteSnapshot(idx) {
   // Restore globals
   if (typeof snap.bomTotal !== 'undefined') { try { bomTotal = snap.bomTotal; } catch(e){} }
   if (typeof snap.rawGrandTotal !== 'undefined') { try { rawGrandTotal = snap.rawGrandTotal; } catch(e){} }
+  if (snap.engineGlobals) {
+    try {
+      if (snap.engineGlobals.recPanels !== undefined) recPanels = snap.engineGlobals.recPanels;
+      if (snap.engineGlobals.recSysKw !== undefined) recSysKw = snap.engineGlobals.recSysKw;
+      if (snap.engineGlobals.invQty !== undefined) invQty = snap.engineGlobals.invQty;
+      if (snap.engineGlobals.invSize !== undefined) invSize = snap.engineGlobals.invSize;
+      if (snap.engineGlobals.invVolts !== undefined) invVolts = snap.engineGlobals.invVolts;
+      if (snap.engineGlobals.batQty !== undefined) batQty = snap.engineGlobals.batQty;
+      if (snap.engineGlobals.batSizeAh !== undefined) batSizeAh = snap.engineGlobals.batSizeAh;
+      if (snap.engineGlobals.batNeedAh !== undefined) batNeedAh = snap.engineGlobals.batNeedAh;
+      if (snap.engineGlobals.usableKwhNeed !== undefined) usableKwhNeed = snap.engineGlobals.usableKwhNeed;
+      if (snap.engineGlobals.batEffDod !== undefined) batEffDod = snap.engineGlobals.batEffDod;
+      if (snap.engineGlobals.clientMonthlyKwh !== undefined) clientMonthlyKwh = snap.engineGlobals.clientMonthlyKwh;
+    } catch(e){}
+  } else {
+    // Backward compatibility for older snapshots: derive safe BOM globals without res-sizing the quote.
+    try {
+      const restored = getBOMSystemState();
+      recPanels = restored.panelQty;
+      recSysKw = restored.invTotalKw;
+      invQty = restored.invQty;
+      invSize = restored.invUnitKw;
+    } catch(e){}
+  }
   // Lock the session ref to this saved quote's ref so all generated docs match it
   currentQuoteRef = q.ref;
   const badge = document.getElementById('quoteRefBadge'); if (badge) badge.textContent = 'REF: ' + currentQuoteRef;
-  // Re-run all live recalcs so dependent displays + the Client Proposal refresh
+  // Recalculate prices/displays WITHOUT running the autosizer, which would overwrite a manual BOM quote.
   try { if (typeof calcBOM === 'function') calcBOM(); } catch(e){}
   try { if (typeof calcGrandTotal === 'function') calcGrandTotal(); } catch(e){}
-  try { if (typeof calculateFlow === 'function') calculateFlow(); } catch(e){}
-  try { if (typeof syncToQuotation === 'function') syncToQuotation(); } catch(e){}
+  try { if (typeof calculateFlow === 'function') calculateFlow(true); } catch(e){}
   // Jump to the Quotation Generator so user can print any document
   switchView('view-quote', document.querySelector('.nav-item[onclick*=view-quote]'));
   document.getElementById('edit-quote-bg')?.remove();
