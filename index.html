@@ -2132,15 +2132,15 @@ const defaultDB = {
     {price:40000,name:"5kW 24V MPPT Hybrid Inverter",client:"Advanced Series 5kW 24V Hybrid Inverter"},
     {price:64000,name:"Deye/Solis 6kW Hybrid",client:"Advanced Series 6kW Hybrid Inverter"},
     {price:55000,name:"SUNGROW 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center"},
-    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",maxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",designPvKw:6,manufacturerMaxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:92000,name:"Deye/Solis 8kW Hybrid",client:"Advanced Series 8kW Hybrid Inverter"},
     {price:73000,name:"SUNGROW 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center"},
-    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",maxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
+    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",designPvKw:8,manufacturerMaxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:89000,name:"SUNGROW 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center"},
-    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",maxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
+    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",designPvKw:10,manufacturerMaxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:144000,name:"Deye 12kW 3-Phase Hybrid",client:"Advanced Series 12kW 3-Phase Power Center"},
-    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
-    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",designPvKw:12,manufacturerMaxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",designPvKw:14,manufacturerMaxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:180000,name:"Elite 16kW Hybrid",client:"Elite Series 16kW Hybrid Power Center"},
     {price:210000,name:"Deye 20kW 3-Phase Hybrid",client:"Advanced Series 20kW 3-Phase Power Center"},
     {price:175200,name:"LuxPower 20kW 1-Phase",client:"Elite Series 20kW 1-Phase Power Center"},
@@ -2238,14 +2238,28 @@ Object.keys(defaultDB).forEach(cat => {
 // This allows newly verified manufacturer metadata to reach existing local inventories
 // without bumping/wiping the localStorage database.
 function mergeDefaultTechnicalMetadata() {
-  const TECH_KEYS = ['maxPvKw','specModel','specSource','specRevision','specVerified'];
+  const TECH_KEYS = ['designPvKw','manufacturerMaxPvKw','specModel','specSource','specRevision','specVerified'];
   let changed = 0;
 
   Object.keys(defaultDB).forEach(cat => {
     if (!Array.isArray(hwDB[cat])) return;
     defaultDB[cat].forEach(defItem => {
       const stored = hwDB[cat].find(i => i.name === defItem.name);
-      if (!stored || stored.specOverride === true) return;
+      if (!stored) return;
+
+      // Migrate previous Max-PV semantics into separate design-target and hard-limit fields.
+      if (cat === 'inverters' && stored.maxPvKw !== undefined) {
+        const legacy = parseFloat(stored.maxPvKw);
+        if (Number.isFinite(legacy) && legacy > 0) {
+          if (stored.specVerified === true && stored.specOverride !== true) {
+            if (stored.manufacturerMaxPvKw === undefined) { stored.manufacturerMaxPvKw = legacy; changed++; }
+          } else if (stored.designPvKw === undefined) {
+            stored.designPvKw = legacy; changed++;
+          }
+        }
+        delete stored.maxPvKw;
+        changed++;
+      }
 
       TECH_KEYS.forEach(key => {
         if (defItem[key] !== undefined && stored[key] === undefined) {
