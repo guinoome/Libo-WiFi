@@ -5717,9 +5717,9 @@ function buildSLDPage(c) {
       <table>
         <thead><tr><th>Tag</th><th>Component</th><th>Specification</th><th>Quantity</th></tr></thead>
         <tbody>
-          <tr><td><strong>PV-1</strong></td><td>Solar PV Modules</td><td>${c.panelW}Wp Mono-Crystalline</td><td>${c.panels} pcs</td></tr>
+          <tr><td><strong>PV-1</strong></td><td>${escapeHtml(c.panelClientDesc || 'Solar PV Modules')}</td><td>${c.panelW}Wp/unit · ${c.pvKwp.toFixed(2)} kWp installed</td><td>${c.panels} pcs</td></tr>
           <tr><td><strong>INV-1</strong></td><td>${escapeHtml(String(c.invClientDesc || c.invType).replace(/\s+Inverter$/i,""))} Inverter</td><td>${c.sInvKw} kW/unit · ${c.sysKw} kW total · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>${c.invQ} pc${c.invQ>1?'s':''}</td></tr>
-          ${c.batQ>0?`<tr><td><strong>BAT-1</strong></td><td>LiFePO4 Battery</td><td>${c.V_DC_BAT}V × ${c.batSizeAh}Ah · ${(c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh/unit</td><td>${c.batQ} pc${c.batQ>1?'s':''}</td></tr>`:''}
+          ${c.batQ>0?`<tr><td><strong>BAT-1</strong></td><td>${escapeHtml(c.batClientDesc || 'LiFePO4 Battery')}</td><td>${c.V_DC_BAT}V × ${c.batSizeAh}Ah/unit · ${(c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh/unit · ${(c.batQ*c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh bank</td><td>${c.batQ} pc${c.batQ>1?'s':''}</td></tr>`:''}
           <tr><td><strong>ATS-1</strong></td><td>Auto Transfer Switch</td><td>${c.gridIso}A · ${c.phase===3?3:2}P · SOLAR/GEN/UTILITY</td><td>1 pc</td></tr>
           <tr><td><strong>CB-PV</strong></td><td>DC PV Breaker</td><td>${c.dcPvBr}A · 2P · 1000V DC</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
           <tr><td><strong>CB-AC</strong></td><td>AC Breakers (Grid/Load/Gen)</td><td>${c.acBr}A · ${c.phase===3?3:2}P · ${c.V_AC}V AC</td><td>3 pcs</td></tr>
@@ -7967,11 +7967,13 @@ async function openTurnoverForm() {
   // Ref stays locked to the same quote/session used by proposal, Full Quote, SLD, and JO.
   const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
 
-  const panelDesc = `${cfg.panels}× ${cfg.panelW}W PV modules = ${pvKwp.toFixed(2)} kWp installed`;
+  const cleanPanel = String(cfg.panelClientDesc || 'PV Module').replace(/^\d+x\s*/i,'').trim();
+  const panelDesc = `${cfg.panels}× ${escapeHtml(cleanPanel)} · ${cfg.panelW}W/module · ${pvKwp.toFixed(2)} kWp installed`;
   const cleanInv = String(cfg.invClientDesc || cfg.invType || '').replace(/^\d+x\s*/i,'').trim();
-  const invDesc = `${cfg.invQ}× ${cfg.sInvKw}kW${cleanInv ? ' · ' + escapeHtml(cleanInv) : ''} · ${inverterKw.toFixed(2)}kW total · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
+  const invDesc = `${cfg.invQ}× ${escapeHtml(cleanInv || (cfg.sInvKw + 'kW ' + cfg.invType))} · ${cfg.sInvKw}kW/unit · ${inverterKw.toFixed(2)}kW total · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
+  const cleanBat = String(cfg.batClientDesc || 'LiFePO4 Battery').replace(/^\d+x\s*/i,'').trim();
   const batDesc = cfg.batQ > 0
-    ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 = ${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh gross`
+    ? `${cfg.batQ}× ${escapeHtml(cleanBat)} · ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah/unit · ${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh gross`
     : 'N/A — Grid-Tied system';
 
   let html = `<!DOCTYPE html>
