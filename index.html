@@ -2132,15 +2132,15 @@ const defaultDB = {
     {price:40000,name:"5kW 24V MPPT Hybrid Inverter",client:"Advanced Series 5kW 24V Hybrid Inverter"},
     {price:64000,name:"Deye/Solis 6kW Hybrid",client:"Advanced Series 6kW Hybrid Inverter"},
     {price:55000,name:"SUNGROW 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center"},
-    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center"},
+    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",maxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:92000,name:"Deye/Solis 8kW Hybrid",client:"Advanced Series 8kW Hybrid Inverter"},
     {price:73000,name:"SUNGROW 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center"},
-    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center"},
+    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",maxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:89000,name:"SUNGROW 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center"},
-    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center"},
+    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",maxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:144000,name:"Deye 12kW 3-Phase Hybrid",client:"Advanced Series 12kW 3-Phase Power Center"},
-    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center"},
-    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center"},
+    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:180000,name:"Elite 16kW Hybrid",client:"Elite Series 16kW Hybrid Power Center"},
     {price:210000,name:"Deye 20kW 3-Phase Hybrid",client:"Advanced Series 20kW 3-Phase Power Center"},
     {price:175200,name:"LuxPower 20kW 1-Phase",client:"Elite Series 20kW 1-Phase Power Center"},
@@ -2232,6 +2232,36 @@ let hwDB = (() => {
 Object.keys(defaultDB).forEach(cat => {
   if (!hwDB[cat]) hwDB[cat] = JSON.parse(JSON.stringify(defaultDB[cat]));
 });
+
+// Additive technical-spec migration.
+// Existing user prices, client labels, names, and manual spec overrides always win.
+// This allows newly verified manufacturer metadata to reach existing local inventories
+// without bumping/wiping the localStorage database.
+function mergeDefaultTechnicalMetadata() {
+  const TECH_KEYS = ['maxPvKw','specModel','specSource','specRevision','specVerified'];
+  let changed = 0;
+
+  Object.keys(defaultDB).forEach(cat => {
+    if (!Array.isArray(hwDB[cat])) return;
+    defaultDB[cat].forEach(defItem => {
+      const stored = hwDB[cat].find(i => i.name === defItem.name);
+      if (!stored || stored.specOverride === true) return;
+
+      TECH_KEYS.forEach(key => {
+        if (defItem[key] !== undefined && stored[key] === undefined) {
+          stored[key] = JSON.parse(JSON.stringify(defItem[key]));
+          changed++;
+        }
+      });
+    });
+  });
+
+  if (changed > 0) {
+    try { localStorage.setItem(DB_KEY, JSON.stringify(hwDB)); } catch(e) {}
+  }
+  return changed;
+}
+mergeDefaultTechnicalMetadata();
 
 function saveDB() {
   try {
@@ -2339,12 +2369,16 @@ function syncPricesFromFile() {
         hwDB[cat].push(JSON.parse(JSON.stringify(defItem)));
         added++;
       }
-      // NEVER overwrite user's prices/clients — only adds missing items
+      // NEVER overwrite user prices/clients/names.
     });
   });
+  const specFieldsAdded = mergeDefaultTechnicalMetadata();
   saveDB();
-  if (added > 0) toast(`✓ Added ${added} new item${added>1?'s':''} from file. Your prices kept untouched.`, 'success');
-  else toast('No new items in file. Your prices are safe.', 'info');
+  if (added > 0 || specFieldsAdded > 0) {
+    toast(`✓ Inventory synced: ${added} new item${added===1?'':'s'}, ${specFieldsAdded} verified technical field${specFieldsAdded===1?'':'s'} added. User pricing kept untouched.`, 'success');
+  } else {
+    toast('No new items or verified specs to add. Your prices are safe.', 'info');
+  }
   const activeBtn = document.querySelector('#view-database button.btn-amber');
   if (activeBtn) renderDBTable(['panels','inverters','batteries','accessories','bos'].find(c => activeBtn.textContent.toLowerCase().includes(c.slice(0,3))) || 'panels');
 }
@@ -2560,9 +2594,15 @@ function getBOMInverterMaxPvKwPerUnit() {
   const explicit = parseFloat(
     rec?.maxPvKw ?? rec?.maxPVKw ?? rec?.maxPvInputKw ?? rec?.maxPvInputPowerKw
   );
+  const hasExplicit = Number.isFinite(explicit) && explicit > 0;
   return {
-    kw: Number.isFinite(explicit) && explicit > 0 ? explicit : unitKw,
-    explicit: Number.isFinite(explicit) && explicit > 0
+    kw: hasExplicit ? explicit : unitKw,
+    explicit: hasExplicit,
+    verified: hasExplicit && rec?.specVerified === true && rec?.specOverride !== true,
+    custom: hasExplicit && (rec?.specOverride === true || rec?.specVerified !== true),
+    model: rec?.specModel || '',
+    source: rec?.specSource || '',
+    revision: rec?.specRevision || ''
   };
 }
 
@@ -2585,7 +2625,12 @@ function getBOMSystemState() {
     invTotalKw,
     maxPvPerUnitKw: pvLimit.kw,
     maxPvTotalKw: pvLimit.kw * invQtyNow,
-    hasExplicitMaxPv: pvLimit.explicit
+    hasExplicitMaxPv: pvLimit.explicit,
+    hasVerifiedMaxPv: pvLimit.verified,
+    hasCustomMaxPv: pvLimit.custom,
+    maxPvModel: pvLimit.model,
+    maxPvSource: pvLimit.source,
+    maxPvRevision: pvLimit.revision
   };
 }
 
@@ -2629,8 +2674,14 @@ function syncPanelsToCurrentInverter({ notify = false } = {}) {
 
   if (notify) {
     const actualPv = q * state.panelW / 1000;
-    const basis = state.hasExplicitMaxPv ? 'configured inverter max PV input' : 'selected inverter total';
-    toast(`✓ PV array synced to ${basis}: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
+    if (state.hasVerifiedMaxPv) {
+      const model = state.maxPvModel ? ` (${state.maxPvModel})` : '';
+      toast(`✓ PV array synced to VERIFIED manufacturer Max PV Input${model}: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
+    } else if (state.hasCustomMaxPv) {
+      toast(`✓ PV array synced to CUSTOM Max PV Input: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
+    } else {
+      toast(`⚠ Exact inverter model/spec not verified. Using nominal ${state.invUnitKw.toFixed(1)}kW fallback: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'warn');
+    }
   }
 }
 
@@ -2740,7 +2791,12 @@ function addDBItem() {
   const item = {name, client, price};
   if (cat === 'inverters') {
     const maxPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
-    if (Number.isFinite(maxPvKw) && maxPvKw > 0) item.maxPvKw = maxPvKw;
+    if (Number.isFinite(maxPvKw) && maxPvKw > 0) {
+      item.maxPvKw = maxPvKw;
+      item.specOverride = true;
+      item.specVerified = false;
+      item.specSource = 'Manual entry';
+    }
   }
   hwDB[cat].push(item);
   saveDB();
@@ -2794,7 +2850,7 @@ function renderDBTable(cat) {
     <tr>
       <th onclick="setInvSort('${cat}','name')" style="cursor:pointer;">Internal Name ⇅</th>
       <th>Client Spec</th>
-      ${isInv ? '<th>Max PV Input / Unit</th>' : ''}
+      ${isInv ? '<th>Max PV Input / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">manufacturer spec status</span></th>' : ''}
       <th onclick="setInvSort('${cat}','price')" style="cursor:pointer;">Price ⇅</th>
       <th>Actions</th>
     </tr>`;
@@ -2807,9 +2863,17 @@ function renderDBTable(cat) {
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="client"
             style="cursor:text;color:var(--text2);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;min-width:120px;"
             onclick="editInvField(this)">${item.client}</span></td>
-      ${isInv ? `<td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
-            style="cursor:text;font-family:var(--mono);color:${item.maxPvKw?'var(--green)':'var(--text3)'};border-bottom:1px dashed var(--border2);padding:2px 4px;"
-            onclick="editInvField(this)">${item.maxPvKw ? Number(item.maxPvKw).toFixed(1)+' kW' : 'Nominal fallback'}</span></td>` : ''}
+      ${isInv ? `<td>
+            <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
+              title="${item.specSource ? item.specSource + (item.specRevision ? ' · '+item.specRevision : '') : 'Exact manufacturer model/spec not yet verified'}"
+              style="cursor:text;font-family:var(--mono);color:${item.specVerified===true?'var(--green)':item.maxPvKw?'var(--accent)':'#f59e0b'};border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
+              onclick="editInvField(this)">
+              ${item.maxPvKw
+                ? (item.specVerified===true?'✓ VERIFIED ':'CUSTOM ') + Number(item.maxPvKw).toFixed(1)+' kW'
+                : '⚠ EXACT MODEL REQUIRED'}
+            </span>
+            ${item.specModel ? `<div style="font-size:9px;color:var(--text3);margin-top:3px;">${item.specModel}${item.specRevision?' · '+item.specRevision:''}</div>` : ''}
+          </td>` : ''}
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="price"
             style="cursor:text;font-family:var(--mono);color:var(--accent);font-weight:700;border-bottom:1px dashed var(--border2);padding:2px 4px;"
             onclick="editInvField(this)">₱${item.price.toLocaleString()}</span></td>
@@ -2836,7 +2900,7 @@ function editInvField(span) {
     : field === 'maxPvKw' ? 'Max PV Input per Inverter (kW)'
     : field;
 
-  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (blank or 0 = nominal-kW fallback)':''}`, cur ?? '');
+  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (manual edits become CUSTOM; blank/0 disables verified auto-spec for this item)':''}`, cur ?? '');
   if (val === null) return;
 
   if (field === 'price') {
@@ -2845,6 +2909,9 @@ function editInvField(span) {
     hwDB[cat][idx][field] = val;
   } else if (field === 'maxPvKw') {
     const n = parseFloat(val);
+    hwDB[cat][idx].specOverride = true;
+    hwDB[cat][idx].specVerified = false;
+    hwDB[cat][idx].specSource = 'Manual override';
     if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].maxPvKw;
     else hwDB[cat][idx].maxPvKw = n;
   } else {
