@@ -7844,19 +7844,24 @@ h2.section {
 
 async function openTurnoverForm() {
   if (!(await requirePassword('open Turnover & Warranty Form'))) return;
+  if (typeof calcBOM === 'function') calcBOM();
   const cfg = readSLDConfig();
+  const bomState = getBOMSystemState();
   const clientName = document.getElementById('cli-name')?.value || 'Client';
   const clientAddress = document.getElementById('cli-address')?.value || '_______________________________________________';
-  const sysKw = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
+  const pvKwp = bomState.pvKwp;
+  const inverterKw = bomState.invTotalKw;
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
   const today = getDocDate();
-  // Ref = the current session quote reference (matches the badge shown in the app).
-  // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
+  // Ref stays locked to the same quote/session used by proposal, Full Quote, SLD, and JO.
   const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
 
-  const panelDesc = `${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp Solar Panels (Total)`;
-  const invDesc = `${cfg.sInvKw}kW ${escapeHtml(cfg.invType)} · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
-  const batDesc = cfg.batQ > 0 ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 (${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh)` : 'N/A — Grid-Tied system';
+  const panelDesc = `${cfg.panels}× ${cfg.panelW}W PV modules = ${pvKwp.toFixed(2)} kWp installed`;
+  const cleanInv = String(cfg.invClientDesc || cfg.invType || '').replace(/^\d+x\s*/i,'').trim();
+  const invDesc = `${cfg.invQ}× ${cfg.sInvKw}kW${cleanInv ? ' · ' + escapeHtml(cleanInv) : ''} · ${inverterKw.toFixed(2)}kW total · ${cfg.phase}-Phase ${cfg.V_AC}V AC`;
+  const batDesc = cfg.batQ > 0
+    ? `${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4 = ${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh gross`
+    : 'N/A — Grid-Tied system';
 
   let html = `<!DOCTYPE html>
 <html><head>
@@ -8060,8 +8065,8 @@ async function openTurnoverForm() {
       <table class="info-table">
         <tr><td>Client / Owner</td><td><strong>${escapeHtml(clientName)}</strong></td></tr>
         <tr><td>Site Address</td><td>${escapeHtml(clientAddress)}</td></tr>
-        <tr><td>System Capacity</td><td><strong>${sysKw} kWp ${escapeHtml(sysType)}</strong></td></tr>
-        <tr><td>Panel Configuration</td><td>${(cfg.panels*cfg.panelW/1000).toFixed(2)} kWp · ${cfg.mpptCount} MPPT</td></tr>
+        <tr><td>System Capacity</td><td><strong>${pvKwp.toFixed(2)} kWp PV · ${inverterKw.toFixed(2)} kW inverter · ${escapeHtml(sysType)}</strong></td></tr>
+        <tr><td>Panel Configuration</td><td>${cfg.panels} × ${cfg.panelW}W = ${pvKwp.toFixed(2)} kWp · ${cfg.mpptCount} MPPT</td></tr>
         <tr><td>Inverter</td><td>${invDesc}</td></tr>
         <tr><td>Battery Bank</td><td>${batDesc}</td></tr>
         <tr><td>Energization Date</td><td>_____________________ &nbsp;&nbsp; (warranty start)</td></tr>
