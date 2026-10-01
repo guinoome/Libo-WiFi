@@ -6231,7 +6231,9 @@ function saveQuote() {
   const ref = currentQuoteRef;
   const client = document.getElementById('cli-name').value || 'Unnamed Client';
   const date = document.getElementById('cli-date').value || new Date().toISOString().slice(0,10);
-  const sysKw = document.getElementById('sys-size').value || '?';
+  const bomState = getBOMSystemState();
+  const pvKwp = bomState.pvKwp > 0 ? bomState.pvKwp.toFixed(2) : '?';
+  const inverterKw = bomState.invTotalKw > 0 ? bomState.invTotalKw.toFixed(2) : (document.getElementById('sys-size').value || '?');
   const sysType = document.getElementById('sys-type').value.replace(/[⚡🔌🔋]/g,'').trim();
   const amount = document.getElementById('sys-grandtotal').value;
   const amountRaw = rawGrandTotal;
@@ -6241,7 +6243,7 @@ function saveQuote() {
   if(history.find(q => q.ref === ref)) {
     toast('This quote reference is already saved.', 'warn'); return;
   }
-  history.unshift({ ref, client, date, sysKw, sysType, amount, amountRaw, snapshot, status: 'pending', saved: new Date().toISOString() });
+  history.unshift({ ref, client, date, pvKwp, inverterKw, sysKw: pvKwp, sysType, amount, amountRaw, snapshot, status: 'pending', saved: new Date().toISOString() });
   saveQuoteHistory(history);
   currentQuoteRef = generateQuoteRef();
   document.getElementById('quoteRefBadge').textContent = 'REF: ' + currentQuoteRef;
@@ -6274,7 +6276,7 @@ function renderHistoryTable() {
       <td style="font-family:var(--mono);font-size:11px;color:var(--accent);">${q.ref}</td>
       <td style="font-weight:600;">${q.client}${q.notes ? ' <span title="Has follow-up notes" style="font-size:11px;">📝</span>' : ''}</td>
       <td style="color:var(--text2);font-size:12px;">${q.date}</td>
-      <td style="font-size:12px;">${q.sysKw}kW ${q.sysType}</td>
+      <td style="font-size:12px;">${q.pvKwp || q.sysKw || "?"} kWp PV${q.inverterKw ? " · "+q.inverterKw+" kW inv" : ""} · ${q.sysType}</td>
       <td style="font-family:var(--mono);font-weight:700;color:var(--green);">${q.amount}</td>
       <td>
         <select onchange="updateQuoteStatus(${idx}, this.value)" style="padding:5px 8px;font-size:11px;border-radius:4px;background:var(--bg2);color:${sc};border-color:${sc};">
@@ -6328,8 +6330,8 @@ function openEditQuote(idx) {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div>
-            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">System (kW)</label>
-            <input id="eq-syskw" type="text" value="${(q.sysKw||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
+            <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">PV Capacity (kWp)</label>
+            <input id="eq-syskw" type="text" value="${(q.pvKwp||q.sysKw||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:9px;font-size:13px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;box-sizing:border-box;"/>
           </div>
           <div>
             <label style="font-size:10px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;font-weight:700;">Type</label>
@@ -6361,7 +6363,8 @@ function saveEditQuote(idx) {
   q.client  = document.getElementById('eq-client').value.trim() || q.client;
   q.date    = document.getElementById('eq-date').value || q.date;
   q.status  = document.getElementById('eq-status').value;
-  q.sysKw   = document.getElementById('eq-syskw').value.trim();
+  q.pvKwp   = document.getElementById('eq-syskw').value.trim();
+  q.sysKw   = q.pvKwp; // legacy alias for older history consumers
   q.sysType = document.getElementById('eq-systype').value.trim();
   q.amount  = document.getElementById('eq-amount').value.trim();
   q.notes   = document.getElementById('eq-notes').value;
@@ -8412,8 +8415,8 @@ function migrateHistoryToPipeline() {
     pipe.push({
       id: 'L' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       name: q.client || 'Unknown',
-      est_kWp: parseFloat(q.system) || 0,
-      est_value_PHP: parseFloat(q.amount) || 0,
+      est_kWp: parseFloat(q.pvKwp || q.sysKw || q.system) || 0,
+      est_value_PHP: parseFloat(q.amountRaw) || parseFloat(String(q.amount||'').replace(/[^0-9.]/g,'')) || 0,
       stage,
       next_action: '',
       next_action_date: '',
