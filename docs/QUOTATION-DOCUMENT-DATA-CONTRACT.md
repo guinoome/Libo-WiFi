@@ -19,6 +19,7 @@ Once the user changes the Interactive BOM, the **actual BOM configuration** is t
 | Solar generation | actual installed BOM PV kWp | `PV kWp × 4.5 PSH × 0.81 yield` |
 | Monthly solar savings | actual BOM solar generation + client load + tariff | `min(monthly solar generation, monthly client consumption) × tariff` |
 | Quote reference | current/saved quotation reference | Same reference across Proposal, Full Quote, Turnover/Warranty, SLD, and Job Order |
+| Equipment identity / description | Interactive BOM selected client-facing descriptions | Turnover/Warranty, SLD, Job Order and client-facing proposal must preserve the selected panel, inverter and battery identity rather than replace them with generic descriptions |
 
 ## Document synchronization matrix
 
