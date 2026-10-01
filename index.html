@@ -3086,21 +3086,56 @@ function runAutoSizerSilent() {
 
   let selInv;
   if (V === 48) {
-      const STRICT = [6, 8, 10, 12, 14, 16, 20]; // Added 10 & 20 to allowable rigid matches
-      let avail = STRICT.filter(sz => opts.some(o => o.name.match(new RegExp(sz+'kW'))));
-      if (!avail.length) avail = STRICT; 
+      // Rule 3B — balanced parallel inverter sizing.
+      // Keep the 20kW single-unit ceiling, but do NOT automatically use 20kW units
+      // when the target exceeds that ceiling. Split the actual target across the
+      // minimum required quantity, then select the smallest AVAILABLE inverter size
+      // that is not below the resulting per-unit demand.
+      //
+      // Example: 24.1kW target → 2 units → 12.05kW/unit.
+      // 12kW is undersized (24.0kW total), 13kW is unavailable, so select 2×14kW.
+      const MAX_SINGLE_KW = 20;
+      const parseInvKw = (opt) => {
+          const m = (opt?.name || '').match(/(\d+(?:\.\d+)?)\s*kW/i);
+          return m ? parseFloat(m[1]) : NaN;
+      };
+
+      let avail = [...new Set(
+          opts
+            .map(parseInvKw)
+            .filter(sz => Number.isFinite(sz) && sz > 0 && sz <= MAX_SINGLE_KW)
+      )].sort((a, b) => a - b);
+
+      // Defensive fallback only; normal operation uses live Hardware Database sizes.
+      if (!avail.length) avail = [6, 8, 10, 12, 14, 16, 18, 20];
 
       const largest = Math.max(...avail);
+      const pickBySize = (size) =>
+          opts.find(o => Math.abs(parseInvKw(o) - size) < 0.001) || opts[opts.length - 1];
+
       if (targetKw <= largest) {
-          let bestSz = avail.find(s => s >= targetKw) || largest;
-          selInv = opts.find(o => o.name.match(new RegExp(bestSz+'kW'))) || opts[opts.length-1];
+          const bestSz = avail.find(s => s >= targetKw) || largest;
+          selInv = pickBySize(bestSz);
           invQty = 1;
           invSize = bestSz;
       } else {
+          // Minimum quantity needed to respect the single-inverter ceiling.
           invQty = Math.ceil(targetKw / largest);
-          invSize = largest;
-          selInv = opts.find(o => o.name.match(new RegExp(largest+'kW'))) || opts[opts.length-1];
-          engineWarnings.push(`ℹ️ Rule 3B: Target ${targetKw.toFixed(1)}kW > ${largest}kW single limit. Paralleling ${invQty}× ${largest}kW identical units.`);
+
+          // Divide the ACTUAL required inverter power across those identical units.
+          const perUnitDemand = targetKw / invQty;
+
+          // Never undersize: choose the nearest available size at or above demand.
+          const bestSz = avail.find(s => s >= perUnitDemand) || largest;
+          invSize = bestSz;
+          selInv = pickBySize(bestSz);
+
+          const totalSelectedKw = invQty * invSize;
+          engineWarnings.push(
+            `ℹ️ Rule 3B: Target ${targetKw.toFixed(1)}kW > ${largest}kW single limit. ` +
+            `Split across ${invQty} identical units = ${perUnitDemand.toFixed(2)}kW/unit; ` +
+            `selected ${invQty}× ${invSize}kW (${totalSelectedKw.toFixed(1)}kW total).`
+          );
       }
   } else {
       let bestDiff = Infinity;
