@@ -1511,9 +1511,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
             <input type="number" id="db-price" placeholder="144000">
           </div>
           <div class="fg" id="db-maxpv-wrap" style="display:none;">
-            <label>Max PV Input per Inverter (kW) <span style="color:var(--text3);font-weight:400;">— optional</span></label>
-            <input type="number" id="db-maxpv" placeholder="E.g., 18" min="0" step="0.1">
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">If blank, manual BOM sync uses nominal inverter kW as the PV design cap.</div>
+            <label>PV Design Capacity per Inverter (kWp) <span style="color:var(--text3);font-weight:400;">— editable</span></label>
+            <input type="number" id="db-maxpv" placeholder="Defaults to inverter kW, e.g. 14" min="0" step="0.1">
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">Controls the PV size targeted by Interactive BOM. Verified manufacturer max remains a separate hard safety ceiling.</div>
           </div>
         </div>
         <div class="btn-group">
@@ -2805,13 +2805,8 @@ function addDBItem() {
 
   const item = {name, client, price};
   if (cat === 'inverters') {
-    const maxPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
-    if (Number.isFinite(maxPvKw) && maxPvKw > 0) {
-      item.maxPvKw = maxPvKw;
-      item.specOverride = true;
-      item.specVerified = false;
-      item.specSource = 'Manual entry';
-    }
+    const designPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
+    if (Number.isFinite(designPvKw) && designPvKw > 0) item.designPvKw = designPvKw;
   }
   hwDB[cat].push(item);
   saveDB();
@@ -2865,7 +2860,7 @@ function renderDBTable(cat) {
     <tr>
       <th onclick="setInvSort('${cat}','name')" style="cursor:pointer;">Internal Name ⇅</th>
       <th>Client Spec</th>
-      ${isInv ? '<th>Max PV Input / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">manufacturer spec status</span></th>' : ''}
+      ${isInv ? '<th>PV Design / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">user target · max shown below</span></th>' : ''}
       <th onclick="setInvSort('${cat}','price')" style="cursor:pointer;">Price ⇅</th>
       <th>Actions</th>
     </tr>`;
@@ -2879,7 +2874,7 @@ function renderDBTable(cat) {
             style="cursor:text;color:var(--text2);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;min-width:120px;"
             onclick="editInvField(this)">${item.client}</span></td>
       ${isInv ? `<td>
-            <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
+            <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="designPvKw"
               title="${item.specSource ? item.specSource + (item.specRevision ? ' · '+item.specRevision : '') : 'Exact manufacturer model/spec not yet verified'}"
               style="cursor:text;font-family:var(--mono);color:${item.specVerified===true?'var(--green)':item.maxPvKw?'var(--accent)':'#f59e0b'};border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
               onclick="editInvField(this)">
@@ -2912,7 +2907,7 @@ function editInvField(span) {
   const label = field === 'name' ? 'Internal Name'
     : field === 'client' ? 'Client Spec'
     : field === 'price' ? 'Price'
-    : field === 'maxPvKw' ? 'Max PV Input per Inverter (kW)'
+    : field === 'designPvKw' ? 'PV Design Capacity per Inverter (kWp)'
     : field;
 
   let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (manual edits become CUSTOM; blank/0 disables verified auto-spec for this item)':''}`, cur ?? '');
@@ -2922,13 +2917,13 @@ function editInvField(span) {
     val = parseFloat(val);
     if (isNaN(val) || val < 0) { toast('Invalid price', 'error'); return; }
     hwDB[cat][idx][field] = val;
-  } else if (field === 'maxPvKw') {
+  } else if (field === 'designPvKw') {
     const n = parseFloat(val);
-    hwDB[cat][idx].specOverride = true;
-    hwDB[cat][idx].specVerified = false;
-    hwDB[cat][idx].specSource = 'Manual override';
-    if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].maxPvKw;
-    else hwDB[cat][idx].maxPvKw = n;
+    if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].designPvKw;
+    else {
+      const hardMax = parseFloat(hwDB[cat][idx].manufacturerMaxPvKw);
+      hwDB[cat][idx].designPvKw = (Number.isFinite(hardMax) && hardMax > 0) ? Math.min(n, hardMax) : n;
+    }
   } else {
     val = String(val).trim();
     if (!val) { toast(`${label} cannot be empty`, 'error'); return; }
