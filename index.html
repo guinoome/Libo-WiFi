@@ -2598,6 +2598,21 @@ function getBOMInverterUnitKw() {
   return m ? parseFloat(m[1]) : (invSize || 0);
 }
 
+function getCurrentBatteryVoltage() {
+  // Prefer the selected/restored battery description so reopened quotations retain
+  // the quoted DC bus even if autosizer globals have since changed.
+  const sources = [
+    document.getElementById('desc-battery')?.value || '',
+    document.getElementById('desc-inverter')?.value || '',
+    getSelectedBOMOption('inverter')?.name || ''
+  ];
+  for (const source of sources) {
+    const m = String(source).match(/\b(12|24|48)\s*V\b/i);
+    if (m) return parseInt(m[1]);
+  }
+  return (typeof invVolts !== 'undefined' && invVolts) ? invVolts : 48;
+}
+
 function getBOMInverterPvDesign() {
   const item = getSelectedBOMOption('inverter');
   const unitKw = getBOMInverterUnitKw();
@@ -3844,7 +3859,7 @@ async function openJobOrder(withPrices) {
   const bomPhaseParts = bomPhaseStr.split('|');
   const sysPhaseVal = parseInt(bomPhaseParts[0]) || 1;
   const V_AC = parseInt(bomPhaseParts[1]) || 220;
-  const V_DC_BAT = (typeof invVolts !== 'undefined' && invVolts) ? invVolts : 48;
+  const V_DC_BAT = getCurrentBatteryVoltage();
   const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;
   const PF = 0.9;
   const acDivisor = (sysPhaseVal === 3 ? 1.732 : 1) * V_AC * PF;
@@ -4191,7 +4206,7 @@ async function generateDoc(type) {
     const bomPhaseParts = bomPhaseStr.split('|');
     const sysPhaseVal = parseInt(bomPhaseParts[0]) || 1;
     const V_AC = parseInt(bomPhaseParts[1]) || 220;
-    const V_DC_BAT = invVolts || 48;                      // battery bus voltage
+    const V_DC_BAT = getCurrentBatteryVoltage();          // battery bus voltage from current/restored BOM
     const V_DC_PV  = V_DC_BAT >= 48 ? 400 : 150;          // typical MPPT string voltage
     const PF = 0.9;                                       // assumed power factor
 
@@ -4304,7 +4319,7 @@ function readSLDConfig() {
   const phaseParts = phaseStr.split('|');
   const phase = parseInt(phaseParts[0]) || 1;
   const V_AC = parseInt(phaseParts[1]) || 220;
-  const V_DC_BAT = invVolts || 48;
+  const V_DC_BAT = getCurrentBatteryVoltage();
 
   // Architecture follows the same live selector used by the quotation/calculator.
   const arch = document.getElementById('auto-sys-type')?.value || '';
