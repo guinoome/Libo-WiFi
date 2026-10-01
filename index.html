@@ -5441,7 +5441,7 @@ function buildSLDPage(c) {
     <svg viewBox="0 0 ${F_W} ${F_H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;display:block;margin:0 auto;background:#fafbfc;border:1px solid #cbd5e1;border-radius:4px;">
       <defs>${arrowDefs}</defs>
       <text x="${F_W/2}" y="22" text-anchor="middle" font="bold 13px sans-serif" fill="#0f172a" letter-spacing="2.5">⟨ SINGLE-LINE DIAGRAM · PER-ARRAY PROTECTION VIEW ⟩</text>
-      <text x="${F_W/2}" y="40" text-anchor="middle" font="9.5px sans-serif" fill="#94a3b8">${c.clientName} · ${c.invType} · ${c.sysKw} kWp · ${c.phase}-Phase ${c.V_AC}V</text>
+      <text x="${F_W/2}" y="40" text-anchor="middle" font="9.5px sans-serif" fill="#94a3b8">${c.clientName} · ${c.invType} · ${c.pvKwp.toFixed(2)} kWp PV · ${c.sysKw} kW inverter · ${c.phase}-Phase ${c.V_AC}V</text>
       <text x="${F_W/2}" y="56" text-anchor="middle" font="8.5px sans-serif" fill="#64748b">${numPV} PV string${numPV>1?'s':''} · ${numBat||'no'} battery pack${numBat!==1?'s':''} · ${numInv} inverter${numInv>1?'s':''} · all parallel paths shown</text>
 
       ${pvSvg}
@@ -5475,7 +5475,7 @@ function buildSLDPage(c) {
 <html><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SLD — ${c.clientName} — ${c.sysKw} kWp</title>
+<title>SLD — ${c.clientName} — ${c.pvKwp.toFixed(2)} kWp</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0f172a;background:#e2e8f0;font-size:9.5pt;line-height:1.4;}
@@ -5659,12 +5659,12 @@ function buildSLDPage(c) {
       </div>
 
       <h1 class="doc-title">System Single-Line Diagram</h1>
-      <div class="doc-sub">${c.clientName} · ${c.sysKw} kWp ${c.invType}</div>
+      <div class="doc-sub">${c.clientName} · ${c.pvKwp.toFixed(2)} kWp PV · ${c.sysKw} kW inverter · ${c.invType}</div>
 
       <h2>System Specifications</h2>
       <div class="specs-grid">
-        <div class="spec-card"><div class="spec-card-label">Capacity</div><div class="spec-card-val">${c.sysKw} kWp</div><div class="spec-card-sub">${(c.panels*c.panelW/1000).toFixed(2)} kWp total</div></div>
-        <div class="spec-card"><div class="spec-card-label">Inverter</div><div class="spec-card-val">${c.sInvKw} kW</div><div class="spec-card-sub">${c.phase}-Ph ${c.V_AC}V</div></div>
+        <div class="spec-card"><div class="spec-card-label">PV Capacity</div><div class="spec-card-val">${c.pvKwp.toFixed(2)} kWp</div><div class="spec-card-sub">${c.panels} × ${c.panelW}Wp installed</div></div>
+        <div class="spec-card"><div class="spec-card-label">Inverter</div><div class="spec-card-val">${c.sysKw} kW</div><div class="spec-card-sub">${c.invQ} × ${c.sInvKw}kW · ${c.phase}-Ph ${c.V_AC}V</div></div>
         ${c.batQ>0?`<div class="spec-card"><div class="spec-card-label">Storage</div><div class="spec-card-val">${(c.batQ*c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">${c.batQ}× ${c.V_DC_BAT}V LiFePO4</div></div>`:''}
         <div class="spec-card"><div class="spec-card-label">MPPT</div><div class="spec-card-val">${c.mpptCount}</div><div class="spec-card-sub">DC tracking</div></div>
       </div>
@@ -5699,7 +5699,7 @@ function buildSLDPage(c) {
         <thead><tr><th>Tag</th><th>Component</th><th>Specification</th><th>Quantity</th></tr></thead>
         <tbody>
           <tr><td><strong>PV-1</strong></td><td>Solar PV Modules</td><td>${c.panelW}Wp Mono-Crystalline</td><td>${c.panels} pcs</td></tr>
-          <tr><td><strong>INV-1</strong></td><td>${c.invType} Inverter</td><td>${c.sInvKw} kW · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>1 pc</td></tr>
+          <tr><td><strong>INV-1</strong></td><td>${escapeHtml(c.invClientDesc || c.invType)} Inverter</td><td>${c.sInvKw} kW/unit · ${c.sysKw} kW total · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>${c.invQ} pc${c.invQ>1?'s':''}</td></tr>
           ${c.batQ>0?`<tr><td><strong>BAT-1</strong></td><td>LiFePO4 Battery</td><td>${c.V_DC_BAT}V × ${c.batSizeAh}Ah · ${(c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh/unit</td><td>${c.batQ} pc${c.batQ>1?'s':''}</td></tr>`:''}
           <tr><td><strong>ATS-1</strong></td><td>Auto Transfer Switch</td><td>${c.gridIso}A · ${c.phase===3?3:2}P · SOLAR/GEN/UTILITY</td><td>1 pc</td></tr>
           <tr><td><strong>CB-PV</strong></td><td>DC PV Breaker</td><td>${c.dcPvBr}A · 2P · 1000V DC</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
@@ -5708,7 +5708,7 @@ function buildSLDPage(c) {
           <tr><td><strong>SPD-DC</strong></td><td>DC Surge Protector Type II</td><td>${c.dcPvBr}A · 1000V DC · per array</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
           <tr><td><strong>SPD-AC</strong></td><td>AC Surge Protector Type II</td><td>${c.gridIso}A · ${c.V_AC}V AC</td><td>1 pc</td></tr>
           <tr><td><strong>RLY-ISL</strong></td><td>Islanding / Anti-Islanding Relay</td><td>Voltage/Frequency monitoring · ${c.V_AC}V AC</td><td>1 pc</td></tr>
-          <tr><td><strong>METER</strong></td><td>Utility kWh Meter</td><td>Bi-directional Net Meter</td><td>1 pc</td></tr>
+          <tr><td><strong>METER</strong></td><td>Utility kWh Meter</td><td>Grid import / backup monitoring · no export assumption</td><td>1 pc</td></tr>
         </tbody>
       </table>
 
