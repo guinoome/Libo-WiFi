@@ -6312,7 +6312,15 @@ async function generatePDFQuote() {
   const vatLabelLong  = isVatIn ? 'VAT Inclusive · Official Receipt · includes 12% VAT + 10% Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt Only';
   const vatNoteHTML   = isVatIn ? '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">Final Investment includes 12% VAT + 10% Professional Fee. Official Receipt issued upon full payment.</div>' : '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">VAT Exclusive — Acknowledgement Receipt only. Switch to VAT Inclusive for Official Receipt + 22% additional.</div>';
 
-  const sysSize = parseFloat(document.getElementById('sys-size')?.value) || cfg.sysKw;
+  const bomState = getBOMSystemState();
+  // Client-facing "system capacity" is the ACTUAL installed PV array from Interactive BOM.
+  // Keep AC inverter capacity separate for electrical calculations.
+  const sysSize = bomState.pvKwp > 0
+    ? bomState.pvKwp
+    : (parseFloat(document.getElementById('sys-size')?.value) || parseFloat(cfg.sysKw) || 0);
+  const inverterCapacityKw = bomState.invTotalKw > 0
+    ? bomState.invTotalKw
+    : (parseFloat(document.getElementById('sys-size')?.value) || parseFloat(cfg.sysKw) || 0);
   const sysType = document.getElementById('sys-type')?.options[document.getElementById('sys-type').selectedIndex]?.text || cfg.invType;
   const rate = (typeof autoRate !== 'undefined' ? autoRate : null) || 12.56;
   // Detect if user actually entered a rate (in bill mode flowRate or amps mode flowAmpsRate)
@@ -6325,13 +6333,15 @@ async function generatePDFQuote() {
   const SYS_LOSS = 0.81;
   const PEAK_SUN = 4.5;
 
-  // Daily kWh from Eng. Calc (clientMonthlyKwh / 30) — falls back to theoretical
+  // Daily Equivalent remains the CLIENT LOAD. Solar generation is calculated
+  // independently from the ACTUAL Interactive BOM PV array.
   const engDailyKwh = (typeof clientMonthlyKwh !== 'undefined' && clientMonthlyKwh > 0) ? (clientMonthlyKwh / 30) : 0;
-  const dailyKwh = engDailyKwh > 0 ? engDailyKwh : (cfg.sysKw * PEAK_SUN * SYS_LOSS);
-  const monthlyKwh = dailyKwh * 30;
-  const yearlyKwh = dailyKwh * 365;
-  const monthlySav = monthlyKwh * rate;
-  const yearlySav = monthlySav * 12;
+  const uncappedSolar = getBOMSolarProjection(rate, 0);
+  const dailyKwh = engDailyKwh > 0 ? engDailyKwh : uncappedSolar.dailyGenerationKwh;
+  const monthlyKwh = uncappedSolar.monthlyGenerationKwh;
+  const yearlyKwh = uncappedSolar.yearlyGenerationKwh;
+  const monthlySav = uncappedSolar.monthlySavings;
+  const yearlySav = uncappedSolar.yearlySavings;
   // === GRAND TOTAL = FINAL INVESTMENT shown to client (from Print Client Proposal data) ===
   // Read from the rendered Client Proposal grand-total element so it matches exactly what client sees.
   // This reflects current VAT mode (Ex or In) — calcGrandTotal pushes the right number here.
@@ -6388,8 +6398,17 @@ async function generatePDFQuote() {
   // Show kWh-only ONLY when amps mode AND user didn't enter rate
   const showKwhOnly = isAmpsMode && ampsRate <= 0;
   const consumptionPesosPerMonth = derivedMonthlyPesos > 0 ? derivedMonthlyPesos : (monthlyBillPesos > 0 ? monthlyBillPesos : monthlySav);
-  const paybackMonths = (grandTotal > 0 && consumptionPesosPerMonth > 0 && !showKwhOnly) ? (grandTotal / consumptionPesosPerMonth).toFixed(0) : '—';
-  const paybackYears  = (grandTotal > 0 && consumptionPesosPerMonth > 0 && !showKwhOnly) ? (grandTotal / (consumptionPesosPerMonth * 12)).toFixed(1) : '—';
+
+  // Savings are limited by BOTH actual PV production and actual client consumption.
+  // This fixes the old behavior where the full client bill was shown as savings even
+  // after the user manually downsized the inverter/PV system in the Interactive BOM.
+  const solarProjection = getBOMSolarProjection(flowRateVal || rate, consumptionKwhPerMonth);
+  const estimatedMonthlyOffsetKwh = solarProjection.usefulMonthlyKwh;
+  const estimatedMonthlySavings = showKwhOnly ? 0 : solarProjection.monthlySavings;
+  const paybackMonths = (grandTotal > 0 && estimatedMonthlySavings > 0 && !showKwhOnly)
+    ? (grandTotal / estimatedMonthlySavings).toFixed(0) : '—';
+  const paybackYears  = (grandTotal > 0 && estimatedMonthlySavings > 0 && !showKwhOnly)
+    ? (grandTotal / (estimatedMonthlySavings * 12)).toFixed(1) : '—';
 
   const today = getDocDate();
   const _qd = document.getElementById('cli-date')?.value;
@@ -6406,8 +6425,8 @@ async function generatePDFQuote() {
   const slotsTotal = isNaN(slotsTotalManual) || slotsTotalManual < 1 ? 2 : slotsTotalManual;
   const slotsLeft = Math.max(0, slotsTotal - slotsBooked);
 
-  // 10-year cashflow (4% annual rate increase) — based on consumption pesos saved
-  const yearlyConsumptionSavings = consumptionPesosPerMonth * 12;
+  // 10-year cashflow (4% annual rate increase) — based on actual BOM-sized solar savings.
+  const yearlyConsumptionSavings = estimatedMonthlySavings * 12;
   let cashflow = '';
   let cumulative = -grandTotal;
   for (let y = 1; y <= 10; y++) {
@@ -6421,7 +6440,7 @@ async function generatePDFQuote() {
     </tr>`;
   }
 
-  // Sensitivity: Total Investment ÷ Monthly Savings (months) — base = bill
+  // Sensitivity: vary actual solar generation and tariff, still capped by client consumption.
   const scenarios = [
     {name:'Best Case',    rateMod:1.10, genMod:1.10, cls:'#059669'},
     {name:'Base Case',    rateMod:1.00, genMod:1.00, cls:'#0891b2'},
@@ -6430,7 +6449,11 @@ async function generatePDFQuote() {
   ];
   let sens = '';
   scenarios.forEach(s => {
-    const sMonth = consumptionPesosPerMonth * s.genMod * s.rateMod;
+    const scenarioGenerationKwh = monthlyKwh * s.genMod;
+    const scenarioUsefulKwh = consumptionKwhPerMonth > 0
+      ? Math.min(scenarioGenerationKwh, consumptionKwhPerMonth)
+      : scenarioGenerationKwh;
+    const sMonth = showKwhOnly ? 0 : scenarioUsefulKwh * (flowRateVal || rate) * s.rateMod;
     const sYear = sMonth * 12;
     const pMonths = (grandTotal > 0 && sMonth > 0) ? (grandTotal / sMonth).toFixed(0) : '—';
     const pYears  = (grandTotal > 0 && sMonth > 0) ? (grandTotal / sMonth / 12).toFixed(1) : '—';
@@ -6454,7 +6477,7 @@ async function generatePDFQuote() {
   // Monthly chart
   const monthlyVar = [0.95,0.92,1.05,1.10,1.08,0.98,0.90,0.95,1.05,1.10,1.05,0.97];
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const baseMonthKwh = dailyKwh * 30;
+  const baseMonthKwh = monthlyKwh;
   const maxMonth = Math.max(...monthlyVar) * baseMonthKwh;
   let monthlyChart = '';
   monthlyVar.forEach((v,i) => {
