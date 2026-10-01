@@ -4148,7 +4148,7 @@ async function generateDoc(type) {
     const isGT  = sysType.includes('Grid-Tied');
     const pitches = {
       Elite: `<h4>🌟 PREMIUM ENGINEERING. MAXIMUM YIELD.</h4>
-        <p>Your ${pvKwp.toFixed(2)}kWp FDG Solar Visayas system is engineered at the highest level — precision-designed for maximum energy output, zero compromise. Elite-grade inverter with real-time MPPT optimization, 24/7 cloud monitoring, and 6,000+ cycle battery storage.${isHyb?' Complete blackout protection with seamless automatic switchover — your home stays powered, always.':''}${isOG?' Fully autonomous — complete independence from the utility grid.':''}${isGT?' Maximum daytime offset with intelligent export management — zero-waste solar generation every day.':''} Built to last for years. This is a long-term energy asset.</p>`,
+        <p>Your ${pvKwp.toFixed(2)}kWp FDG Solar Visayas system is engineered at the highest level — precision-designed for maximum energy output, zero compromise. Elite-grade inverter with real-time MPPT optimization, 24/7 cloud monitoring, and 6,000+ cycle battery storage.${isHyb?' Complete blackout protection with seamless automatic switchover — your home stays powered, always.':''}${isOG?' Fully autonomous — complete independence from the utility grid.':''}${isGT?' Maximum daytime self-consumption with intelligent load matching — solar energy prioritized for on-site use.':''} Built to last for years. This is a long-term energy asset.</p>`,
       Advanced: `<h4>⚖️ PROVEN RELIABILITY. SMART INVESTMENT.</h4>
         <p>Your ${pvKwp.toFixed(2)}kWp FDG Solar Visayas system delivers the ideal balance of performance, reliability, and financial return. Industry-standard components trusted by thousands of Philippine installations.${isHyb?' Hybrid architecture saves on every sunny day AND protects during brownouts and outages.':''}${isOG?' Off-grid independence — no more monthly bills, no more outage anxiety. Your power, your rules.':''}${isGT?' Smart grid-tied savings with proven technology — consistent daily bill reduction, year after year.':''}</p>`,
       Essential: `<h4>🔋 CORE ENERGY SECURITY. EVERY PESO COUNTS.</h4>
@@ -4644,7 +4644,7 @@ function realInverter(x, y, w, h, type, sInvKw, phase, V_AC, V_DC, sysKw, mppt, 
     <!-- LCD glass -->
     <rect x="${x+w/2-58}" y="${y+121}" width="116" height="58" rx="3" fill="#022c22"/>
     <rect x="${x+w/2-58}" y="${y+121}" width="116" height="20" rx="3" fill="url(#lcdGloss)" opacity="0.3"/>
-    <text x="${x+w/2}" y="${y+143}" text-anchor="middle" fill="#10b981" font="bold 13px monospace">${sysKw} kW AC</text>
+    <text x="${x+w/2}" y="${y+143}" text-anchor="middle" fill="#10b981" font="bold 13px monospace">${sInvKw} kW AC</text>
     <text x="${x+w/2}" y="${y+159}" text-anchor="middle" fill="#10b981" font="9px monospace">ONLINE · ${mppt}MPPT</text>
     <text x="${x+w/2}" y="${y+172}" text-anchor="middle" fill="#10b981" font="8px monospace" opacity="0.7">━━━━━━━━━━</text>
     <!-- Status LED row (with glow) -->
@@ -5701,7 +5701,7 @@ function buildSLDPage(c) {
         <thead><tr><th>Tag</th><th>Component</th><th>Specification</th><th>Quantity</th></tr></thead>
         <tbody>
           <tr><td><strong>PV-1</strong></td><td>Solar PV Modules</td><td>${c.panelW}Wp Mono-Crystalline</td><td>${c.panels} pcs</td></tr>
-          <tr><td><strong>INV-1</strong></td><td>${escapeHtml(c.invClientDesc || c.invType)} Inverter</td><td>${c.sInvKw} kW/unit · ${c.sysKw} kW total · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>${c.invQ} pc${c.invQ>1?'s':''}</td></tr>
+          <tr><td><strong>INV-1</strong></td><td>${escapeHtml(String(c.invClientDesc || c.invType).replace(/\s+Inverter$/i,""))} Inverter</td><td>${c.sInvKw} kW/unit · ${c.sysKw} kW total · ${c.phase}-Phase ${c.V_AC}V · ${c.V_DC_BAT}V DC</td><td>${c.invQ} pc${c.invQ>1?'s':''}</td></tr>
           ${c.batQ>0?`<tr><td><strong>BAT-1</strong></td><td>LiFePO4 Battery</td><td>${c.V_DC_BAT}V × ${c.batSizeAh}Ah · ${(c.batSizeAh*c.V_DC_BAT/1000).toFixed(1)} kWh/unit</td><td>${c.batQ} pc${c.batQ>1?'s':''}</td></tr>`:''}
           <tr><td><strong>ATS-1</strong></td><td>Auto Transfer Switch</td><td>${c.gridIso}A · ${c.phase===3?3:2}P · SOLAR/GEN/UTILITY</td><td>1 pc</td></tr>
           <tr><td><strong>CB-PV</strong></td><td>DC PV Breaker</td><td>${c.dcPvBr}A · 2P · 1000V DC</td><td>${c.mpptCount} pc${c.mpptCount>1?'s':''}</td></tr>
