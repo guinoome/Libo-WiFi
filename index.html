@@ -2132,15 +2132,15 @@ const defaultDB = {
     {price:40000,name:"5kW 24V MPPT Hybrid Inverter",client:"Advanced Series 5kW 24V Hybrid Inverter"},
     {price:64000,name:"Deye/Solis 6kW Hybrid",client:"Advanced Series 6kW Hybrid Inverter"},
     {price:55000,name:"SUNGROW 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center"},
-    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center"},
+    {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",maxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:92000,name:"Deye/Solis 8kW Hybrid",client:"Advanced Series 8kW Hybrid Inverter"},
     {price:73000,name:"SUNGROW 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center"},
-    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center"},
+    {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",maxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:89000,name:"SUNGROW 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center"},
-    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center"},
+    {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",maxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:144000,name:"Deye 12kW 3-Phase Hybrid",client:"Advanced Series 12kW 3-Phase Power Center"},
-    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center"},
-    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center"},
+    {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",maxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:180000,name:"Elite 16kW Hybrid",client:"Elite Series 16kW Hybrid Power Center"},
     {price:210000,name:"Deye 20kW 3-Phase Hybrid",client:"Advanced Series 20kW 3-Phase Power Center"},
     {price:175200,name:"LuxPower 20kW 1-Phase",client:"Elite Series 20kW 1-Phase Power Center"},
@@ -2232,6 +2232,36 @@ let hwDB = (() => {
 Object.keys(defaultDB).forEach(cat => {
   if (!hwDB[cat]) hwDB[cat] = JSON.parse(JSON.stringify(defaultDB[cat]));
 });
+
+// Additive technical-spec migration.
+// Existing user prices, client labels, names, and manual spec overrides always win.
+// This allows newly verified manufacturer metadata to reach existing local inventories
+// without bumping/wiping the localStorage database.
+function mergeDefaultTechnicalMetadata() {
+  const TECH_KEYS = ['maxPvKw','specModel','specSource','specRevision','specVerified'];
+  let changed = 0;
+
+  Object.keys(defaultDB).forEach(cat => {
+    if (!Array.isArray(hwDB[cat])) return;
+    defaultDB[cat].forEach(defItem => {
+      const stored = hwDB[cat].find(i => i.name === defItem.name);
+      if (!stored || stored.specOverride === true) return;
+
+      TECH_KEYS.forEach(key => {
+        if (defItem[key] !== undefined && stored[key] === undefined) {
+          stored[key] = JSON.parse(JSON.stringify(defItem[key]));
+          changed++;
+        }
+      });
+    });
+  });
+
+  if (changed > 0) {
+    try { localStorage.setItem(DB_KEY, JSON.stringify(hwDB)); } catch(e) {}
+  }
+  return changed;
+}
+mergeDefaultTechnicalMetadata();
 
 function saveDB() {
   try {
@@ -2339,12 +2369,16 @@ function syncPricesFromFile() {
         hwDB[cat].push(JSON.parse(JSON.stringify(defItem)));
         added++;
       }
-      // NEVER overwrite user's prices/clients — only adds missing items
+      // NEVER overwrite user prices/clients/names.
     });
   });
+  const specFieldsAdded = mergeDefaultTechnicalMetadata();
   saveDB();
-  if (added > 0) toast(`✓ Added ${added} new item${added>1?'s':''} from file. Your prices kept untouched.`, 'success');
-  else toast('No new items in file. Your prices are safe.', 'info');
+  if (added > 0 || specFieldsAdded > 0) {
+    toast(`✓ Inventory synced: ${added} new item${added===1?'':'s'}, ${specFieldsAdded} verified technical field${specFieldsAdded===1?'':'s'} added. User pricing kept untouched.`, 'success');
+  } else {
+    toast('No new items or verified specs to add. Your prices are safe.', 'info');
+  }
   const activeBtn = document.querySelector('#view-database button.btn-amber');
   if (activeBtn) renderDBTable(['panels','inverters','batteries','accessories','bos'].find(c => activeBtn.textContent.toLowerCase().includes(c.slice(0,3))) || 'panels');
 }
@@ -2560,9 +2594,15 @@ function getBOMInverterMaxPvKwPerUnit() {
   const explicit = parseFloat(
     rec?.maxPvKw ?? rec?.maxPVKw ?? rec?.maxPvInputKw ?? rec?.maxPvInputPowerKw
   );
+  const hasExplicit = Number.isFinite(explicit) && explicit > 0;
   return {
-    kw: Number.isFinite(explicit) && explicit > 0 ? explicit : unitKw,
-    explicit: Number.isFinite(explicit) && explicit > 0
+    kw: hasExplicit ? explicit : unitKw,
+    explicit: hasExplicit,
+    verified: hasExplicit && rec?.specVerified === true && rec?.specOverride !== true,
+    custom: hasExplicit && (rec?.specOverride === true || rec?.specVerified !== true),
+    model: rec?.specModel || '',
+    source: rec?.specSource || '',
+    revision: rec?.specRevision || ''
   };
 }
 
@@ -2585,7 +2625,12 @@ function getBOMSystemState() {
     invTotalKw,
     maxPvPerUnitKw: pvLimit.kw,
     maxPvTotalKw: pvLimit.kw * invQtyNow,
-    hasExplicitMaxPv: pvLimit.explicit
+    hasExplicitMaxPv: pvLimit.explicit,
+    hasVerifiedMaxPv: pvLimit.verified,
+    hasCustomMaxPv: pvLimit.custom,
+    maxPvModel: pvLimit.model,
+    maxPvSource: pvLimit.source,
+    maxPvRevision: pvLimit.revision
   };
 }
 
@@ -2629,8 +2674,14 @@ function syncPanelsToCurrentInverter({ notify = false } = {}) {
 
   if (notify) {
     const actualPv = q * state.panelW / 1000;
-    const basis = state.hasExplicitMaxPv ? 'configured inverter max PV input' : 'selected inverter total';
-    toast(`✓ PV array synced to ${basis}: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
+    if (state.hasVerifiedMaxPv) {
+      const model = state.maxPvModel ? ` (${state.maxPvModel})` : '';
+      toast(`✓ PV array synced to VERIFIED manufacturer Max PV Input${model}: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
+    } else if (state.hasCustomMaxPv) {
+      toast(`✓ PV array synced to CUSTOM Max PV Input: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
+    } else {
+      toast(`⚠ Exact inverter model/spec not verified. Using nominal ${state.invUnitKw.toFixed(1)}kW fallback: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'warn');
+    }
   }
 }
 
@@ -2740,7 +2791,12 @@ function addDBItem() {
   const item = {name, client, price};
   if (cat === 'inverters') {
     const maxPvKw = parseFloat(document.getElementById('db-maxpv')?.value);
-    if (Number.isFinite(maxPvKw) && maxPvKw > 0) item.maxPvKw = maxPvKw;
+    if (Number.isFinite(maxPvKw) && maxPvKw > 0) {
+      item.maxPvKw = maxPvKw;
+      item.specOverride = true;
+      item.specVerified = false;
+      item.specSource = 'Manual entry';
+    }
   }
   hwDB[cat].push(item);
   saveDB();
@@ -2845,6 +2901,9 @@ function editInvField(span) {
     hwDB[cat][idx][field] = val;
   } else if (field === 'maxPvKw') {
     const n = parseFloat(val);
+    hwDB[cat][idx].specOverride = true;
+    hwDB[cat][idx].specVerified = false;
+    hwDB[cat][idx].specSource = 'Manual override';
     if (!val.trim() || !Number.isFinite(n) || n <= 0) delete hwDB[cat][idx].maxPvKw;
     else hwDB[cat][idx].maxPvKw = n;
   } else {
