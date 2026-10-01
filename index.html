@@ -2850,7 +2850,7 @@ function renderDBTable(cat) {
     <tr>
       <th onclick="setInvSort('${cat}','name')" style="cursor:pointer;">Internal Name ⇅</th>
       <th>Client Spec</th>
-      ${isInv ? '<th>Max PV Input / Unit</th>' : ''}
+      ${isInv ? '<th>Max PV Input / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">manufacturer spec status</span></th>' : ''}
       <th onclick="setInvSort('${cat}','price')" style="cursor:pointer;">Price ⇅</th>
       <th>Actions</th>
     </tr>`;
@@ -2863,9 +2863,17 @@ function renderDBTable(cat) {
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="client"
             style="cursor:text;color:var(--text2);border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;min-width:120px;"
             onclick="editInvField(this)">${item.client}</span></td>
-      ${isInv ? `<td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
-            style="cursor:text;font-family:var(--mono);color:${item.maxPvKw?'var(--green)':'var(--text3)'};border-bottom:1px dashed var(--border2);padding:2px 4px;"
-            onclick="editInvField(this)">${item.maxPvKw ? Number(item.maxPvKw).toFixed(1)+' kW' : 'Nominal fallback'}</span></td>` : ''}
+      ${isInv ? `<td>
+            <span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="maxPvKw"
+              title="${item.specSource ? item.specSource + (item.specRevision ? ' · '+item.specRevision : '') : 'Exact manufacturer model/spec not yet verified'}"
+              style="cursor:text;font-family:var(--mono);color:${item.specVerified===true?'var(--green)':item.maxPvKw?'var(--accent)':'#f59e0b'};border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;"
+              onclick="editInvField(this)">
+              ${item.maxPvKw
+                ? (item.specVerified===true?'✓ VERIFIED ':'CUSTOM ') + Number(item.maxPvKw).toFixed(1)+' kW'
+                : '⚠ EXACT MODEL REQUIRED'}
+            </span>
+            ${item.specModel ? `<div style="font-size:9px;color:var(--text3);margin-top:3px;">${item.specModel}${item.specRevision?' · '+item.specRevision:''}</div>` : ''}
+          </td>` : ''}
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="price"
             style="cursor:text;font-family:var(--mono);color:var(--accent);font-weight:700;border-bottom:1px dashed var(--border2);padding:2px 4px;"
             onclick="editInvField(this)">₱${item.price.toLocaleString()}</span></td>
@@ -2892,7 +2900,7 @@ function editInvField(span) {
     : field === 'maxPvKw' ? 'Max PV Input per Inverter (kW)'
     : field;
 
-  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (blank or 0 = nominal-kW fallback)':''}`, cur ?? '');
+  let val = prompt(`Edit ${label}:${field==='maxPvKw'?' (manual edits become CUSTOM; blank/0 disables verified auto-spec for this item)':''}`, cur ?? '');
   if (val === null) return;
 
   if (field === 'price') {
