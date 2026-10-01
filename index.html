@@ -2598,28 +2598,31 @@ function getBOMInverterUnitKw() {
   return m ? parseFloat(m[1]) : (invSize || 0);
 }
 
-function getBOMInverterMaxPvKwPerUnit() {
+function getBOMInverterPvDesign() {
   const item = getSelectedBOMOption('inverter');
   const unitKw = getBOMInverterUnitKw();
   const rec = (item && item.index >= 0 && hwDB?.inverters?.[item.index]) ? hwDB.inverters[item.index] : null;
-  // Optional future-ready technical metadata. Imported inventory JSON may provide any
-  // of these keys. If absent, FDG's current design convention falls back to a 1:1
-  // nominal inverter-kW PV design cap for manual BOM overrides.
-  const explicit = parseFloat(
-    rec?.maxPvKw ?? rec?.maxPVKw ?? rec?.maxPvInputKw ?? rec?.maxPvInputPowerKw
-  );
-  const hasExplicit = Number.isFinite(explicit) && explicit > 0;
+
+  // User-selected PV design capacity. Defaults to nominal inverter kW.
+  let designKw = parseFloat(rec?.designPvKw);
+  if (!Number.isFinite(designKw) || designKw <= 0) designKw = unitKw;
+
+  // Verified manufacturer maximum is a hard safety ceiling, not the default design target.
+  const manufacturerMaxKw = parseFloat(rec?.manufacturerMaxPvKw);
+  const hasManufacturerMax = Number.isFinite(manufacturerMaxKw) && manufacturerMaxKw > 0;
+  const effectiveDesignKw = hasManufacturerMax ? Math.min(designKw, manufacturerMaxKw) : designKw;
+
   return {
-    kw: hasExplicit ? explicit : unitKw,
-    explicit: hasExplicit,
-    verified: hasExplicit && rec?.specVerified === true && rec?.specOverride !== true,
-    custom: hasExplicit && (rec?.specOverride === true || rec?.specVerified !== true),
+    designKw,
+    effectiveDesignKw,
+    manufacturerMaxKw: hasManufacturerMax ? manufacturerMaxKw : 0,
+    hasManufacturerMax,
+    verified: hasManufacturerMax && rec?.specVerified === true,
     model: rec?.specModel || '',
     source: rec?.specSource || '',
     revision: rec?.specRevision || ''
   };
 }
-
 function getBOMSystemState() {
   const panelW = getBOMPanelW();
   const panelQty = Math.max(0, parseInt(document.getElementById('qty-panels')?.value) || 0);
@@ -2628,7 +2631,7 @@ function getBOMSystemState() {
   const invUnitKw = getBOMInverterUnitKw();
   const invQtyNow = Math.max(1, parseInt(document.getElementById('qty-inverter')?.value) || 1);
   const invTotalKw = invUnitKw > 0 ? invUnitKw * invQtyNow : 0;
-  const pvLimit = getBOMInverterMaxPvKwPerUnit();
+  const pvDesign = getBOMInverterPvDesign();
 
   return {
     panelW,
@@ -2637,14 +2640,16 @@ function getBOMSystemState() {
     invUnitKw,
     invQty: invQtyNow,
     invTotalKw,
-    maxPvPerUnitKw: pvLimit.kw,
-    maxPvTotalKw: pvLimit.kw * invQtyNow,
-    hasExplicitMaxPv: pvLimit.explicit,
-    hasVerifiedMaxPv: pvLimit.verified,
-    hasCustomMaxPv: pvLimit.custom,
-    maxPvModel: pvLimit.model,
-    maxPvSource: pvLimit.source,
-    maxPvRevision: pvLimit.revision
+    designPvPerUnitKw: pvDesign.designKw,
+    effectiveDesignPvPerUnitKw: pvDesign.effectiveDesignKw,
+    designPvTotalKw: pvDesign.effectiveDesignKw * invQtyNow,
+    manufacturerMaxPvPerUnitKw: pvDesign.manufacturerMaxKw,
+    manufacturerMaxPvTotalKw: pvDesign.manufacturerMaxKw * invQtyNow,
+    hasManufacturerMaxPv: pvDesign.hasManufacturerMax,
+    hasVerifiedManufacturerMaxPv: pvDesign.verified,
+    maxPvModel: pvDesign.model,
+    maxPvSource: pvDesign.source,
+    maxPvRevision: pvDesign.revision
   };
 }
 
@@ -2672,15 +2677,16 @@ function getBOMSolarProjection(ratePerKwh, consumptionKwhPerMonth) {
 
 function syncPanelsToCurrentInverter({ notify = false } = {}) {
   const state = getBOMSystemState();
-  if (!(state.invUnitKw > 0) || !(state.maxPvTotalKw > 0) || !(state.panelW > 0)) return;
+  if (!(state.invUnitKw > 0) || !(state.designPvTotalKw > 0) || !(state.panelW > 0)) return;
 
-  // If true manufacturer max-PV metadata exists, never exceed it.
-  // Otherwise match the nearest practical panel count to the selected inverter total,
-  // which preserves the current FDG 1:1 manual-override convention.
-  let q = state.hasExplicitMaxPv
-    ? Math.floor((state.maxPvTotalKw * 1000) / state.panelW)
-    : Math.round((state.maxPvTotalKw * 1000) / state.panelW);
-  q = Math.max(1, q);
+  // BOM follows the user's PV DESIGN TARGET, not the manufacturer maximum.
+  let q = Math.max(1, Math.round((state.designPvTotalKw * 1000) / state.panelW));
+
+  // Manufacturer maximum remains a hard safety ceiling when known.
+  if (state.hasManufacturerMaxPv && state.manufacturerMaxPvTotalKw > 0) {
+    const maxPanels = Math.max(1, Math.floor((state.manufacturerMaxPvTotalKw * 1000) / state.panelW));
+    q = Math.min(q, maxPanels);
+  }
 
   const qtyPanels = document.getElementById('qty-panels');
   if (qtyPanels) qtyPanels.value = q;
@@ -2688,17 +2694,12 @@ function syncPanelsToCurrentInverter({ notify = false } = {}) {
 
   if (notify) {
     const actualPv = q * state.panelW / 1000;
-    if (state.hasVerifiedMaxPv) {
-      const model = state.maxPvModel ? ` (${state.maxPvModel})` : '';
-      toast(`✓ PV array synced to VERIFIED manufacturer Max PV Input${model}: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
-    } else if (state.hasCustomMaxPv) {
-      toast(`✓ PV array synced to CUSTOM Max PV Input: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'success');
-    } else {
-      toast(`⚠ Exact inverter model/spec not verified. Using nominal ${state.invUnitKw.toFixed(1)}kW fallback: ${q}× ${state.panelW}W = ${actualPv.toFixed(2)} kWp`, 'warn');
-    }
+    let msg = '✓ PV BOM synced to design target: ' + q + '× ' + state.panelW + 'W = ' + actualPv.toFixed(2) + ' kWp (target ' + state.designPvTotalKw.toFixed(2) + ' kWp';
+    if (state.hasVerifiedManufacturerMaxPv) msg += ' · manufacturer max ' + state.manufacturerMaxPvTotalKw.toFixed(2) + ' kWp';
+    msg += ')';
+    toast(msg, 'success');
   }
 }
-
 function syncManualInverterBOM({ notify = false } = {}) {
   const unitKw = getBOMInverterUnitKw();
   if (!(unitKw > 0)) return;
