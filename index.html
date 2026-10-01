@@ -4277,77 +4277,82 @@ async function openSLD() {
 }
 
 function readSLDConfig() {
-  const panels = parseInt(document.getElementById('qty-panels')?.value) || 0;
-  const invQ   = parseInt(document.getElementById('qty-inverter')?.value) || 1;
-  const batQ   = parseInt(document.getElementById('qty-battery')?.value) || 0;
-  const invDesc = (document.getElementById('desc-inverter')?.value || '').toLowerCase();
-  // Phase + voltage: parse from auto-phase hidden input ("1|220", "3|220", "3|380")
-  // This distinguishes 3Ph 220V (delta) vs 3Ph 380V (wye/Y line-to-line)
+  const bomState = getBOMSystemState();
+  const panels = bomState.panelQty;
+  const panelW = bomState.panelW;
+  const pvKwp = bomState.pvKwp;
+  const invQ = bomState.invQty;
+  const sysKw = bomState.invTotalKw; // AC inverter total
+  const sInvKw = bomState.invUnitKw; // per inverter
+  const batQ = parseInt(document.getElementById('qty-battery')?.value) || 0;
+
+  const invDescEl = document.getElementById('desc-inverter');
+  const invDescRaw = invDescEl?.value || '';
+  const invClientDesc = invDescEl?.dataset?.client || invDescRaw;
+  const panelDescEl = document.getElementById('desc-panels');
+  const panelClientDesc = panelDescEl?.dataset?.client || panelDescEl?.value || '';
+  const batDescEl = document.getElementById('desc-battery');
+  const batClientDesc = batDescEl?.dataset?.client || batDescEl?.value || '';
+  const batAhMatch = (batDescEl?.value || '').match(/(\d+(?:\.\d+)?)\s*Ah/i);
+  const currentBatAh = batAhMatch ? parseFloat(batAhMatch[1]) : (batSizeAh || 0);
+
   const phaseStr = document.getElementById('auto-phase')?.value || '1|220';
   const phaseParts = phaseStr.split('|');
-  const phaseFromHidden = parseInt(phaseParts[0]) || 1;
-  const voltsFromHidden = parseInt(phaseParts[1]) || 220;
-  const phase = phaseFromHidden;
-  const V_AC = voltsFromHidden;
-  const sysKw  = parseFloat(document.getElementById('out-system')?.textContent) || (invQ * (invSize||5));
-  const panelW = panels > 0 ? Math.round(sysKw * 1000 / panels) : 0;
+  const phase = parseInt(phaseParts[0]) || 1;
+  const V_AC = parseInt(phaseParts[1]) || 220;
   const V_DC_BAT = invVolts || 48;
 
-  // === Inverter type classification (generic, no brand) ===
+  // Architecture follows the same live selector used by the quotation/calculator.
+  const arch = document.getElementById('auto-sys-type')?.value || '';
   let invType;
-  if (batQ === 0)                  invType = 'Grid-Tie Inverter';
-  else if (/off.?grid/.test(invDesc))  invType = 'Off-Grid Inverter';
-  else                                 invType = 'Hybrid On/Off-Grid Inverter';
-  const isHybrid  = invType === 'Hybrid On/Off-Grid Inverter';
+  if (arch === 'gridtie' || batQ === 0) invType = 'Grid-Tie Inverter';
+  else if (arch === 'offgrid' || /off.?grid/i.test(invDescRaw)) invType = 'Off-Grid Inverter';
+  else invType = 'Hybrid On/Off-Grid Inverter';
+  const isHybrid = invType === 'Hybrid On/Off-Grid Inverter';
   const isOffGrid = invType === 'Off-Grid Inverter';
   const isGridTie = invType === 'Grid-Tie Inverter';
 
-  // === MPPT distribution rule (per user spec) ===
-  // 1 MPPT per 4kW of inverter capacity (rounded up):
-  //   ≤4kW   → 1 MPPT
-  //   5-8kW  → 2 MPPT
-  //   9-12kW → 3 MPPT
-  //   13-16kW → 4 MPPT etc.
-  // Manual override available via sys-mppt-override
-  const invKwForMppt = parseFloat(document.getElementById('sys-size')?.value) || 0;
+  // Existing MPPT distribution convention retained; now based on actual BOM inverter total.
+  const invKwForMppt = sysKw || 0;
   const autoMppt = Math.max(1, Math.ceil(invKwForMppt / 4));
   const manualMppt = parseInt(document.getElementById('sys-mppt-override')?.value) || 0;
-  const mpptCount = (manualMppt > 0 && manualMppt <= Math.max(panels, 1)) ? manualMppt : Math.min(autoMppt, panels);
+  const mpptCount = panels > 0
+    ? ((manualMppt > 0 && manualMppt <= panels) ? manualMppt : Math.min(autoMppt, panels))
+    : 0;
   const basePerMppt = mpptCount > 0 ? Math.floor(panels / mpptCount) : 0;
-  const remainder   = panels - basePerMppt * mpptCount;
+  const remainder = panels - basePerMppt * mpptCount;
   const panelsByMppt = [];
   for (let i = 0; i < mpptCount; i++) {
     panelsByMppt.push(i === mpptCount - 1 ? basePerMppt + remainder : basePerMppt);
   }
 
-  // === Breaker calcs (NEC 125% continuous, PH std sizes) ===
+  // Existing protection calculation convention retained; source values now match BOM.
   const STD = [10,15,20,30,40,50,60,75,100,125,150,200,225,250,300,400,500,630,800,1000,1250,1600];
-  const next = a => { for(const b of STD) if(b>=a) return b; return STD[STD.length-1]; };
-  const sInvKw   = sysKw / Math.max(invQ,1);
-  const acDiv    = (phase===3 ? 1.732 : 1) * V_AC * 0.9;       // 0.9 PF
-  const acA_inv  = (sInvKw * 1000) / acDiv;
-  const acBr     = next(acA_inv * 1.25);
-  const gridIso  = next(acA_inv * 1.25 * 1.1);                 // grid iso 10% margin over inverter AC
-  const dcA_bat  = batQ>0 ? (sInvKw * 1000) / V_DC_BAT : 0;
-  const dcBatMain = batQ>0 ? next((dcA_bat / 0.976) * 1.25) : 0; // include eff
-  const perStringA  = batQ>1 ? dcA_bat / batQ : dcA_bat;
+  const next = a => { for (const b of STD) if (b >= a) return b; return STD[STD.length-1]; };
+  const acDiv = (phase===3 ? 1.732 : 1) * V_AC * 0.9;
+  const acA_inv = sInvKw > 0 ? (sInvKw * 1000) / acDiv : 0;
+  const acBr = next(acA_inv * 1.25);
+  const gridIso = next(acA_inv * 1.25 * 1.1);
+  const dcA_bat = batQ>0 && sInvKw>0 ? (sInvKw * 1000) / V_DC_BAT : 0;
+  const dcBatMain = batQ>0 ? next((dcA_bat / 0.976) * 1.25) : 0;
+  const perStringA = batQ>1 ? dcA_bat / batQ : dcA_bat;
   const perStringBr = batQ>1 ? next(perStringA * 1.25) : 0;
-  const dcPvA   = 14;                 // typical Isc for 550–620W panel
-  const dcPvBr  = next(dcPvA * 1.25); // per string
+  const dcPvA = 14;
+  const dcPvBr = next(dcPvA * 1.25);
   const needBusbar = batQ > 2;
 
   return {
-    panels, panelW, panelsByMppt, mpptCount,
-    invQ, iQty: invQ, invType, isHybrid, isOffGrid, isGridTie,
-    batQ, batSizeAh, V_DC_BAT, V_AC, phase,
-    sysKw: sysKw.toFixed(2), sInvKw: sInvKw.toFixed(2),
+    panels, panelW, pvKwp, panelsByMppt, mpptCount,
+    invQ, iQty: invQ, invType, invClientDesc, isHybrid, isOffGrid, isGridTie,
+    batQ, batSizeAh: currentBatAh, batClientDesc, panelClientDesc, V_DC_BAT, V_AC, phase,
+    sysKw: Number(sysKw || 0).toFixed(2), sInvKw: Number(sInvKw || 0).toFixed(2),
     acA_inv: acA_inv.toFixed(1), acBr, gridIso,
     dcA_bat: dcA_bat.toFixed(1), dcBatMain,
     perStringA: perStringA.toFixed(1), perStringBr,
     dcPvA, dcPvBr,
     needBusbar,
     clientName: document.getElementById('cli-name')?.value || 'Client',
-    projDate: new Date().toLocaleDateString('en-PH', {year:'numeric',month:'short',day:'numeric'}),
+    projDate: getDocDate(),
     revision: 'R1.0',
     designer: 'FDG Solar Visayas Engineering'
   };
