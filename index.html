@@ -5765,15 +5765,65 @@ function calcROI(){
 // QUOTE HISTORY — localStorage key `fdgQuoteHistory_v1` (legacy `fdgQuoteHistory`)
 // ================================================================
 const QH_KEY = 'fdgQuoteHistory_v1';
+function deriveSavedQuoteCapacities(q) {
+  if (!q || !q.snapshot) return null;
+  const snap = q.snapshot;
+  if (snap.actualBOM) {
+    return {
+      pvKwp: parseFloat(snap.actualBOM.pvKwp) || 0,
+      inverterKw: parseFloat(snap.actualBOM.invTotalKw) || 0
+    };
+  }
+
+  const inp = snap.inputs || {};
+  const panelQty = parseInt(inp['qty-panels']) || 0;
+  const panelSource = inp['sel-panels'] || inp['desc-panels'] || '';
+  const panelMatch = String(panelSource).match(/(\d+(?:\.\d+)?)\s*W/i);
+  const panelW = panelMatch ? parseFloat(panelMatch[1]) : 0;
+
+  const invQtySaved = parseInt(inp['qty-inverter']) || 1;
+  const invSource = inp['sel-inverter'] || inp['desc-inverter'] || '';
+  const invMatch = String(invSource).match(/(\d+(?:\.\d+)?)\s*kW/i);
+  const invUnitKw = invMatch ? parseFloat(invMatch[1]) : 0;
+
+  return {
+    pvKwp: panelQty > 0 && panelW > 0 ? panelQty * panelW / 1000 : 0,
+    inverterKw: invUnitKw > 0 ? invQtySaved * invUnitKw : 0
+  };
+}
+
+function normalizeQuoteHistoryCapacity(arr) {
+  if (!Array.isArray(arr)) return { arr: [], changed: false };
+  let changed = false;
+  arr.forEach(q => {
+    const derived = deriveSavedQuoteCapacities(q);
+    if (!derived) return;
+    if ((!q.pvKwp || parseFloat(q.pvKwp) <= 0) && derived.pvKwp > 0) {
+      q.pvKwp = derived.pvKwp.toFixed(2);
+      changed = true;
+    }
+    if ((!q.inverterKw || parseFloat(q.inverterKw) <= 0) && derived.inverterKw > 0) {
+      q.inverterKw = derived.inverterKw.toFixed(2);
+      changed = true;
+    }
+  });
+  return { arr, changed };
+}
+
 function loadQuoteHistory() {
   try {
     let arr = JSON.parse(localStorage.getItem(QH_KEY));
-    if (arr && arr.length) return arr;
+    if (arr && arr.length) {
+      const normalized = normalizeQuoteHistoryCapacity(arr);
+      if (normalized.changed) localStorage.setItem(QH_KEY, JSON.stringify(normalized.arr));
+      return normalized.arr;
+    }
     // Migrate from legacy
     const legacy = JSON.parse(localStorage.getItem('fdgQuoteHistory'));
     if (legacy && legacy.length) {
-      localStorage.setItem(QH_KEY, JSON.stringify(legacy));
-      return legacy;
+      const normalized = normalizeQuoteHistoryCapacity(legacy);
+      localStorage.setItem(QH_KEY, JSON.stringify(normalized.arr));
+      return normalized.arr;
     }
   } catch(e) {}
   return [];
