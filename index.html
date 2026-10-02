@@ -1165,7 +1165,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
               </tr>
               <tr class="bom-row-labor">
                 <td><span class="bom-cat-label">👷 Professional Labor</span></td>
-                <td><input type="text" id="desc-labor" data-client="FDG Solar Visayas Engineering, Execution &amp; Testing" value="Labor dynamically bound to highest kW"></td>
+                <td><input type="text" id="desc-labor" data-client="FDG Solar Visayas Engineering, Execution &amp; Testing" value="Progressive installation labor based on installed PV kWp"></td>
                 <td><input type="number" id="qty-labor" value="1" min="1" readonly="" style="background:var(--card2);color:var(--text3);"></td>
                 <td><input type="number" id="price-labor" value="0" readonly="" style="background:var(--card2);color:var(--text3);font-family:var(--mono);"></td>
                 <td class="bom-line-total" id="total-labor">₱84,000.00</td>
@@ -2985,6 +2985,50 @@ function getLivePrice(itemName) {
   return item ? item.price : 0;
 }
 
+// Progressive installation labor — based on ACTUAL installed PV DC capacity from Interactive BOM.
+// Approved FDG schedule:
+//   first 5 kWp  = ₱8,000/kWp
+//   next 5 kWp   = ₱7,000/kWp
+//   next 10 kWp  = ₱6,000/kWp
+//   next 30 kWp  = ₱5,000/kWp
+//   above 50 kWp = ₱4,500/kWp
+// Minimum installation labor = ₱30,000.
+function calculateProgressiveSolarLabor(pvKwp) {
+  const kw = Math.max(0, parseFloat(pvKwp) || 0);
+  if (kw <= 0) return { total: 0, pvKwp: 0, effectiveRate: 0, breakdown: [] };
+
+  const tiers = [
+    { cap: 5,  rate: 8000, label: 'First 5 kWp' },
+    { cap: 5,  rate: 7000, label: 'Next 5 kWp' },
+    { cap: 10, rate: 6000, label: 'Next 10 kWp' },
+    { cap: 30, rate: 5000, label: 'Next 30 kWp' },
+    { cap: Infinity, rate: 4500, label: 'Above 50 kWp' }
+  ];
+
+  let remaining = kw;
+  let raw = 0;
+  const breakdown = [];
+
+  tiers.forEach(tier => {
+    if (remaining <= 0) return;
+    const tierKw = tier.cap === Infinity ? remaining : Math.min(remaining, tier.cap);
+    if (tierKw <= 0) return;
+    const amount = tierKw * tier.rate;
+    raw += amount;
+    breakdown.push({ label: tier.label, kw: tierKw, rate: tier.rate, amount });
+    remaining -= tierKw;
+  });
+
+  const total = Math.max(30000, raw);
+  return {
+    total,
+    pvKwp: kw,
+    effectiveRate: kw > 0 ? total / kw : 0,
+    minimumApplied: raw < 30000,
+    breakdown
+  };
+}
+
 // ================================================================
 // STEP BUTTON HANDLERS
 // ================================================================
@@ -3638,9 +3682,26 @@ function calcBOM() {
     document.getElementById('price-electrical').value=applyCeiling(rawBOS);
   }
 
-  if(kw>0){
-    const panelKw=(p*550)/1000;
-    document.getElementById('price-labor').value=Math.max(kw,panelKw)*7000;
+  // Professional installation labor follows ACTUAL installed PV capacity,
+  // not the original inverter recommendation and not a hardcoded 550W panel assumption.
+  if(p>0){
+    const bomStateForLabor = getBOMSystemState();
+    const labor = calculateProgressiveSolarLabor(bomStateForLabor.pvKwp);
+    const laborEl = document.getElementById('price-labor');
+    const laborDesc = document.getElementById('desc-labor');
+    if (laborEl) laborEl.value = Number(labor.total.toFixed(2));
+    if (laborDesc) {
+      laborDesc.value =
+        'Progressive installation labor · ' +
+        bomStateForLabor.pvKwp.toFixed(2) + ' kWp installed PV · effective ₱' +
+        Math.round(labor.effectiveRate).toLocaleString() + '/kWp';
+      laborDesc.title = labor.breakdown
+        .map(x => x.label + ': ' + x.kw.toFixed(2) + ' kWp × ₱' + x.rate.toLocaleString() + ' = ₱' + x.amount.toLocaleString(undefined,{maximumFractionDigits:0}))
+        .join('\n') + (labor.minimumApplied ? '\nMinimum labor applied: ₱30,000' : '');
+    }
+  } else {
+    const laborEl = document.getElementById('price-labor');
+    if (laborEl) laborEl.value = 0;
   }
 
   bomTotal=0;
