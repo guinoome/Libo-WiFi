@@ -2070,7 +2070,7 @@ Energy audit, Documentation, Technical Reports, Equipment Specifications</textar
         <td>10-Year Net Savings<strong id="p-roi-10yr">₱1,440,000</strong></td>
       </tr>
     </tbody></table>
-    <p class="p-roi-note">*Based on provided electricity rate and conservative 4.5 peak sun hours/day. Actual savings may vary.</p>
+    <p class="p-roi-note">*Savings are recalculated from the current Interactive BOM PV array, provided electricity rate, 4.5 peak sun hours/day, and system-yield assumptions; capped by modeled client consumption. Actual savings may vary.</p>
   </div>
 
   <div class="p-terms p-client">
@@ -2714,6 +2714,71 @@ function getBOMSolarProjection(ratePerKwh, consumptionKwhPerMonth) {
     usefulMonthlyKwh,
     monthlySavings: rate > 0 ? usefulMonthlyKwh * rate : 0,
     yearlySavings: rate > 0 ? usefulMonthlyKwh * rate * 12 : 0
+  };
+}
+
+function getCurrentQuotationFinancialContext() {
+  const flowMode = document.getElementById('auto-basis')?.value || 'bill';
+  const isAmpsMode = flowMode === 'amps';
+  const ampsRate = parseFloat(document.getElementById('flowAmpsRate')?.value) || 0;
+  const normalRate = parseFloat(document.getElementById('flowRate')?.value) || 0;
+  const fallbackRate = (typeof autoRate !== 'undefined' && parseFloat(autoRate) > 0) ? parseFloat(autoRate) : 12.56;
+  const rate = isAmpsMode ? ampsRate : (normalRate > 0 ? normalRate : fallbackRate);
+
+  let consumptionKwhPerMonth = 0;
+  try {
+    if (typeof getFlowConsumption === 'function') consumptionKwhPerMonth = getFlowConsumption();
+  } catch(e) {}
+  if (!(consumptionKwhPerMonth > 0) && typeof clientMonthlyKwh !== 'undefined') {
+    consumptionKwhPerMonth = parseFloat(clientMonthlyKwh) || 0;
+  }
+
+  return {
+    flowMode,
+    isAmpsMode,
+    rate,
+    consumptionKwhPerMonth,
+    showKwhOnly: isAmpsMode && !(ampsRate > 0)
+  };
+}
+
+function syncQuotationFinancialsFromBOM() {
+  const ctx = getCurrentQuotationFinancialContext();
+  const projection = getBOMSolarProjection(ctx.rate, ctx.consumptionKwhPerMonth);
+
+  const totalText = document.getElementById('sys-grandtotal')?.value || '0';
+  const finalInvestment = parseFloat(String(totalText).replace(/[^0-9.-]/g,'')) || 0;
+
+  const monthlySavings = ctx.showKwhOnly ? 0 : projection.monthlySavings;
+  const yearlySavings = monthlySavings * 12;
+  const paybackYears = finalInvestment > 0 && monthlySavings > 0
+    ? finalInvestment / yearlySavings
+    : 0;
+
+  const monthlyEl = document.getElementById('p-roi-monthly');
+  const yearlyEl = document.getElementById('p-roi-yearly');
+  const paybackEl = document.getElementById('p-roi-payback');
+  const tenYearEl = document.getElementById('p-roi-10yr');
+
+  if (ctx.showKwhOnly) {
+    if (monthlyEl) monthlyEl.textContent = projection.usefulMonthlyKwh.toLocaleString(undefined,{maximumFractionDigits:0}) + ' kWh offset';
+    if (yearlyEl) yearlyEl.textContent = (projection.usefulMonthlyKwh * 12).toLocaleString(undefined,{maximumFractionDigits:0}) + ' kWh offset';
+    if (paybackEl) paybackEl.textContent = 'Enter ₱/kWh rate';
+    if (tenYearEl) tenYearEl.textContent = 'N/A';
+  } else {
+    if (monthlyEl) monthlyEl.textContent = '₱' + monthlySavings.toLocaleString(undefined,{maximumFractionDigits:0});
+    if (yearlyEl) yearlyEl.textContent = '₱' + yearlySavings.toLocaleString(undefined,{maximumFractionDigits:0});
+    if (paybackEl) paybackEl.textContent = paybackYears > 0 ? paybackYears.toFixed(1) + ' Years' : 'N/A';
+    if (tenYearEl) tenYearEl.textContent = '₱' + (monthlySavings * 120).toLocaleString(undefined,{maximumFractionDigits:0});
+  }
+
+  return {
+    ...ctx,
+    projection,
+    finalInvestment,
+    monthlySavings,
+    yearlySavings,
+    paybackYears
   };
 }
 
@@ -3796,6 +3861,10 @@ function calcGrandTotal() {
   if (pGT) pGT.textContent = '₱' + finalAmount.toLocaleString(undefined,{minimumFractionDigits:2});
   const pVatLbl = document.getElementById('p-vat-label');
   if (pVatLbl) pVatLbl.textContent = vatMode === 'in' ? 'Official Receipt (BIR) · 12% VAT + 10% Professional Fee included' : 'VAT Exclusive · Acknowledgement Receipt + Warranty Form · 12% VAT + 10% Professional Fee excluded';
+
+  // Quotation financial outputs must always follow the CURRENT Interactive BOM,
+  // never the original autosizer recommendation.
+  if (typeof syncQuotationFinancialsFromBOM === 'function') syncQuotationFinancialsFromBOM();
 }
 
 // ================================================================
@@ -4265,18 +4334,9 @@ async function generateDoc(type) {
     };
     document.getElementById('p-client-pitch').innerHTML = pitches[tier] || pitches.Essential;
 
-    // ROI — actual Interactive BOM PV array × 4.5 PSH × 81% yield, capped by client consumption.
-    const rate = autoRate || 12.56;
-    const anchor = rawGT;
-    const projection = getBOMSolarProjection(rate, clientMonthlyKwh);
-    const generatedKwh = projection.monthlyGenerationKwh;
-    const billCapKwh   = clientMonthlyKwh > 0 ? clientMonthlyKwh : generatedKwh;
-    const usefulKwh    = projection.usefulMonthlyKwh;
-    const ms = projection.monthlySavings;
-    p('p-roi-monthly', '₱' + ms.toLocaleString(undefined,{maximumFractionDigits:0}));
-    p('p-roi-yearly',  '₱' + (ms*12).toLocaleString(undefined,{maximumFractionDigits:0}));
-    p('p-roi-payback', anchor>0&&ms>0 ? (anchor/(ms*12)).toFixed(1)+' Years' : 'N/A');
-    p('p-roi-10yr',    '₱' + (ms*120).toLocaleString(undefined,{maximumFractionDigits:0}));
+    // ROI — one canonical path: CURRENT Interactive BOM PV array, capped by current client consumption.
+    // This intentionally ignores the original autosizer capacity after the BOM is manually changed.
+    syncQuotationFinancialsFromBOM();
 
   } else {
     // INTERNAL JOB ORDER
