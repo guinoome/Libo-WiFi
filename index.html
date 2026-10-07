@@ -1073,14 +1073,41 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
                 <input type="number" id="sys-blueprint" value="25000" min="0" oninput="calcGrandTotal()">
               </div>
             </div>
+            <div class="g2">
+              <div class="fg" style="background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);border-radius:6px;padding:10px;">
+                <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--red);font-weight:700;">
+                  <input type="checkbox" id="add-permit-service" onchange="calcGrandTotal()" style="margin:2px 0 0 0;width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+                  <span style="line-height:1.4;">📋 Add: HOA &amp; Local Permit Application / Processing
+                    <div style="font-size:10px;font-weight:400;color:var(--text3);margin-top:2px;">Excluded by default · FDG preparation, submission &amp; coordination service</div>
+                  </span>
+                </label>
+              </div>
+              <div class="fg"><label>Permit Service Fee (₱)</label>
+                <input type="number" id="sys-permit-service" value="50000" min="0" oninput="calcGrandTotal()">
+              </div>
+            </div>
+            <div class="g2">
+              <div class="fg" style="background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);border-radius:6px;padding:10px;">
+                <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--red);font-weight:700;">
+                  <input type="checkbox" id="add-net-metering" onchange="calcGrandTotal()" style="margin:2px 0 0 0;width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+                  <span style="line-height:1.4;">⚡ Add: Net Metering Application &amp; Processing
+                    <div style="font-size:10px;font-weight:400;color:var(--text3);margin-top:2px;">Excluded by default · FDG preparation, submission &amp; DU coordination service</div>
+                  </span>
+                </label>
+              </div>
+              <div class="fg"><label>Net Metering Service Fee (₱)</label>
+                <input type="number" id="sys-net-metering" value="75000" min="0" oninput="calcGrandTotal()">
+              </div>
+            </div>
             <div class="fg"><label style="color:var(--accent);">Turnkey Anchor Price (Rounded ↑ to nearest 1,000)</label>
               <input type="text" id="sys-anchor" class="input-accent" readonly="">
             </div>
-            <div class="fg"><label>VAT Treatment</label>
+            <div class="fg"><label>Receipt / VAT Treatment</label>
               <select id="vat-mode" onchange="calcGrandTotal()">
-                <option value="ex" selected>VAT Exclusive (Acknowledgement Receipt — no 12% VAT, no 10% prof fee)</option>
-                <option value="in">VAT Inclusive (+12% VAT + 10% Professional Fee · Official Receipt)</option>
+                <option value="ex" selected>Acknowledgement Receipt + Warranty Form — VAT Exclusive (12% VAT + 10% Professional Fee excluded)</option>
+                <option value="in">Official Receipt (BIR) — adds 12% VAT + 10% Professional Fee</option>
               </select>
+              <div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.45;">Professional Fee: <strong style="color:var(--accent);">10%</strong> of the VAT-exclusive base. Official Receipt pricing adds <strong>12% VAT</strong> and the <strong>10% Professional Fee</strong> as separate line items.</div>
             </div>
             <div class="fg" id="vat-breakdown-row" style="display:none;">
               <label style="color:var(--text2);">VAT-In Breakdown</label>
@@ -3724,7 +3751,11 @@ function calcBOM() {
 function calcGrandTotal() {
   const blueprintOn = document.getElementById('add-blueprint')?.checked;
   const blueprintCost = blueprintOn ? (parseFloat(document.getElementById('sys-blueprint')?.value) || 0) : 0;
-  rawGrandTotal=bomTotal+(parseFloat(document.getElementById('sys-mob').value)||0)+(parseFloat(document.getElementById('sys-delivery').value)||0)+blueprintCost;
+  const permitOn = document.getElementById('add-permit-service')?.checked;
+  const permitCost = permitOn ? (parseFloat(document.getElementById('sys-permit-service')?.value) || 0) : 0;
+  const netMeteringOn = document.getElementById('add-net-metering')?.checked;
+  const netMeteringCost = netMeteringOn ? (parseFloat(document.getElementById('sys-net-metering')?.value) || 0) : 0;
+  rawGrandTotal=bomTotal+(parseFloat(document.getElementById('sys-mob').value)||0)+(parseFloat(document.getElementById('sys-delivery').value)||0)+blueprintCost+permitCost+netMeteringCost;
   const anchor=rawGrandTotal===0?0:Math.ceil(rawGrandTotal/1000)*1000;
   const disc=5000;
   const baseFinal=anchor===0?0:anchor-disc;
@@ -3757,14 +3788,14 @@ function calcGrandTotal() {
   // Update VAT indicator + Final Investment color
   const indicator = document.getElementById('vat-mode-indicator');
   if (indicator) {
-    indicator.textContent = vatMode === 'in' ? 'VAT-IN +22%' : 'VAT-EX';
+    indicator.textContent = vatMode === 'in' ? 'VAT-IN · 12% VAT + 10% PROF. FEE' : 'VAT-EX · ACKNOWLEDGEMENT + WARRANTY';
     indicator.style.color = vatMode === 'in' ? '#10b981' : 'var(--text3)';
   }
   // Live-sync the Client Proposal Final Investment display so PDF Quote captures it
   const pGT = document.getElementById('p-sys-grandtotal');
   if (pGT) pGT.textContent = '₱' + finalAmount.toLocaleString(undefined,{minimumFractionDigits:2});
   const pVatLbl = document.getElementById('p-vat-label');
-  if (pVatLbl) pVatLbl.textContent = vatMode === 'in' ? 'VAT Inclusive — Official Receipt · +12% VAT + 10% Prof Fee' : 'VAT Exclusive — Acknowledgement Receipt Only';
+  if (pVatLbl) pVatLbl.textContent = vatMode === 'in' ? 'Official Receipt (BIR) · 12% VAT + 10% Professional Fee included' : 'VAT Exclusive · Acknowledgement Receipt + Warranty Form · 12% VAT + 10% Professional Fee excluded';
 }
 
 // ================================================================
@@ -6601,9 +6632,9 @@ async function generatePDFQuote() {
   // VAT mode awareness — drives all "Total/Final Investment" labels in PDF
   const vatModePDF = document.getElementById('vat-mode')?.value || 'ex';
   const isVatIn = vatModePDF === 'in';
-  const vatLabelShort = isVatIn ? 'VAT INCLUSIVE / OFFICIAL RECEIPT' : 'VAT EXCLUSIVE / ACKNOWLEDGEMENT RECEIPT';
-  const vatLabelLong  = isVatIn ? 'VAT Inclusive · Official Receipt · includes 12% VAT + 10% Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt Only';
-  const vatNoteHTML   = isVatIn ? '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">Final Investment includes 12% VAT + 10% Professional Fee. Official Receipt issued upon full payment.</div>' : '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">VAT Exclusive — Acknowledgement Receipt only. Switch to VAT Inclusive for Official Receipt + 22% additional.</div>';
+  const vatLabelShort = isVatIn ? 'OFFICIAL RECEIPT · 12% VAT + 10% PROFESSIONAL FEE' : 'VAT EXCLUSIVE · ACKNOWLEDGEMENT RECEIPT + WARRANTY FORM';
+  const vatLabelLong  = isVatIn ? 'Official Receipt · includes 12% VAT + 10% Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt + Warranty Form · 12% VAT + 10% Professional Fee excluded';
+  const vatNoteHTML   = isVatIn ? '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">Official Receipt selected: the Final Investment includes 12% VAT plus a separately disclosed 10% Professional Fee.</div>' : '<div style="font-size:8pt;color:#94a3b8;margin-top:4pt;font-style:italic;">Acknowledgement Receipt + Warranty Form only. The displayed Final Investment excludes 12% VAT and the 10% Professional Fee. Select Official Receipt when required.</div>';
 
   const bomState = getBOMSystemState();
   // Client-facing "system capacity" is the ACTUAL installed PV array from Interactive BOM.
@@ -6660,6 +6691,10 @@ async function generatePDFQuote() {
   const profFee = baseVatEx * 0.10;
   const blueprintIncluded = !!document.getElementById('add-blueprint')?.checked;
   const blueprintVal = blueprintIncluded ? (parseFloat(document.getElementById('sys-blueprint')?.value) || 0) : 0;
+  const permitIncluded = !!document.getElementById('add-permit-service')?.checked;
+  const permitVal = permitIncluded ? (parseFloat(document.getElementById('sys-permit-service')?.value) || 0) : 0;
+  const netMeteringIncluded = !!document.getElementById('add-net-metering')?.checked;
+  const netMeteringVal = netMeteringIncluded ? (parseFloat(document.getElementById('sys-net-metering')?.value) || 0) : 0;
 
   // Pull other Client Proposal display data (matches what's already shown in print)
   const subtotalDisplay = document.getElementById('p-sys-anchor')?.textContent?.trim() || '';
@@ -6712,6 +6747,8 @@ async function generatePDFQuote() {
   const refNo = (typeof currentQuoteRef !== 'undefined' && currentQuoteRef) ? currentQuoteRef : generateQuoteRef();
   const slotsBookedAuto = (typeof loadPipeline === 'function' ? loadPipeline().filter(l => PL_ACTIVE_STAGES.includes(l.stage)).length : 0);
   const blueprintOn = !!document.getElementById('add-blueprint')?.checked;
+  const permitOn = !!document.getElementById('add-permit-service')?.checked;
+  const netMeteringOn = !!document.getElementById('add-net-metering')?.checked;
   const slotsBookedManual = parseInt(document.getElementById('slots-booked')?.value);
   const slotsBooked = isNaN(slotsBookedManual) ? slotsBookedAuto : slotsBookedManual;
   const slotsTotalManual = parseInt(document.getElementById('slots-total')?.value);
@@ -7117,13 +7154,13 @@ async function generatePDFQuote() {
       <div class="compute-block">
       <h3>How This Was Computed</h3>
       <table style="font-size:8pt;">
-        <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor${blueprintIncluded ? ' + Blueprint' : ''})</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
+        <tr><td style="background:#f1f5f9;width:42%;">Subtotal (Equipment + Labor${(blueprintIncluded || permitIncluded || netMeteringIncluded) ? ' + Selected Add-ons' : ''})</td><td style="font-family:monospace;">${escapeHtml(subtotalDisplay) || '₱' + grandTotal.toLocaleString()}</td></tr>
         ${discountDisplay ? `<tr><td style="background:#f1f5f9;">Engineering Design Discount</td><td style="font-family:monospace;color:#dc2626;">${escapeHtml(discountDisplay)}</td></tr>` : ''}
         <tr><td style="background:#f1f5f9;">Base (VAT-Exclusive)</td><td style="font-family:monospace;">₱${baseVatEx.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>
         <tr><td style="background:#f1f5f9;">+ 12% VAT</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#dc2626;'}">${isVatIn ? '₱' + vat12.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>excluded</em>'}</td></tr>
         <tr><td style="background:#f1f5f9;">+ 10% Professional Fee</td><td style="font-family:monospace;${isVatIn ? '' : 'color:#dc2626;'}">${isVatIn ? '₱' + profFee.toLocaleString(undefined,{maximumFractionDigits:2}) : '<em>Waived</em>'}</td></tr>
         <tr><td style="background:#fef3c7;font-weight:800;">⭐ FINAL INVESTMENT (${isVatIn ? 'VAT Inclusive · Official Receipt' : 'VAT Exclusive · Acknowledgement Receipt'})</td><td style="font-family:monospace;font-weight:800;background:#fef3c7;">₱${grandTotal.toLocaleString()}</td></tr>
-        ${!isVatIn ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: This is a VAT-Exclusive figure (Acknowledgement Receipt). The <strong>12% VAT</strong> and <strong>10% Professional Fee</strong> shown above are <strong>excluded</strong> from this total. ${blueprintIncluded ? 'The Blueprint (Sign &amp; Seal) price of <strong>₱' + blueprintVal.toLocaleString() + '</strong> is also VAT-Exclusive. ' : ''}Switch to VAT Inclusive for an Official Receipt (adds 22%).</td></tr>` : (blueprintIncluded ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: Blueprint (Sign &amp; Seal) input price of <strong>₱${blueprintVal.toLocaleString()}</strong> is entered VAT-Exclusive; the 12% VAT + 10% Professional Fee above are applied on the full base (blueprint included).</td></tr>` : '')}
+        ${!isVatIn ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: This is a VAT-Exclusive figure with <strong>Acknowledgement Receipt + Warranty Form</strong>. The <strong>12% VAT</strong> and <strong>10% Professional Fee</strong> shown above are <strong>excluded</strong> from this total. ${blueprintIncluded ? 'The Blueprint (Sign &amp; Seal) price of <strong>₱' + blueprintVal.toLocaleString() + '</strong> is also VAT-Exclusive. ' : ''}Switch to VAT Inclusive for an Official Receipt (adds 22%).</td></tr>` : (blueprintIncluded ? `<tr><td colspan="2" style="background:#fff;border:0;padding:5pt 0 2pt;font-size:7.5pt;color:#64748b;font-style:italic;line-height:1.4;">Note: Blueprint (Sign &amp; Seal) input price of <strong>₱${blueprintVal.toLocaleString()}</strong> is entered VAT-Exclusive; the 12% VAT + 10% Professional Fee above are applied on the full base (blueprint included).</td></tr>` : '')}
         <tr><td style="background:#f1f5f9;">Estimated Solar Generation (Actual BOM PV)</td><td style="font-family:monospace;">${solarProjection.dailyGenerationKwh.toFixed(2)} kWh/day · ${monthlyKwh.toFixed(0)} kWh/month <em style="color:#94a3b8;">(${sysSize.toFixed(2)} kWp × ${PEAK_SUN}h × ${(SYS_LOSS*100).toFixed(0)}%)</em></td></tr>
         ${showKwhOnly
           ? `<tr><td style="background:#f1f5f9;">Current Monthly Consumption</td><td style="font-family:monospace;"><strong>${consumptionKwhPerMonth.toFixed(0)} kWh</strong> <em style="color:#94a3b8;">(amperage-based — no rate known for 3Ph)</em></td></tr>
@@ -7337,9 +7374,18 @@ async function generatePDFQuote() {
           <tr><td style="font-weight:700;">Turnover &amp; Acceptance</td><td>Formal handover document with system schematics &amp; commissioning report</td></tr>
           <tr><td style="font-weight:700;">Free Support</td><td>FDG Solar Visayas assists with warranty matters at no charge for the first 5 years. This excludes drafting RMA <em>(Return Merchandise Authorization)</em> correspondence, packing/shipping coordination, and re-installation labor (these may incur material/courier costs).</td></tr>
           ${blueprintOn
-            ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ Blueprint Sign &amp; Seal</td><td><strong style="color:#059669;">INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||5000).toLocaleString()})</td></tr>`
-            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Blueprint Sign &amp; Seal</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal available as separate add-on (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||5000).toLocaleString()})</td></tr>`
+            ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ Blueprint Sign &amp; Seal</td><td><strong style="color:#059669;">INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||25000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Blueprint Sign &amp; Seal</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal available as separate add-on (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||25000).toLocaleString()})</td></tr>`
           }
+          ${permitOn
+            ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ HOA &amp; Local Permit Application / Processing</td><td><strong style="color:#059669;">INCLUDED</strong> · FDG document preparation, submission and coordination service (₱${(parseFloat(document.getElementById('sys-permit-service')?.value)||50000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ HOA &amp; Local Permit Application / Processing</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · Available as a separate application/processing service (₱${(parseFloat(document.getElementById('sys-permit-service')?.value)||50000).toLocaleString()})</td></tr>`
+          }
+          ${netMeteringOn
+            ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ Net Metering Application &amp; Processing</td><td><strong style="color:#059669;">INCLUDED</strong> · FDG preparation, submission and Distribution Utility coordination service (₱${(parseFloat(document.getElementById('sys-net-metering')?.value)||75000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Net Metering Application &amp; Processing</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · Available as a separate application/processing service (₱${(parseFloat(document.getElementById('sys-net-metering')?.value)||75000).toLocaleString()})</td></tr>`
+          }
+          <tr><td colspan="2" style="background:#fff7ed;color:#9a3412;font-size:7.8pt;line-height:1.45;"><strong>Application Service Fee Scope:</strong> Quoted application service fees cover FDG document preparation, submission and coordination. HOA/LGU/DU assessment fees, permit charges, bonds, inspection fees, meter charges, notarization and other third-party charges, where applicable, are excluded unless expressly stated. Approval remains subject to the relevant HOA, LGU, Distribution Utility or authority.</td></tr>
         </tbody>
       </table>
 
@@ -7472,7 +7518,7 @@ async function generateMessengerCard() {
   // VAT mode (local to messenger card fn)
   const vatModeMC = document.getElementById('vat-mode')?.value || 'ex';
   const isVatInMC = vatModeMC === 'in';
-  const vatLabelLong = isVatInMC ? 'VAT Inclusive · Official Receipt · w/ Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt';
+  const vatLabelLong = isVatInMC ? 'Official Receipt · 12% VAT + 10% Professional Fee' : 'VAT Exclusive · Acknowledgement Receipt + Warranty Form';
 
   // Ref = the current session quote reference (matches the badge shown in the app).
   // Stable until a quote is actually SAVED, which then issues a fresh ref for the next quote.
