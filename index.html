@@ -5846,7 +5846,7 @@ function buildSLDPage(c) {
            <div class="photo-grid">${photoCards}</div>`
         : photoCards}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
 
     <!-- PAGE 2: CONNECTION FLOW + SCHEDULE -->
@@ -5895,7 +5895,7 @@ function buildSLDPage(c) {
         </ol>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
   </div>
 </body></html>`;
@@ -6669,6 +6669,30 @@ async function clearAllTrials() {
   }
 }
 
+const FDG_SOLAR_URL = 'https://fdgsolar-visayas.vercel.app/';
+const CORE_ENGINEERING_URL = 'https://coreengineering.vercel.app/';
+const FDG_MESSENGER_URL = 'https://www.facebook.com/share/1DoVRR6ZMm/';
+const FDG_WHATSAPP_URL = 'https://wa.me/639151983899';
+const FDG_VIBER_URL = 'viber://chat?number=%2B639151983899';
+
+function clientContactFooterHTML(refNo, suffix = 'Engineering | Procurement | Construction') {
+  return `
+    <div style="font-weight:700;color:#475569;margin-bottom:2pt;">
+      <a href="${FDG_SOLAR_URL}" target="_blank" style="color:inherit;text-decoration:none;">FDG Solar Visayas · fdgsolar-visayas.vercel.app</a>
+      &nbsp;|&nbsp;
+      <a href="${CORE_ENGINEERING_URL}" target="_blank" style="color:inherit;text-decoration:none;">CORE Integrated Engineering · coreengineering.vercel.app</a>
+    </div>
+    <div style="font-size:7pt;color:#64748b;">
+      Message us:
+      <a href="${FDG_WHATSAPP_URL}" target="_blank" style="color:inherit;text-decoration:none;">WhatsApp</a>
+      · <a href="${FDG_VIBER_URL}" style="color:inherit;text-decoration:none;">Viber</a>
+      · <a href="${FDG_MESSENGER_URL}" target="_blank" style="color:inherit;text-decoration:none;">Messenger</a>
+      · 0915 1983 899 · fmguinoo@gmail.com
+    </div>
+    <div style="font-size:6.8pt;color:#94a3b8;margin-top:2pt;">© FDG Solar Visayas · ${escapeHtml(String(refNo || ''))} · ${suffix}</div>
+  `;
+}
+
 // ===== PDF CLIENT QUOTE (FULL) — A4 FORMAT MATCHING JO =====
 async function generatePDFQuote() {
   if (!(await requirePassword('generate PDF Quote (Full)'))) return;
@@ -7159,7 +7183,8 @@ async function generatePDFQuote() {
             </div>
           </div>
           <div class="cover-contact-line">
-            FDG Solar Visayas · Engr. Francis Dale Guinoo · 0915 1983 899 · fmguinoo@gmail.com
+            FDG Solar Visayas · Engr. Francis Dale Guinoo · 0915 1983 899 · fmguinoo@gmail.com<br/>
+            fdgsolar-visayas.vercel.app · coreengineering.vercel.app · WhatsApp · Viber · Messenger
           </div>
         </div>
       </div>
@@ -7240,7 +7265,7 @@ async function generatePDFQuote() {
       </table>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
 
     <!-- ━━━ PAGE 3: GENERATION FORECAST + CASHFLOW ━━━ -->
@@ -7289,7 +7314,7 @@ async function generatePDFQuote() {
         <span style="font-size:8pt;color:#64748b;">Every year after = pure profit.</span>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
 
     <!-- ━━━ PAGE 4: SENSITIVITY + BATTERY LIFECYCLE ━━━ -->
@@ -7403,7 +7428,7 @@ async function generatePDFQuote() {
         `;
       })() : ''}
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
 
     <!-- ━━━ PAGE 5: TIERS + SCARCITY + CONTACT + SIGNATURE ━━━ -->
@@ -7435,21 +7460,21 @@ async function generatePDFQuote() {
           <tr><td style="font-weight:700;">Free Support</td><td>FDG Solar Visayas assists with warranty matters at no charge for the first 5 years. This excludes drafting RMA <em>(Return Merchandise Authorization)</em> correspondence, packing/shipping coordination, and re-installation labor (these may incur material/courier costs).</td></tr>
           ${blueprintOn
             ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ Blueprint Sign &amp; Seal</td><td><strong style="color:#059669;">INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||25000).toLocaleString()})</td></tr>`
-            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Blueprint Sign &amp; Seal</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · 5 copies of blueprint with engineer's sign &amp; seal available as separate add-on (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||25000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Blueprint Sign &amp; Seal</td><td><strong style="color:#dc2626;">NOT INCLUDED / OPTIONAL</strong> · 5 copies of blueprint with engineer's sign &amp; seal available as separate add-on (₱${(parseFloat(document.getElementById('sys-blueprint')?.value)||25000).toLocaleString()})</td></tr>`
           }
           ${permitOn
             ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ HOA &amp; Local Permit Application / Processing</td><td><strong style="color:#059669;">INCLUDED</strong> · FDG document preparation, submission and coordination service (₱${(parseFloat(document.getElementById('sys-permit-service')?.value)||50000).toLocaleString()})</td></tr>`
-            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ HOA &amp; Local Permit Application / Processing</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · Available as a separate application/processing service (₱${(parseFloat(document.getElementById('sys-permit-service')?.value)||50000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ HOA &amp; Local Permit Application / Processing</td><td><strong style="color:#dc2626;">NOT INCLUDED / OPTIONAL</strong> · Available as a separate application/processing service (₱${(parseFloat(document.getElementById('sys-permit-service')?.value)||50000).toLocaleString()})</td></tr>`
           }
           ${netMeteringOn
             ? `<tr style="background:#f0fdf4;"><td style="font-weight:700;color:#059669;">✓ Net Metering Application &amp; Processing</td><td><strong style="color:#059669;">INCLUDED</strong> · FDG preparation, submission and Distribution Utility coordination service (₱${(parseFloat(document.getElementById('sys-net-metering')?.value)||75000).toLocaleString()})</td></tr>`
-            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Net Metering Application &amp; Processing</td><td><strong style="color:#dc2626;">NOT INCLUDED</strong> · Available as a separate application/processing service (₱${(parseFloat(document.getElementById('sys-net-metering')?.value)||75000).toLocaleString()})</td></tr>`
+            : `<tr style="background:#fef2f2;"><td style="font-weight:700;color:#dc2626;">✗ Net Metering Application &amp; Processing</td><td><strong style="color:#dc2626;">NOT INCLUDED / OPTIONAL</strong> · Available as a separate application/processing service (₱${(parseFloat(document.getElementById('sys-net-metering')?.value)||75000).toLocaleString()})</td></tr>`
           }
           <tr><td colspan="2" style="background:#fff7ed;color:#9a3412;font-size:7.8pt;line-height:1.45;"><strong>Application Service Fee Scope:</strong> Quoted application service fees cover FDG document preparation, submission and coordination. HOA/LGU/DU assessment fees, permit charges, bonds, inspection fees, meter charges, notarization and other third-party charges, where applicable, are excluded unless expressly stated. Approval remains subject to the relevant HOA, LGU, Distribution Utility or authority.</td></tr>
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
 
     <!-- ━━━ PAGE 6: SCARCITY + CONTACT + ACCEPTANCE + SIGNATURE ━━━ -->
@@ -7482,7 +7507,10 @@ async function generatePDFQuote() {
             <strong style="color:#fbbf24;">Engr. Francis Dale Guinoo</strong><br/>
             Lead Engineer · FDG Solar Visayas<br/>
             📱 0915 1983 899<br/>
-            ✉ fmguinoo@gmail.com
+            ✉ fmguinoo@gmail.com<br/>
+            🌐 <a href="${FDG_SOLAR_URL}" target="_blank" style="color:#fff;text-decoration:none;">fdgsolar-visayas.vercel.app</a><br/>
+            🌐 <a href="${CORE_ENGINEERING_URL}" target="_blank" style="color:#fff;text-decoration:none;">coreengineering.vercel.app</a><br/>
+            💬 <a href="${FDG_WHATSAPP_URL}" target="_blank" style="color:#fbbf24;text-decoration:none;">WhatsApp</a> · <a href="${FDG_VIBER_URL}" style="color:#fbbf24;text-decoration:none;">Viber</a> · <a href="${FDG_MESSENGER_URL}" target="_blank" style="color:#fbbf24;text-decoration:none;">Messenger</a>
           </div>
           <div>
             <strong style="color:#fbbf24;">Site Visit / Online Assessment · Free</strong><br/>
@@ -8366,7 +8394,7 @@ async function openTurnoverForm() {
         </tbody>
       </table>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Engineering | Procurement | Construction</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo)}</div>
     </div>
 
 
@@ -8497,7 +8525,7 @@ async function openTurnoverForm() {
         <input type="file" id="serial-input-2" multiple accept="image/*" onchange="handleAttach(event,'serial')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix A · REV 3.6.1</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo, 'Appendix A · REV 3.6.1')}</div>
     </div>
 
     <!-- ━━━ APPENDIX B: APP CREDENTIAL SCREENSHOTS ━━━ -->
@@ -8528,7 +8556,7 @@ async function openTurnoverForm() {
         <input type="file" id="app-input-2" multiple accept="image/*" onchange="handleAttach(event,'app')" style="display:none;"/>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix B · REV 3.6.1</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo, 'Appendix B · REV 3.6.1')}</div>
     </div>
 
     <!-- ━━━ APPENDIX C: COMMISSIONING TEST PHOTOS ━━━ -->
@@ -8570,7 +8598,7 @@ async function openTurnoverForm() {
         </ul>
       </div>
 
-      <div class="footer-line">© FDG Solar Visayas · ${refNo} · Appendix C · REV 3.6.1</div>
+      <div class="footer-line">${clientContactFooterHTML(refNo, 'Appendix C · REV 3.6.1')}</div>
     </div>
 
   </div>
