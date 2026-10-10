@@ -7222,9 +7222,9 @@ async function generatePDFQuote() {
 
       <h2>System Specifications</h2>
       <div class="specs-grid">
-        <div class="spec-card"><div class="spec-card-label">Total Capacity</div><div class="spec-card-val">${sysSize.toFixed(2)} kWp</div><div class="spec-card-sub">${bomState.panelQty} × ${bomState.panelW}W modules · Interactive BOM</div></div>
+        <div class="spec-card"><div class="spec-card-label">Total Capacity</div><div class="spec-card-val">${sysSize.toFixed(2)} kWp</div><div class="spec-card-sub">Installed PV capacity · Interactive BOM</div></div>
         <div class="spec-card"><div class="spec-card-label">System Type</div><div class="spec-card-val">${escapeHtml(sysType)}</div><div class="spec-card-sub">${cfg.phase}-Phase ${cfg.V_AC}V AC</div></div>
-        ${cfg.batQ>0?`<div class="spec-card"><div class="spec-card-label">Energy Storage</div><div class="spec-card-val">${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">${cfg.batQ}× ${cfg.V_DC_BAT}V ${cfg.batSizeAh}Ah LiFePO4</div></div>`:''}
+        ${cfg.batQ>0?`<div class="spec-card"><div class="spec-card-label">Energy Storage</div><div class="spec-card-val">${(cfg.batQ*cfg.batSizeAh*cfg.V_DC_BAT/1000).toFixed(1)} kWh</div><div class="spec-card-sub">Installed battery capacity · Interactive BOM</div></div>`:''}
         <div class="spec-card"><div class="spec-card-label">Daily Equivalent</div><div class="spec-card-val">${dailyKwh.toFixed(1)} kWh</div><div class="spec-card-sub">${engDailyKwh > 0 ? 'Client load profile' : `${PEAK_SUN}h sun × ${(SYS_LOSS*100).toFixed(0)}% derate`}</div></div>
       </div>
 
