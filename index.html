@@ -2596,6 +2596,12 @@ function populateBOMDropdowns() {
 // ================================================================
 const FDG_PEAK_SUN_HOURS = 4.5;
 const FDG_SYSTEM_YIELD_FACTOR = 0.81;
+const FDG_MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const FDG_MONTH_DAYS = [31,28,31,30,31,30,31,31,30,31,30,31];
+// Indicative Visayas/Philippines seasonal shape only. It is normalized by actual
+// calendar days so the 12 monthly rows ALWAYS reconcile exactly to the canonical
+// 365-day annual generation. It changes distribution, never annual energy.
+const FDG_MONTH_SEASON_FACTORS = [0.95,0.92,1.05,1.10,1.08,0.98,0.90,0.95,1.05,1.10,1.05,0.97];
 
 function getSelectedBOMOption(type) {
   const sel = document.getElementById('sel-' + type);
@@ -2699,21 +2705,48 @@ function getBOMSolarProjection(ratePerKwh, consumptionKwhPerMonth) {
   const state = getBOMSystemState();
   const pvKwp = state.pvKwp;
   const dailyGenerationKwh = pvKwp * FDG_PEAK_SUN_HOURS * FDG_SYSTEM_YIELD_FACTOR;
-  const monthlyGenerationKwh = dailyGenerationKwh * 30;
   const yearlyGenerationKwh = dailyGenerationKwh * 365;
   const consumptionCap = parseFloat(consumptionKwhPerMonth) || 0;
-  const usefulMonthlyKwh = consumptionCap > 0
-    ? Math.min(monthlyGenerationKwh, consumptionCap)
-    : monthlyGenerationKwh;
   const rate = parseFloat(ratePerKwh) || 0;
+
+  // Normalize the seasonal shape on a day-weighted basis. This guarantees:
+  // SUM(monthly forecast generation) === daily generation × 365.
+  const weightedSeasonDays = FDG_MONTH_SEASON_FACTORS.reduce(
+    (sum, factor, i) => sum + factor * FDG_MONTH_DAYS[i], 0
+  );
+  const seasonNormalization = weightedSeasonDays > 0 ? 365 / weightedSeasonDays : 1;
+
+  const monthlyForecast = FDG_MONTH_NAMES.map((month, i) => {
+    const days = FDG_MONTH_DAYS[i];
+    const seasonFactor = FDG_MONTH_SEASON_FACTORS[i] * seasonNormalization;
+    const generationKwh = dailyGenerationKwh * days * seasonFactor;
+    const usefulKwh = consumptionCap > 0
+      ? Math.min(generationKwh, consumptionCap)
+      : generationKwh;
+    const savings = rate > 0 ? usefulKwh * rate : 0;
+    return { month, days, seasonFactor, generationKwh, usefulKwh, savings };
+  });
+
+  const forecastYearGenerationKwh = monthlyForecast.reduce((s,m) => s + m.generationKwh, 0);
+  const yearlyUsefulKwh = monthlyForecast.reduce((s,m) => s + m.usefulKwh, 0);
+  const yearlySavings = monthlyForecast.reduce((s,m) => s + m.savings, 0);
+
+  // "Monthly" means annual average month, not an arbitrary 30-day month.
+  // This keeps monthly × 12 exactly synchronized with the annual forecast.
+  const monthlyGenerationKwh = forecastYearGenerationKwh / 12;
+  const usefulMonthlyKwh = yearlyUsefulKwh / 12;
+  const monthlySavings = yearlySavings / 12;
+
   return {
     ...state,
     dailyGenerationKwh,
     monthlyGenerationKwh,
-    yearlyGenerationKwh,
+    yearlyGenerationKwh: forecastYearGenerationKwh,
     usefulMonthlyKwh,
-    monthlySavings: rate > 0 ? usefulMonthlyKwh * rate : 0,
-    yearlySavings: rate > 0 ? usefulMonthlyKwh * rate * 12 : 0
+    yearlyUsefulKwh,
+    monthlySavings,
+    yearlySavings,
+    monthlyForecast
   };
 }
 
@@ -6839,8 +6872,9 @@ async function generatePDFQuote() {
   const slotsTotal = isNaN(slotsTotalManual) || slotsTotalManual < 1 ? 2 : slotsTotalManual;
   const slotsLeft = Math.max(0, slotsTotal - slotsBooked);
 
-  // 10-year cashflow (4% annual rate increase) — based on actual BOM-sized solar savings.
-  const yearlyConsumptionSavings = estimatedMonthlySavings * 12;
+  // 10-year cashflow (4% annual rate increase) — based on the same canonical,
+  // month-by-month BOM forecast used by the proposal.
+  const yearlyConsumptionSavings = showKwhOnly ? 0 : solarProjection.yearlySavings;
   let cashflow = '';
   let cumulative = -grandTotal;
   for (let y = 1; y <= 10; y++) {
@@ -6888,21 +6922,20 @@ async function generatePDFQuote() {
     <tr><td><strong style="color:#0891b2;">Standard</strong></td><td>Bi-Facial PV Modules</td><td>Premium Hybrid Inverter</td><td>LiFePO4 Standard</td><td style="text-align:center;">+8–15%</td></tr>
     <tr><td><strong style="color:#059669;">Elite</strong></td><td>Premium PV Modules</td><td>Tier-1 Hybrid Inverter</td><td>LiFePO4 with Premium BMS</td><td style="text-align:center;">+18–25%</td></tr>`;
 
-  // Monthly chart
-  const monthlyVar = [0.95,0.92,1.05,1.10,1.08,0.98,0.90,0.95,1.05,1.10,1.05,0.97];
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const baseMonthKwh = monthlyKwh;
-  const maxMonth = Math.max(...monthlyVar) * baseMonthKwh;
+  // Monthly chart — canonical forecast from actual BOM. No separate PDF-only formula.
+  const forecastRows = solarProjection.monthlyForecast || [];
+  const maxMonth = Math.max(1, ...forecastRows.map(m => m.generationKwh));
   let monthlyChart = '';
-  monthlyVar.forEach((v,i) => {
-    const kwh = baseMonthKwh * v;
-    const pesoVal = kwh * rate;
-    const pct = (kwh / maxMonth) * 100;
+  forecastRows.forEach(m => {
+    const pct = (m.generationKwh / maxMonth) * 100;
+    const valueDisplay = showKwhOnly
+      ? '—'
+      : '₱' + m.savings.toLocaleString(undefined,{maximumFractionDigits:0});
     monthlyChart += `<tr>
-      <td style="width:32px;font-weight:700;">${monthNames[i]}</td>
+      <td style="width:32px;font-weight:700;">${m.month}</td>
       <td><div style="height:14px;background:#f1f5f9;border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#fbbf24,#f59e0b);"></div></div></td>
-      <td style="width:70px;text-align:right;font-family:monospace;">${kwh.toFixed(0)} kWh</td>
-      <td style="width:90px;text-align:right;font-family:monospace;color:#059669;font-weight:700;">₱${pesoVal.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+      <td style="width:70px;text-align:right;font-family:monospace;">${m.generationKwh.toFixed(0)} kWh</td>
+      <td style="width:90px;text-align:right;font-family:monospace;color:#059669;font-weight:700;">${valueDisplay}</td>
     </tr>`;
   });
 
@@ -7282,23 +7315,23 @@ async function generatePDFQuote() {
       </div>
 
       <h2>Monthly Generation Forecast</h2>
-      <p style="font-size:8.5pt;color:#64748b;">Estimated kWh produced per month, accounting for typical Philippine solar yield variation (rainy / dry season). ${rateNote}</p>
+      <p style="font-size:8.5pt;color:#64748b;">Estimated generation from the current Interactive BOM PV array. Monthly seasonality is normalized so all 12 months reconcile exactly to the 365-day annual generation. Peso values show estimated usable savings capped by modeled monthly client consumption. ${rateNote}</p>
       <table>${monthlyChart}</table>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt;margin-top:6pt;">
         <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;">
           <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">Monthly Avg</div>
           <div style="font-size:11pt;font-weight:900;">${monthlyKwh.toFixed(0)} kWh</div>
-          <div style="font-size:9pt;font-weight:700;color:#059669;">₱${(monthlyKwh*rate).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+          <div style="font-size:9pt;font-weight:700;color:#059669;">${showKwhOnly ? 'Enter ₱/kWh' : '₱' + estimatedMonthlySavings.toLocaleString(undefined,{maximumFractionDigits:0}) + ' avg. savings'}</div>
         </div>
         <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;">
           <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">Yearly Total</div>
           <div style="font-size:11pt;font-weight:900;">${yearlyKwh.toFixed(0)} kWh</div>
-          <div style="font-size:9pt;font-weight:700;color:#059669;">₱${(yearlyKwh*rate).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+          <div style="font-size:9pt;font-weight:700;color:#059669;">${showKwhOnly ? '—' : '₱' + solarProjection.yearlySavings.toLocaleString(undefined,{maximumFractionDigits:0}) + ' savings'}</div>
         </div>
         <div style="background:#f0fdf4;border-left:3px solid #059669;padding:6pt 8pt;">
-          <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">10-Yr Total</div>
+          <div style="font-size:7.5pt;color:#166534;text-transform:uppercase;">10-Yr Base Case</div>
           <div style="font-size:11pt;font-weight:900;">${(yearlyKwh*10/1000).toFixed(1)} MWh</div>
-          <div style="font-size:9pt;font-weight:700;color:#059669;">₱${(yearlyKwh*10*rate).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+          <div style="font-size:9pt;font-weight:700;color:#059669;">${showKwhOnly ? '—' : '₱' + (solarProjection.yearlySavings*10).toLocaleString(undefined,{maximumFractionDigits:0}) + ' @ current rate'}</div>
         </div>
       </div>
 
@@ -7310,7 +7343,7 @@ async function generatePDFQuote() {
       </table>
       <div class="info-block" style="background:#fef3c7;border-left-color:#f59e0b;">
         <strong style="color:#92400e;">Investment recovered in Year ${paybackYears}</strong><br/>
-        <span style="font-size:8pt;color:#64748b;font-family:monospace;">Formula: ₱${grandTotal.toLocaleString()} ÷ ₱${(estimatedMonthlySavings*12).toLocaleString(undefined,{maximumFractionDigits:0})} (estimated yearly solar savings) = <strong>${paybackYears} years</strong></span><br/>
+        <span style="font-size:8pt;color:#64748b;font-family:monospace;">Formula: ₱${grandTotal.toLocaleString()} ÷ ₱${solarProjection.yearlySavings.toLocaleString(undefined,{maximumFractionDigits:0})} (estimated yearly usable solar savings) = <strong>${paybackYears} years</strong></span><br/>
         <span style="font-size:8pt;color:#64748b;">Every year after = pure profit.</span>
       </div>
 
