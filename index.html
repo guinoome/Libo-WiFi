@@ -2076,8 +2076,8 @@ Energy audit, Documentation, Technical Reports, Equipment Specifications</textar
   <div class="p-terms p-client">
     <strong>Terms &amp; Validity:</strong> This quotation is valid for <strong>30 days</strong> from the date issued.
     Prices are subject to change upon material price fluctuations. An <strong>80% down payment</strong> is required upon confirmation.
-    Balance due after system commissioning. All installations carry a <strong>1-year workmanship warranty</strong>.
-    Equipment warranty follows manufacturer terms.
+    Balance due after system commissioning. All installations carry a <strong>2-year FDG workmanship warranty</strong> from documented system energization / turnover acceptance, whichever is later.
+    Manufacturer warranty schedule: <strong>Inverter 10 years · Battery 7 years · PV modules 10 years</strong>, subject to the exact supplied models' manufacturer warranty certificates, registration and operating conditions.
   </div>
 
   <div class="p-internal-notes p-internal">
@@ -7488,7 +7488,12 @@ async function generatePDFQuote() {
           <tr><td style="font-weight:700;">Equipment Supply</td><td>All panels, inverter, batteries, mounting, BOS, breakers, wires</td></tr>
           <tr><td style="font-weight:700;">Professional Installation</td><td>Supervised by Licensed Engineer · Full system installation &amp; commissioning</td></tr>
           <tr><td style="font-weight:700;">Commissioning &amp; Testing</td><td>String I-V test · App setup &amp; monitoring activation</td></tr>
-          <tr><td style="font-weight:700;">Workmanship Warranty</td><td>12 months from energization (installation defects). <strong>Exclusions:</strong> warranty does not cover (a) modifications by third parties, (b) physical damage from external causes (typhoon, flood, lightning beyond SPD rating, vandalism), (c) consumable items (fuses, AC contactor wear), (d) fading/weathering of cosmetic finishes.</td></tr>
+          <tr><td style="font-weight:700;">Equipment &amp; Workmanship Warranty</td><td>
+            <strong>Inverter: 10 years · Battery: 7 years · PV modules: 10 years</strong> (manufacturer warranties, subject to the exact supplied model's official warranty certificate, registration and operating conditions).
+            <br/><strong>FDG installation workmanship: 2 years</strong> from documented system energization / turnover acceptance, whichever is later.
+            <br/>Final supplied brands/models, serial numbers and warranty certificates govern. Any separate PV performance/output warranty remains subject to the panel manufacturer's terms.
+            <br/><strong>Exclusions:</strong> unauthorized tampering, opening, dismantling, rewiring, modification, relocation, repair, bypassing protection or changing settings / firmware; misuse, negligence, abnormal operation, external damage, force majeure, consumables and normal cosmetic aging. Unauthorized intervention that causes, contributes to, or prevents diagnosis of a defect may void coverage for the affected component and related workmanship; system-level coverage may be denied where integrity is compromised and damage cannot reasonably be isolated. Unrelated, independently verifiable defects are not automatically excluded.
+          </td></tr>
           <tr><td style="font-weight:700;">Turnover &amp; Acceptance</td><td>Formal handover document with system schematics &amp; commissioning report</td></tr>
           <tr><td style="font-weight:700;">Free Support</td><td>FDG Solar Visayas assists with warranty matters at no charge for the first 5 years. This excludes drafting RMA <em>(Return Merchandise Authorization)</em> correspondence, packing/shipping coordination, and re-installation labor (these may incur material/courier costs).</td></tr>
           ${blueprintOn
@@ -8400,7 +8405,7 @@ async function openTurnoverForm() {
       </div>
 
       <h1 class="doc-title">System Turnover &amp; Acceptance Form</h1>
-      <div class="doc-sub">with Workmanship Warranty &amp; Support Terms</div>
+      <div class="doc-sub">with Equipment Warranty, 2-Year Workmanship Coverage &amp; Support Terms</div>
 
       <h2>1. Project Details</h2>
       <table class="info-table">
@@ -8462,10 +8467,16 @@ async function openTurnoverForm() {
         <p><span class="clause-num">5.2</span><strong>Post-Year-1 Support.</strong> After the first 12 months, FDG Solar Visayas remains available on a <strong>Time &amp; Materials (T&amp;M) basis</strong> at standard service rates (₱3,500/visit + parts/labor + transportation fare if outside Metro Cebu). Service requests are honored within <strong>5 business days</strong>.</p>
       </div>
 
-      <h2>6. Workmanship Warranty</h2>
+      <h2>6. Equipment &amp; Workmanship Warranty Schedule</h2>
+      <table class="info-table">
+        <tr><td>Inverter — Manufacturer Warranty</td><td><strong>10 years</strong>, subject to the exact supplied model's manufacturer warranty certificate and registration requirements.</td></tr>
+        <tr><td>Battery — Manufacturer Warranty</td><td><strong>7 years</strong>, subject to the exact supplied model's manufacturer warranty certificate, operating conditions and cycle / throughput limits.</td></tr>
+        <tr><td>PV Modules — Manufacturer Warranty</td><td><strong>10 years product warranty</strong>, subject to the supplied model's manufacturer warranty certificate. Any separate  performance / output warranty is governed by the manufacturer's published terms.</td></tr>
+        <tr><td>Installation Workmanship — FDG Solar Visayas</td><td><strong>2 years</strong> from documented system energization / turnover acceptance, whichever is later.</td></tr>
+      </table>
       <div class="info-block">
-        <strong>⚙ INSTALLATION WORKMANSHIP — 12 MONTHS</strong>
-        <p style="margin-top:3pt;font-size:8.5pt;">FDG Solar Visayas warrants that the installation is free from defects in workmanship for <strong>twelve (12) months from the date of system energization</strong>. This covers, without limitation:</p>
+        <strong>⚙ INSTALLATION WORKMANSHIP — 2 YEARS</strong>
+        <p style="margin-top:3pt;font-size:8.5pt;">FDG Solar Visayas warrants that installation work performed by its authorized installation team is free from defects in workmanship for <strong>twenty-four (24) months from the documented system energization / turnover acceptance date, whichever is later</strong>. This covers, without limitation:</p>
         <ul style="margin:3pt 0 0 18pt;font-size:8.5pt;">
           <li>Mounting hardware integrity (no rail slippage, cracked clamps, water ingress)</li>
           <li>Wiring terminations (loose lugs, improper torque, exposed conductors)</li>
@@ -8476,8 +8487,11 @@ async function openTurnoverForm() {
         <p style="margin-top:4pt;font-size:8.5pt;">Workmanship defects identified within the warranty period are repaired by FDG Solar Visayas at no charge to the Owner. Defects must be reported in writing within 7 days of discovery.</p>
       </div>
 
-      <h3>Exclusions</h3>
-      <p style="font-size:8.5pt;">Workmanship warranty does not cover: (a) modifications by third parties, (b) physical damage from external causes (typhoon, flood, lightning beyond SPD rating, vandalism), (c) consumable items (fuses, AC contactor wear), (d) fading/weathering of cosmetic finishes.</p>
+      <h3>Warranty Exclusions, Unauthorized Access &amp; Tampering</h3>
+      <p style="font-size:8.5pt;">Warranty coverage does not include failures, damage or loss caused by: (a) unauthorized opening, dismantling, rewiring, alteration, relocation, repair or replacement of any inverter, battery, PV module, protection device, wiring or system component; (b) bypassing, disabling or changing protective devices, safety settings, firmware or operating parameters without written authorization; (c) work or intervention by unqualified or unauthorized persons; (d) misuse, negligence, abnormal operation, overloading or failure to follow the supplied operating instructions; (e) external events including typhoon, flood, fire, lightning / surge beyond the installed protection system's design limits, earthquake, vandalism, pest damage or other force majeure; (f) normal wear, consumables and cosmetic aging.</p>
+      <p style="font-size:8.5pt;"><strong>Tampering condition:</strong> Unauthorized tampering or modification that causes, contributes to, or prevents reliable diagnosis of a defect may void warranty coverage for the affected component and the related system workmanship. Where the intervention compromises the safety or integrity of the interconnected system and the resulting damage cannot reasonably be isolated, the affected system-level coverage may also be denied. Unrelated, independently verifiable defects are not automatically excluded solely because another component was tampered with.</p>
+      <p style="font-size:8.5pt;"><strong>Manufacturer terms prevail:</strong> Equipment warranty claims are subject to the relevant manufacturer's final warranty terms, proof of purchase, serial-number identification, registration, installation requirements and claim approval. FDG Solar Visayas will assist with claim coordination under the support terms stated in this document. This document does not enlarge or replace a manufacturer's warranty.</p>
+      <p style="font-size:8.5pt;"><strong>Claim procedure:</strong> The Owner must stop operating any system component that appears unsafe, preserve monitoring / alarm records, and notify FDG Solar Visayas before arranging third-party repairs. Emergency action necessary to prevent injury or further property damage should not be delayed; document the condition and intervention where practicable.</p>
 
       <div class="footer-line">Project Reference: <strong>${refNo}</strong> · Issued ${today} · Engineering | Procurement | Construction</div>
     </div>
