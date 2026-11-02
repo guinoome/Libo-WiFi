@@ -2304,6 +2304,41 @@ function mergeDefaultTechnicalMetadata() {
 }
 mergeDefaultTechnicalMetadata();
 
+// One-time Sungrow supplier-price migration, 2026-11-02.
+function migrateSungrowSupplierPricing20261102() {
+  const migrationKey = 'fdgSungrowSupplierPricing_20261102';
+  if (localStorage.getItem(migrationKey) === 'done') return;
+  const rules = [
+    ['SUNGROW 6kW Hybrid','SUNGROW MG6RL 6kW Hybrid',55000,52000,'Elite Series 6kW Hybrid Power Center','MG6RL'],
+    ['SUNGROW 8kW Hybrid','SUNGROW MG8RL 8kW Hybrid',73000,69000,'Elite Series 8kW Hybrid Power Center','MG8RL'],
+    ['SUNGROW 10kW Hybrid','SUNGROW MG10RL 10kW Hybrid',89000,89000,'Elite Series 10kW Hybrid Power Center','MG10RL']
+  ];
+  let changed = 0;
+  rules.forEach(rule => {
+    const oldItem = hwDB.inverters.find(item => item.name === rule[0]);
+    const newItem = hwDB.inverters.find(item => item.name === rule[1]);
+    if (oldItem && !newItem) {
+      if (oldItem.price === rule[2]) oldItem.price = rule[3];
+      oldItem.name = rule[1]; oldItem.client = rule[4]; oldItem.modelCode = rule[5];
+      oldItem.priceSource = 'Gerche Solar Solutions'; oldItem.priceCapturedAt = '2026-11-02'; changed++;
+    } else if (newItem && newItem.price === rule[2]) {
+      newItem.price = rule[3]; newItem.client = rule[4]; newItem.modelCode = rule[5];
+      newItem.priceSource = 'Gerche Solar Solutions'; newItem.priceCapturedAt = '2026-11-02'; changed++;
+    }
+  });
+  const additions = [['inverters','SUNGROW MG12RL 12kW Hybrid'],['batteries','SUNGROW MBL160 16.08kWh 51.2V']];
+  additions.forEach(entry => {
+    if (!hwDB[entry[0]].some(item => item.name === entry[1])) {
+      const def = defaultDB[entry[0]].find(item => item.name === entry[1]);
+      if (def) { hwDB[entry[0]].push(JSON.parse(JSON.stringify(def))); changed++; }
+    }
+  });
+  if (changed > 0) { autoBackup(); localStorage.setItem(DB_KEY, JSON.stringify(hwDB)); }
+  localStorage.setItem(migrationKey, 'done');
+}
+migrateSungrowSupplierPricing20261102();
+
+
 function saveDB() {
   try {
     // Auto-backup BEFORE overwriting (rotating last 5)
