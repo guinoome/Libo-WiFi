@@ -2608,8 +2608,34 @@ async function switchView(viewId, el) {
 }
 
 // ================================================================
-// BOM DROPDOWNS
+// HARDWARE BRAND CLASSIFICATION + BOM DROPDOWNS
+// Explicit item.brand metadata takes precedence; legacy records are inferred
+// conservatively from their equipment names. Unknown products remain searchable
+// under "Generic / Unbranded" rather than being assigned a guessed manufacturer.
 // ================================================================
+function getHardwareBrand(item) {
+  if (item && typeof item.brand === 'string' && item.brand.trim()) return item.brand.trim();
+  const name = String(item?.name || '');
+  if (/\bSUNGROW\b/i.test(name)) return 'Sungrow';
+  if (/\bLuxPower\b|\bLuxpowerTek\b/i.test(name)) return 'LuxPower';
+  if (/\bDeye\s*\/\s*Solis\b/i.test(name)) return 'Deye / Solis';
+  if (/\bDeye\b/i.test(name)) return 'Deye';
+  if (/\bSolis\b/i.test(name)) return 'Solis';
+  if (/\bGrowatt\b/i.test(name)) return 'Growatt';
+  if (/\bGoodWe\b/i.test(name)) return 'GoodWe';
+  if (/\bSMA\b/i.test(name)) return 'SMA';
+  if (/\bHuawei\b/i.test(name)) return 'Huawei';
+  if (/\bCanadian Solar\b/i.test(name)) return 'Canadian Solar';
+  if (/\bJinko\b/i.test(name)) return 'Jinko';
+  if (/\bJA Solar\b/i.test(name)) return 'JA Solar';
+  if (/\bTrina\b/i.test(name)) return 'Trina Solar';
+  if (/\bLONGi\b/i.test(name)) return 'LONGi';
+  if (/\bPylontech\b/i.test(name)) return 'Pylontech';
+  if (/\bDyness\b/i.test(name)) return 'Dyness';
+  if (/\bSungrow\b/i.test(name)) return 'Sungrow';
+  return 'Generic / Unbranded';
+}
+
 function populateBOMDropdowns() {
   const catMap = {panels:'panels', inverters:'inverter', batteries:'battery', accessories:'acc'};
   Object.entries(catMap).forEach(([cat, selId]) => {
@@ -2617,8 +2643,17 @@ function populateBOMDropdowns() {
     if(!sel) return;
     const curr = sel.value;
     let html = `<option value="0|Custom ${selId}" data-client="Custom Option">Custom Option</option>`;
+    const groups = {};
     hwDB[cat].forEach((item, idx) => {
-      html += `<option value="${item.price}|${item.name}" data-client="${item.client}" data-index="${idx}">${item.name} (₱${item.price.toLocaleString()})</option>`;
+      const brand = getHardwareBrand(item);
+      (groups[brand] ||= []).push({item, idx});
+    });
+    Object.keys(groups).sort((a,b) => a.localeCompare(b)).forEach(brand => {
+      html += `<optgroup label="${brand}">`;
+      groups[brand].forEach(({item, idx}) => {
+        html += `<option value="${item.price}|${item.name}" data-client="${item.client}" data-index="${idx}">${item.name} (₱${item.price.toLocaleString()})</option>`;
+      });
+      html += '</optgroup>';
     });
     sel.innerHTML = html;
     let match = Array.from(sel.options).find(o => o.value === curr);
@@ -3001,16 +3036,15 @@ let invSortState = { panels:'name', inverters:'name', batteries:'name', accessor
 
 function sortDBItems(cat, items) {
   const mode = invSortState[cat] || 'name';
-  const arr = items.map((item, idx) => ({...item, _idx: idx}));
+  const arr = items.map((item, idx) => ({...item, _idx: idx, _brand: getHardwareBrand(item)}));
   arr.sort((a, b) => {
+    if (mode === 'brand') return a._brand.localeCompare(b._brand) || a.name.localeCompare(b.name);
     if (mode === 'price') return a.price - b.price;
     if (mode === 'size') {
-      // Extract first numeric from name (W for panels, kW for inverters, Ah for batteries)
       const aN = parseFloat((a.name.match(/(\d+(?:\.\d+)?)/)||[0])[0]) || 0;
       const bN = parseFloat((b.name.match(/(\d+(?:\.\d+)?)/)||[0])[0]) || 0;
       return aN - bN;
     }
-    // Default: name (with tier-aware secondary sort: Essential → Advanced → Elite)
     const tierRank = c => /Essential/i.test(c)?1 : /Advanced/i.test(c)?2 : /Elite/i.test(c)?3 : 4;
     const aT = tierRank(a.client);
     const bT = tierRank(b.client);
@@ -3024,18 +3058,20 @@ function renderDBTable(cat) {
   const sortMode = invSortState[cat] || 'name';
   const items = sortDBItems(cat, hwDB[cat]);
   const isInv = cat === 'inverters';
-  const colCount = isInv ? 5 : 4;
+  const colCount = isInv ? 6 : 5;
   let html = `
     <tr style="background:var(--bg3);">
       <th colspan="${colCount}" style="text-align:left;padding:8px 12px;">
         <span style="font-size:11px;color:var(--text3);">SORT BY:</span>
-        <button class="btn btn-sm ${sortMode==='name'?'btn-amber':'btn-slate'}" style="margin-left:6px;" onclick="setInvSort('${cat}','name')">Name (Tier)</button>
+        <button class="btn btn-sm ${sortMode==='brand'?'btn-amber':'btn-slate'}" style="margin-left:6px;" onclick="setInvSort('${cat}','brand')">Brand</button>
+        <button class="btn btn-sm ${sortMode==='name'?'btn-amber':'btn-slate'}" style="margin-left:4px;" onclick="setInvSort('${cat}','name')">Name (Tier)</button>
         <button class="btn btn-sm ${sortMode==='size'?'btn-amber':'btn-slate'}" style="margin-left:4px;" onclick="setInvSort('${cat}','size')">Size</button>
         <button class="btn btn-sm ${sortMode==='price'?'btn-amber':'btn-slate'}" style="margin-left:4px;" onclick="setInvSort('${cat}','price')">Price</button>
         <span style="float:right;color:var(--text3);font-size:11px;">${items.length} items · click any field to edit</span>
       </th>
     </tr>
     <tr>
+      <th onclick="setInvSort('${cat}','brand')" style="cursor:pointer;">Brand ⇅</th>
       <th onclick="setInvSort('${cat}','name')" style="cursor:pointer;">Internal Name ⇅</th>
       <th>Client Spec</th>
       ${isInv ? '<th>PV Design / Unit<br><span style="font-size:9px;font-weight:400;color:var(--text3);">user target · max shown below</span></th>' : ''}
@@ -3045,6 +3081,7 @@ function renderDBTable(cat) {
   items.forEach((item) => {
     const idx = item._idx;
     html += `<tr>
+      <td style="color:var(--text2);font-weight:600;">${getHardwareBrand(item)}</td>
       <td><span class="inv-edit" data-cat="${cat}" data-idx="${idx}" data-field="name"
             style="cursor:text;border-bottom:1px dashed var(--border2);padding:2px 4px;display:inline-block;min-width:120px;"
             onclick="editInvField(this)">${item.name}</span></td>
