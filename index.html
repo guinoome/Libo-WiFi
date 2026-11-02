@@ -2158,16 +2158,17 @@ const defaultDB = {
     {price:42000,name:"Deye/Solis 3kW Grid-Tie",client:"Advanced Series 3kW Grid-Tie Inverter"},
     {price:40000,name:"5kW 24V MPPT Hybrid Inverter",client:"Advanced Series 5kW 24V Hybrid Inverter"},
     {price:64000,name:"Deye/Solis 6kW Hybrid",client:"Advanced Series 6kW Hybrid Inverter"},
-    {price:55000,name:"SUNGROW 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center"},
+    {price:52000,name:"SUNGROW MG6RL 6kW Hybrid",client:"Elite Series 6kW Hybrid Power Center",modelCode:"MG6RL",priceSource:"Gerche Solar Solutions",priceCapturedAt:"2026-11-02"},
     {price:59800,name:"LuxPower 6kW (Gen2-LB-EU)",client:"Elite Series 6kW Hybrid Power Center",designPvKw:6,manufacturerMaxPvKw:9.6,specModel:"GEN2-LB-EU 6K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:92000,name:"Deye/Solis 8kW Hybrid",client:"Advanced Series 8kW Hybrid Inverter"},
-    {price:73000,name:"SUNGROW 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center"},
+    {price:69000,name:"SUNGROW MG8RL 8kW Hybrid",client:"Elite Series 8kW Hybrid Power Center",modelCode:"MG8RL",priceSource:"Gerche Solar Solutions",priceCapturedAt:"2026-11-02"},
     {price:94300,name:"LuxPower 8kW (Gen-LB-EU)",client:"Elite Series 8kW Hybrid Power Center",designPvKw:8,manufacturerMaxPvKw:12,specModel:"GEN-LB-EU 8K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
-    {price:89000,name:"SUNGROW 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center"},
+    {price:89000,name:"SUNGROW MG10RL 10kW Hybrid",client:"Elite Series 10kW Hybrid Power Center",modelCode:"MG10RL",priceSource:"Gerche Solar Solutions",priceCapturedAt:"2026-11-02"},
     {price:101200,name:"LuxPower 10kW (Gen-LB-EU)",client:"Elite Series 10kW Hybrid Power Center",designPvKw:10,manufacturerMaxPvKw:15,specModel:"GEN-LB-EU 10K",specSource:"LuxpowerTek official GEN-LB-EU 7-10K datasheet",specRevision:"2025.09",specVerified:true},
     {price:144000,name:"Deye 12kW 3-Phase Hybrid",client:"Advanced Series 12kW 3-Phase Power Center"},
     {price:112700,name:"LuxPower 12kW (GEN2-LB-EU)",client:"Elite Series 12kW Hybrid Power Center",designPvKw:12,manufacturerMaxPvKw:18,specModel:"GEN2-LB-EU 12K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
     {price:120750,name:"LuxPower 14kW (GEN2-LB-EU)",client:"Elite Series 14kW Hybrid Power Center",designPvKw:14,manufacturerMaxPvKw:18,specModel:"GEN2-LB-EU 14K",specSource:"LuxpowerTek official EU catalogue",specRevision:"2026.03.31",specVerified:true},
+    {price:98000,name:"SUNGROW MG12RL 12kW Hybrid",client:"Elite Series 12kW Hybrid Power Center",modelCode:"MG12RL",priceSource:"Gerche Solar Solutions",priceCapturedAt:"2026-11-02"},
     {price:180000,name:"Elite 16kW Hybrid",client:"Elite Series 16kW Hybrid Power Center"},
     {price:210000,name:"Deye 20kW 3-Phase Hybrid",client:"Advanced Series 20kW 3-Phase Power Center"},
     {price:175200,name:"LuxPower 20kW 1-Phase",client:"Elite Series 20kW 1-Phase Power Center"},
@@ -2185,7 +2186,8 @@ const defaultDB = {
     {price:114000,name:"Standard 48V 200Ah",client:"Advanced Series 48V 200Ah Storage"},
     {price:62400,name:"Elite 48V 200Ah",client:"Elite Series 48V 200Ah Storage System"},
     {price:170400,name:"Standard 48V 300Ah",client:"Advanced Series 48V 300Ah Storage"},
-    {price:138000,name:"Elite 48V 300Ah",client:"Elite Series 48V 300Ah Storage System"}
+    {price:138000,name:"Elite 48V 300Ah",client:"Elite Series 48V 300Ah Storage System"},
+    {price:125000,name:"SUNGROW MBL160 16.08kWh 51.2V",client:"Elite Series 16.08kWh Low-Voltage LFP Battery",modelCode:"MBL160",nominalEnergyKwh:16.08,nominalVoltage:51.2,minVoltage:44.8,maxVoltage:57.6,maxChargeDischargeCurrent:200,compatibleInverters:["MG5RL","MG6RL","MG8RL","MG10RL","MG12RL"],specSource:"Sungrow official MBL160 datasheet",specRevision:"2026",specVerified:true,priceSource:"Gerche Solar Solutions",priceCapturedAt:"2026-11-02"}
   ],
   accessories:[
     {price:0,name:"No Accessories",client:"N/A"},
@@ -2675,8 +2677,8 @@ function getCurrentBatteryVoltage() {
     getSelectedBOMOption('inverter')?.name || ''
   ];
   for (const source of sources) {
-    const m = String(source).match(/\b(12|24|48)\s*V\b/i);
-    if (m) return parseInt(m[1]);
+    const m = String(source).match(/\b(51\.2|48|24|12)\s*V\b/i);
+    if (m) return parseFloat(m[1]);
   }
   return (typeof invVolts !== 'undefined' && invVolts) ? invVolts : 48;
 }
