@@ -2322,7 +2322,8 @@ function migrateSungrowSupplierPricing20261102() {
     if (oldItem && !newItem) {
       if (oldItem.price === rule[2]) oldItem.price = rule[3];
       oldItem.name = rule[1]; oldItem.client = rule[4]; oldItem.modelCode = rule[5];
-      oldItem.priceSource = 'Gerche Solar Solutions'; oldItem.priceCapturedAt = '2026-11-02'; changed++;
+      if (oldItem.price === rule[3]) { oldItem.priceSource = 'Gerche Solar Solutions'; oldItem.priceCapturedAt = '2026-11-02'; }
+      changed++;
     } else if (newItem && newItem.price === rule[2]) {
       newItem.price = rule[3]; newItem.client = rule[4]; newItem.modelCode = rule[5];
       newItem.priceSource = 'Gerche Solar Solutions'; newItem.priceCapturedAt = '2026-11-02'; changed++;
